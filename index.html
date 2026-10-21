@@ -131,6 +131,17 @@
       <!-- Demo & Utility Action Buttons -->
       <div class="flex flex-wrap items-center gap-2">
         <button
+          id="btnOpenAuthModal"
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600/25 hover:bg-indigo-600/40 text-indigo-200 border border-indigo-500/40 transition-all shadow-sm active:scale-95"
+          title="Sign in or create an account to save and sync your anime rankings across devices"
+        >
+          <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <i class="fa-solid fa-user-astronaut text-indigo-300"></i>
+          <span id="headerAccountLabel">Sign In / Save List</span>
+        </button>
+
+        <button
           id="btnRun410Demo"
           type="button"
           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-pink-500/20 hover:from-amber-500/30 hover:to-pink-500/30 text-amber-200 border border-amber-500/40 transition-all shadow-sm active:scale-95"
@@ -676,13 +687,181 @@
     </div>
   </div>
 
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: USER LOGIN, ACCOUNT & CLOUD SYNC MODAL                       -->
+  <!-- ===================================================================== -->
+  <div
+    id="authModalOverlay"
+    class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+  >
+    <div class="bg-slate-900 border border-slate-700/90 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-pop my-8">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-base sm:text-lg text-white">
+              Account &amp; Cloud Sync
+            </h3>
+            <p id="authModalSubtitle" class="text-[11px] text-slate-400">
+              Save your rankings and access your list from any device
+            </p>
+          </div>
+        </div>
+        <button
+          id="btnCloseAuthModal"
+          type="button"
+          class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-5">
+        <!-- Current Session Status Banner -->
+        <div class="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-semibold text-slate-300 flex items-center gap-2">
+              <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+              <span>Active Profile:</span>
+            </span>
+            <span id="authActiveProfileBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              Guest Session
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-400 flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
+            <span>Session User ID:</span>
+            <code id="authUserIdDisplay" class="font-mono text-[10px] text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 select-all">
+              Connecting...
+            </code>
+          </div>
+        </div>
+
+        <!-- Logged-In Account View (Shown when signed into a named username) -->
+        <div id="authLoggedInPanel" class="hidden space-y-4">
+          <div class="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-2 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center mx-auto text-xl">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <h4 class="font-display font-bold text-lg text-white">
+              Signed in as <span id="loggedInUsernameText" class="text-emerald-300">@user</span>
+            </h4>
+            <p class="text-xs text-slate-300">
+              Every rating and head-to-head comparison you make is automatically synced to your cloud account in real time.
+            </p>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <button
+              id="btnForceCloudSync"
+              type="button"
+              class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition flex items-center justify-center gap-2"
+            >
+              <i class="fa-solid fa-rotate"></i>
+              <span>Sync Now</span>
+            </button>
+            <button
+              id="btnSignOutAccount"
+              type="button"
+              class="flex-1 py-2.5 px-4 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 text-rose-200 border border-rose-800/50 text-xs font-semibold transition flex items-center justify-center gap-2"
+            >
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sign In / Create Account Form Panel -->
+        <div id="authFormPanel" class="space-y-4">
+          <!-- Mode Switcher Tabs -->
+          <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800">
+            <button
+              id="tabAuthLogin"
+              type="button"
+              class="py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow"
+            >
+              Log In
+            </button>
+            <button
+              id="tabAuthRegister"
+              type="button"
+              class="py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white"
+            >
+              Create Account
+            </button>
+          </div>
+
+          <form id="cloudAuthForm" class="space-y-3.5" onsubmit="return false;">
+            <div>
+              <label for="authUsernameInput" class="block text-xs font-semibold text-slate-300 mb-1">
+                Username
+              </label>
+              <div class="relative">
+                <i class="fa-solid fa-at absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                <input
+                  id="authUsernameInput"
+                  type="text"
+                  required
+                  minlength="3"
+                  maxlength="24"
+                  autocomplete="username"
+                  placeholder="e.g. otaku_king"
+                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-indigo-500 focus:outline-none text-sm text-white placeholder-slate-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="authPasswordInput" class="block text-xs font-semibold text-slate-300 mb-1">
+                Password / Secret PIN
+              </label>
+              <div class="relative">
+                <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                <input
+                  id="authPasswordInput"
+                  type="password"
+                  required
+                  minlength="4"
+                  autocomplete="current-password"
+                  placeholder="At least 4 characters"
+                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-indigo-500 focus:outline-none text-sm text-white placeholder-slate-500"
+                />
+              </div>
+            </div>
+
+            <div id="authErrorBox" class="hidden p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-xs text-rose-200"></div>
+
+            <button
+              id="btnSubmitAuthForm"
+              type="submit"
+              class="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2"
+            >
+              <i class="fa-solid fa-right-to-bracket"></i>
+              <span id="btnSubmitAuthText">Log In &amp; Load My Rankings</span>
+            </button>
+          </form>
+
+          <p id="authFormHelperText" class="text-[11px] text-slate-400 text-center leading-relaxed">
+            Logging in loads your saved anime list from the cloud so you can continue rating from any device.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
   <!-- ===================================================================== -->
   <!-- APPLICATION JAVASCRIPT                                                -->
   <!-- ===================================================================== -->
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
     /*************************************************************************
      * 1. TIER METADATA & DESCRIPTIONS (0 TO 10)
      *************************************************************************/
@@ -1115,82 +1294,393 @@
     ];
 
     /*************************************************************************
-     * 3. APPLICATION STATE & STORAGE MANAGEMENT
+     * 3. APPLICATION STATE, LOGIN & CLOUD STORAGE MANAGEMENT
      *************************************************************************/
-    const STORAGE_KEY = "anirank_arena_state_v1";
+    const appId = typeof __app_id !== "undefined" ? __app_id : "anirank-arena-app";
+
+    // Optional: If you host this file on your own external GitHub Pages domain,
+    // you can paste your own free Firebase web app config object inside CUSTOM_FIREBASE_CONFIG below:
+    const CUSTOM_FIREBASE_CONFIG = null;
+
+    let app = null;
+    let db = null;
+    let auth = null;
+    let currentUser = null;
+    let activeSnapshotUnsubscribe = null;
+    let isApplyingRemoteUpdate = false;
 
     /**
      * State structure:
-     * - items: Array of rated anime objects:
-     *   {
-     *     mal_id, title, title_japanese, year, type, episodes, mal_score, genres, image, synopsis,
-     *     baseTier: 0..10,
-     *     rankSlot: integer (0 = lowest in baseTier, m-1 = highest in baseTier),
-     *     finalScore: float (e.g. 4.0, 4.5),
-     *     comparisonsCount: integer,
-     *     ratedAt: timestamp
-     *   }
+     * - items: Array of rated anime objects
      * - battleHistory: Array of past H2H comparisons
+     * - accountUsername: null (guest session) or string (logged-in username)
      */
     let appState = {
       items: [],
       battleHistory: [],
       activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'history'
       tierFilter: null,         // null or 0..10
-      searchQuery: ""
+      searchQuery: "",
+      accountUsername: null,
+      accountPasswordHash: null
     };
 
     // Pending rating / H2H Arena session state
     let modalCandidateAnime = null;
     let modalSelectedBaseTier = null;
-
     let arenaSession = null;
-    /*
-      arenaSession structure during Binary Search H2H inside Tier N:
-      {
-        baseTier: number,
-        candidate: animeObj,
-        groups: [ [animeAtSlot0], [animeAtSlot1], ... ], // ordered from lowest to highest in Tier N
-        low: number,
-        high: number,
-        mid: number,
-        stepCount: number,
-        maxStepsEstimate: number,
-        decisions: [] // records each comparison made in this session
-      }
-    */
+    let authModalMode = "login"; // 'login' | 'register'
 
-    function loadStateFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.items)) {
-            appState.items = parsed.items;
-            appState.battleHistory = Array.isArray(parsed.battleHistory) ? parsed.battleHistory : [];
-            // Recalculate all tiers to ensure strict consistency
-            for (let t = 0; t <= 10; t++) {
-              recalculateScoresInTier(t);
-            }
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn("Could not read localStorage state:", err);
-      }
-      // If empty on first visit, seed a balanced starter set so the app looks alive immediately
-      seedDefaultStarterData(false);
+    async function hashCredential(rawText) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode("anirank_salt_v1_" + rawText);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
     }
 
-    function saveStateToStorage() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          items: appState.items,
-          battleHistory: appState.battleHistory
-        }));
-      } catch (err) {
-        console.warn("Could not save state to localStorage:", err);
+    function normalizeUsername(username) {
+      return String(username || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    }
+
+    function getPrivateSessionDocRef() {
+      if (!db || !currentUser) return null;
+      return doc(db, "artifacts", appId, "users", currentUser.uid, "rankings", "main_list");
+    }
+
+    function getNamedAccountDocRef(normalizedUser) {
+      if (!db || !currentUser || !normalizedUser) return null;
+      return doc(db, "artifacts", appId, "public", "data", "user_accounts", normalizedUser);
+    }
+
+    function updateAuthHeaderUI() {
+      const dotEl = document.getElementById("cloudStatusDot");
+      const labelEl = document.getElementById("headerAccountLabel");
+      const badgeEl = document.getElementById("authActiveProfileBadge");
+      const uidEl = document.getElementById("authUserIdDisplay");
+      const loggedInPanel = document.getElementById("authLoggedInPanel");
+      const formPanel = document.getElementById("authFormPanel");
+      const loggedInUsernameText = document.getElementById("loggedInUsernameText");
+
+      if (uidEl) {
+        uidEl.textContent = currentUser ? currentUser.uid : "Session Active (Memory Mode)";
       }
+
+      if (appState.accountUsername) {
+        if (dotEl) dotEl.className = "w-2 h-2 rounded-full bg-emerald-400";
+        if (labelEl) labelEl.textContent = `@${appState.accountUsername}`;
+        if (badgeEl) {
+          badgeEl.textContent = `@${appState.accountUsername} (Cloud Synced)`;
+          badgeEl.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        }
+        if (loggedInUsernameText) loggedInUsernameText.textContent = `@${appState.accountUsername}`;
+        if (loggedInPanel) loggedInPanel.classList.remove("hidden");
+        if (formPanel) formPanel.classList.add("hidden");
+      } else if (currentUser && db) {
+        if (dotEl) dotEl.className = "w-2 h-2 rounded-full bg-sky-400";
+        if (labelEl) labelEl.textContent = "Sign In / Cloud Saved";
+        if (badgeEl) {
+          badgeEl.textContent = "Auto-Saved Guest Session";
+          badgeEl.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30";
+        }
+        if (loggedInPanel) loggedInPanel.classList.add("hidden");
+        if (formPanel) formPanel.classList.remove("hidden");
+      } else {
+        if (dotEl) dotEl.className = "w-2 h-2 rounded-full bg-amber-400";
+        if (labelEl) labelEl.textContent = "Sign In / Save List";
+        if (badgeEl) {
+          badgeEl.textContent = "Local Session";
+          badgeEl.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        }
+        if (loggedInPanel) loggedInPanel.classList.add("hidden");
+        if (formPanel) formPanel.classList.remove("hidden");
+      }
+    }
+
+    async function initCloudStorageAndAuth() {
+      try {
+        const rawConfig = typeof __firebase_config !== "undefined" && __firebase_config
+          ? JSON.parse(__firebase_config)
+          : CUSTOM_FIREBASE_CONFIG;
+
+        if (!rawConfig) {
+          seedDefaultStarterData(false);
+          updateAuthHeaderUI();
+          return;
+        }
+
+        app = initializeApp(rawConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        // RULE 3: Authenticate FIRST before any Firestore operation
+        if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        currentUser = auth.currentUser;
+        onAuthStateChanged(auth, (user) => {
+          currentUser = user;
+          updateAuthHeaderUI();
+        });
+
+        updateAuthHeaderUI();
+        await subscribeToPrivateSessionData();
+      } catch (err) {
+        console.warn("Cloud storage initialization fallback:", err);
+        seedDefaultStarterData(false);
+        updateAuthHeaderUI();
+      }
+    }
+
+    async function subscribeToPrivateSessionData() {
+      if (!db || !currentUser) return;
+
+      if (activeSnapshotUnsubscribe) {
+        activeSnapshotUnsubscribe();
+        activeSnapshotUnsubscribe = null;
+      }
+
+      const privateRef = getPrivateSessionDocRef();
+      if (!privateRef) return;
+
+      try {
+        const snap = await getDoc(privateRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          // If this user previously logged into a named account, automatically reconnect to it
+          if (data.linkedUsername && data.linkedPasswordHash) {
+            const linkedSuccess = await connectNamedAccount(data.linkedUsername, data.linkedPasswordHash, false);
+            if (linkedSuccess) return;
+          }
+          applyLoadedListState(data.items, data.battleHistory);
+        } else {
+          seedDefaultStarterData(false);
+          await saveStateToStorage();
+        }
+
+        activeSnapshotUnsubscribe = onSnapshot(
+          privateRef,
+          (docSnap) => {
+            if (isApplyingRemoteUpdate || appState.accountUsername) return;
+            if (docSnap.exists()) {
+              const d = docSnap.data();
+              applyLoadedListState(d.items, d.battleHistory);
+            }
+          },
+          (err) => {
+            console.warn("Private session snapshot error:", err);
+          }
+        );
+      } catch (err) {
+        console.warn("Error fetching initial private session:", err);
+        seedDefaultStarterData(false);
+      }
+    }
+
+    function applyLoadedListState(itemsPayload, historyPayload) {
+      isApplyingRemoteUpdate = true;
+      try {
+        const parsedItems = typeof itemsPayload === "string" ? JSON.parse(itemsPayload) : itemsPayload;
+        const parsedHistory = typeof historyPayload === "string" ? JSON.parse(historyPayload) : historyPayload;
+
+        if (Array.isArray(parsedItems)) {
+          appState.items = parsedItems;
+          appState.battleHistory = Array.isArray(parsedHistory) ? parsedHistory : [];
+          for (let t = 0; t <= 10; t++) {
+            recalculateScoresInTier(t);
+          }
+          renderAllViews();
+        }
+      } catch (e) {
+        console.warn("Failed to parse cloud state:", e);
+      } finally {
+        isApplyingRemoteUpdate = false;
+      }
+    }
+
+    async function saveStateToStorage() {
+      if (!db || !currentUser) return;
+
+      const payload = {
+        items: JSON.stringify(appState.items),
+        battleHistory: JSON.stringify(appState.battleHistory),
+        updatedAt: Date.now(),
+        ownerUid: currentUser.uid
+      };
+
+      try {
+        // 1. If signed into a named account (@username), save to their named account document
+        if (appState.accountUsername && appState.accountPasswordHash) {
+          const accountRef = getNamedAccountDocRef(appState.accountUsername);
+          if (accountRef) {
+            await setDoc(accountRef, {
+              ...payload,
+              username: appState.accountUsername,
+              passwordHash: appState.accountPasswordHash
+            }, { merge: true });
+          }
+        }
+
+        // 2. Also keep the user's private session document updated
+        const privateRef = getPrivateSessionDocRef();
+        if (privateRef) {
+          await setDoc(privateRef, {
+            ...payload,
+            linkedUsername: appState.accountUsername || null,
+            linkedPasswordHash: appState.accountPasswordHash || null
+          }, { merge: true });
+        }
+      } catch (err) {
+        console.warn("Could not save state to cloud storage:", err);
+      }
+    }
+
+    async function connectNamedAccount(rawUsername, passwordHash, showNotifications = true) {
+      if (!db || !currentUser) return false;
+      const cleanUser = normalizeUsername(rawUsername);
+      if (!cleanUser) return false;
+
+      const accountRef = getNamedAccountDocRef(cleanUser);
+      const snap = await getDoc(accountRef);
+      if (!snap.exists()) return false;
+
+      const data = snap.data();
+      if (data.passwordHash !== passwordHash) {
+        return false;
+      }
+
+      appState.accountUsername = cleanUser;
+      appState.accountPasswordHash = passwordHash;
+      applyLoadedListState(data.items, data.battleHistory);
+      updateAuthHeaderUI();
+
+      if (activeSnapshotUnsubscribe) {
+        activeSnapshotUnsubscribe();
+      }
+      activeSnapshotUnsubscribe = onSnapshot(
+        accountRef,
+        (docSnap) => {
+          if (isApplyingRemoteUpdate) return;
+          if (docSnap.exists()) {
+            const d = docSnap.data();
+            applyLoadedListState(d.items, d.battleHistory);
+          }
+        },
+        (err) => {
+          console.warn("Account sync listener error:", err);
+        }
+      );
+
+      // Remember linked account on private session doc
+      const privateRef = getPrivateSessionDocRef();
+      if (privateRef) {
+        await setDoc(privateRef, {
+          linkedUsername: cleanUser,
+          linkedPasswordHash: passwordHash,
+          updatedAt: Date.now()
+        }, { merge: true });
+      }
+
+      if (showNotifications) {
+        showToast(`Welcome back, @${cleanUser}! Loaded your saved anime rankings.`, "emerald");
+      }
+      return true;
+    }
+
+    async function handleAuthFormSubmit() {
+      const usernameInput = document.getElementById("authUsernameInput");
+      const passwordInput = document.getElementById("authPasswordInput");
+      const errorBox = document.getElementById("authErrorBox");
+      const submitBtn = document.getElementById("btnSubmitAuthForm");
+
+      errorBox.classList.add("hidden");
+
+      const cleanUser = normalizeUsername(usernameInput.value);
+      const rawPass = passwordInput.value;
+
+      if (cleanUser.length < 3) {
+        errorBox.textContent = "Username must be at least 3 letters or numbers.";
+        errorBox.classList.remove("hidden");
+        return;
+      }
+      if (!rawPass || rawPass.length < 4) {
+        errorBox.textContent = "Password / PIN must be at least 4 characters.";
+        errorBox.classList.remove("hidden");
+        return;
+      }
+      if (!db || !currentUser) {
+        errorBox.textContent = "Cloud database is not connected in this environment yet. Use Export/Import JSON or add a Firebase config.";
+        errorBox.classList.remove("hidden");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      try {
+        const passHash = await hashCredential(rawPass);
+        const accountRef = getNamedAccountDocRef(cleanUser);
+        const existingSnap = await getDoc(accountRef);
+
+        if (authModalMode === "register") {
+          if (existingSnap.exists()) {
+            errorBox.textContent = `Username "@${cleanUser}" is already taken. Try logging in or pick another username.`;
+            errorBox.classList.remove("hidden");
+            return;
+          }
+
+          appState.accountUsername = cleanUser;
+          appState.accountPasswordHash = passHash;
+          await saveStateToStorage();
+          await connectNamedAccount(cleanUser, passHash, false);
+          updateAuthHeaderUI();
+          passwordInput.value = "";
+          document.getElementById("authModalOverlay").classList.add("hidden");
+          showToast(`Account @${cleanUser} created! Your rankings are now saved to the cloud.`, "emerald");
+        } else {
+          if (!existingSnap.exists()) {
+            errorBox.textContent = `No account found for "@${cleanUser}". Switch to "Create Account" to register it!`;
+            errorBox.classList.remove("hidden");
+            return;
+          }
+
+          const data = existingSnap.data();
+          if (data.passwordHash !== passHash) {
+            errorBox.textContent = "Incorrect password / PIN for this username.";
+            errorBox.classList.remove("hidden");
+            return;
+          }
+
+          await connectNamedAccount(cleanUser, passHash, true);
+          passwordInput.value = "";
+          document.getElementById("authModalOverlay").classList.add("hidden");
+        }
+      } catch (err) {
+        errorBox.textContent = "Could not complete cloud request. Please try again.";
+        errorBox.classList.remove("hidden");
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    async function handleSignOutAccount() {
+      appState.accountUsername = null;
+      appState.accountPasswordHash = null;
+
+      if (db && currentUser) {
+        const privateRef = getPrivateSessionDocRef();
+        if (privateRef) {
+          await setDoc(privateRef, {
+            linkedUsername: null,
+            linkedPasswordHash: null,
+            updatedAt: Date.now()
+          }, { merge: true });
+        }
+      }
+
+      updateAuthHeaderUI();
+      showToast("Signed out of named account.", "indigo");
     }
 
     /*************************************************************************
@@ -2900,10 +3390,65 @@
     /*************************************************************************
      * 12. EVENT LISTENERS & INITIALIZATION
      *************************************************************************/
+    window.trigger410ScenarioDemo = trigger410ScenarioDemo;
+    window.seedDefaultStarterData = seedDefaultStarterData;
+
     window.onload = function () {
-      loadStateFromStorage();
       initSearchEvents();
       renderAllViews();
+      initCloudStorageAndAuth();
+
+      // Account / Login Modal Events
+      const authModalOverlay = document.getElementById("authModalOverlay");
+      const tabAuthLogin = document.getElementById("tabAuthLogin");
+      const tabAuthRegister = document.getElementById("tabAuthRegister");
+      const btnSubmitAuthText = document.getElementById("btnSubmitAuthText");
+      const authFormHelperText = document.getElementById("authFormHelperText");
+      const authErrorBox = document.getElementById("authErrorBox");
+
+      function setAuthModalMode(mode) {
+        authModalMode = mode;
+        authErrorBox.classList.add("hidden");
+        if (mode === "login") {
+          tabAuthLogin.className = "py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow";
+          tabAuthRegister.className = "py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+          btnSubmitAuthText.textContent = "Log In & Load My Rankings";
+          authFormHelperText.textContent = "Logging in loads your saved anime list from the cloud so you can continue rating from any device.";
+        } else {
+          tabAuthRegister.className = "py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow";
+          tabAuthLogin.className = "py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+          btnSubmitAuthText.textContent = "Create Account & Save Current List";
+          authFormHelperText.textContent = "Creating an account saves your current anime rankings under your username so you can log in anywhere.";
+        }
+      }
+
+      document.getElementById("btnOpenAuthModal").addEventListener("click", () => {
+        updateAuthHeaderUI();
+        authErrorBox.classList.add("hidden");
+        authModalOverlay.classList.remove("hidden");
+      });
+
+      document.getElementById("btnCloseAuthModal").addEventListener("click", () => {
+        authModalOverlay.classList.add("hidden");
+      });
+
+      authModalOverlay.addEventListener("click", (e) => {
+        if (e.target === authModalOverlay) authModalOverlay.classList.add("hidden");
+      });
+
+      tabAuthLogin.addEventListener("click", () => setAuthModalMode("login"));
+      tabAuthRegister.addEventListener("click", () => setAuthModalMode("register"));
+
+      document.getElementById("cloudAuthForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        handleAuthFormSubmit();
+      });
+
+      document.getElementById("btnSignOutAccount").addEventListener("click", handleSignOutAccount);
+      document.getElementById("btnForceCloudSync").addEventListener("click", async () => {
+        await saveStateToStorage();
+        showToast("Synced your rankings to the cloud!", "emerald");
+      });
 
       // Shuffle quick suggestions
       document.getElementById("btnShuffleSuggestions").addEventListener("click", () => {
