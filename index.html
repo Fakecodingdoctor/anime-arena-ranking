@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AniRank Arena — Precision Anime Rating & Head-to-Head Tier Calibration</title>
+  <title>Anime Arena Ranking — Precision Anime Rating & Head-to-Head Tier Calibration</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter & Space Grotesk -->
@@ -116,7 +116,7 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="font-display font-bold text-xl tracking-tight bg-gradient-to-r from-white via-indigo-200 to-pink-200 bg-clip-text text-transparent">
-              AniRank Arena
+              Anime Arena Ranking
             </h1>
             <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
               0–10 + H2H Engine
@@ -859,6 +859,7 @@
   <!-- ===================================================================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAnalytics, isSupported as isAnalyticsSupported } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -1296,13 +1297,22 @@
     /*************************************************************************
      * 3. APPLICATION STATE, LOGIN & CLOUD STORAGE MANAGEMENT
      *************************************************************************/
-    const appId = typeof __app_id !== "undefined" ? __app_id : "anirank-arena-app";
+    const appId = typeof __app_id !== "undefined" ? __app_id : "anime-arena-ranking";
 
-    // Optional: If you host this file on your own external GitHub Pages domain,
-    // you can paste your own free Firebase web app config object inside CUSTOM_FIREBASE_CONFIG below:
-    const CUSTOM_FIREBASE_CONFIG = null;
+    // Your web app's Firebase configuration (from your Firebase Console)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBwIsSQLlDiemD-lTsipDlSaJ_nrMq55Vs",
+      authDomain: "anime-arena-ranking.firebaseapp.com",
+      projectId: "anime-arena-ranking",
+      storageBucket: "anime-arena-ranking.firebasestorage.app",
+      messagingSenderId: "80823288200",
+      appId: "1:80823288200:web:ad8ab6f5dc1bed6ffbba3d",
+      measurementId: "G-GLDSDG3FD4"
+    };
+    const CUSTOM_FIREBASE_CONFIG = firebaseConfig;
 
     let app = null;
+    let analytics = null;
     let db = null;
     let auth = null;
     let currentUser = null;
@@ -1399,9 +1409,12 @@
 
     async function initCloudStorageAndAuth() {
       try {
-        const rawConfig = typeof __firebase_config !== "undefined" && __firebase_config
-          ? JSON.parse(__firebase_config)
-          : CUSTOM_FIREBASE_CONFIG;
+        // Use your CUSTOM_FIREBASE_CONFIG on GitHub Pages (or workspace config in preview)
+        const rawConfig = CUSTOM_FIREBASE_CONFIG || (
+          typeof __firebase_config !== "undefined" && __firebase_config
+            ? JSON.parse(__firebase_config)
+            : null
+        );
 
         if (!rawConfig) {
           seedDefaultStarterData(false);
@@ -1409,12 +1422,17 @@
           return;
         }
 
+        // Initialize Firebase App, Firestore Database, Auth & Analytics
         app = initializeApp(rawConfig);
         db = getFirestore(app);
         auth = getAuth(app);
 
-        // RULE 3: Authenticate FIRST before any Firestore operation
-        if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
+        isAnalyticsSupported().then((supported) => {
+          if (supported) analytics = getAnalytics(app);
+        }).catch(() => {});
+
+        // Authenticate FIRST before any Firestore operation
+        if (typeof __initial_auth_token !== "undefined" && __initial_auth_token && !CUSTOM_FIREBASE_CONFIG) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
           await signInAnonymously(auth);
@@ -3466,7 +3484,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "anirank-ratings.json";
+        a.download = "anime-arena-ranking.json";
         document.body.appendChild(a);
         a.click();
         a.remove();
