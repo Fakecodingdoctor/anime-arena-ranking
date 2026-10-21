@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AniRank Arena — Precision Anime Rating & Head-to-Head Tier Calibration</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              850: '#151c2c',
+              925: '#0b0f19',
+              950: '#060911',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #060911;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Subtle animated aurora mesh background */
+    .bg-aurora {
+      background:
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.14) 0%, transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(236, 72, 153, 0.11) 0%, transparent 40%),
+        radial-gradient(circle at 50% 85%, rgba(14, 165, 233, 0.10) 0%, transparent 45%),
+        #060911;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* Animations */
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.95) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop {
+      animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 0 25px 4px rgba(99, 102, 241, 0.25); }
+    }
+    .glow-indigo {
+      animation: pulseGlow 2.5s infinite;
+    }
+
+    .vs-badge-shadow {
+      box-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+    }
+
+    /* Line clamp helpers */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="bg-aurora min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP NAVIGATION / HEADER -->
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <i class="fa-solid fa-scale-balanced text-white text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-display font-bold text-xl tracking-tight bg-gradient-to-r from-white via-indigo-200 to-pink-200 bg-clip-text text-transparent">
+              AniRank Arena
+            </h1>
+            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              0–10 + H2H Engine
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">
+            Rate 0–10 first, then head-to-head compare within the same tier for automatic decimal scores (e.g. 4.0 &rarr; 4.5)
+          </p>
+        </div>
+      </div>
+
+      <!-- Demo & Utility Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          id="btnRun410Demo"
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500/20 to-pink-500/20 hover:from-amber-500/30 hover:to-pink-500/30 text-amber-200 border border-amber-500/40 transition-all shadow-sm active:scale-95"
+          title="Loads Anime A at 4/10 and immediately starts a 4/10 Head-to-Head comparison with Anime B"
+        >
+          <i class="fa-solid fa-bolt text-amber-400"></i>
+          <span>Demo 4/10 vs 4/10 Scenario</span>
+        </button>
+
+        <button
+          id="btnLoadStarter"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-slate-800/90 hover:bg-slate-700/90 text-slate-200 border border-slate-700 transition-all active:scale-95"
+          title="Load sample rated animes across several tiers"
+        >
+          <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+          <span class="hidden md:inline">Sample List</span>
+        </button>
+
+        <button
+          id="btnExportJson"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-slate-800/90 hover:bg-slate-700/90 text-slate-300 border border-slate-700 transition-all active:scale-95"
+          title="Export your ranked anime list as JSON"
+        >
+          <i class="fa-solid fa-download text-sky-400"></i>
+          <span class="hidden sm:inline">Export</span>
+        </button>
+
+        <button
+          id="btnClearAll"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 transition-all active:scale-95"
+          title="Reset all ratings"
+        >
+          <i class="fa-solid fa-trash-can"></i>
+          <span class="hidden sm:inline">Reset</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+    <!-- HERO SEARCH & HOW IT WORKS BANNER -->
+    <section class="relative rounded-3xl bg-slate-900/75 border border-slate-800/90 p-5 sm:p-8 shadow-2xl">
+      <div class="max-w-3xl mx-auto text-center space-y-3 mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Live MyAnimeList (Jikan v4) Autocomplete + Smart Sub-Tier Calibration</span>
+        </div>
+        <h2 class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white">
+          Search an Anime. Pick a <span class="text-indigo-400">0–10</span> Base Score. Let Battles Decide the Decimal.
+        </h2>
+        <p class="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
+          Rate Anime <strong>A</strong> a <code class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-xs">4/10</code> &rarr; it starts at <code class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-xs">4.0/10</code>.
+          Rate Anime <strong>B</strong> a <code class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-xs">4/10</code> &rarr; we ask if you liked <strong>B</strong> more than <strong>A</strong>. If yes, <strong>B</strong> becomes <code class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/40 font-mono text-xs">4.5/10</code>!
+        </p>
+      </div>
+
+      <!-- AUTOCOMPLETE SEARCH BAR CONTAINER -->
+      <div class="max-w-2xl mx-auto relative" id="searchContainer">
+        <div class="relative flex items-center">
+          <div class="absolute left-4 text-slate-400 pointer-events-none">
+            <i class="fa-solid fa-magnifying-glass text-lg" id="searchIcon"></i>
+            <i class="fa-solid fa-circle-notch fa-spin text-lg text-indigo-400 hidden" id="searchSpinner"></i>
+          </div>
+          <input
+            id="animeSearchInput"
+            type="text"
+            autocomplete="off"
+            placeholder="Search any anime (e.g. Attack on Titan, Death Note, Naruto, Sword Art Online, Bleach...)"
+            class="w-full pl-12 pr-28 py-4 rounded-2xl bg-slate-950/90 border-2 border-slate-700/80 focus:border-indigo-500 focus:outline-none text-white placeholder-slate-500 text-sm sm:text-base shadow-inner transition-colors"
+          />
+          <div class="absolute right-3 flex items-center gap-1.5">
+            <button
+              id="btnClearSearch"
+              type="button"
+              class="hidden px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs transition"
+              title="Clear search"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <span id="apiStatusBadge" class="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-400 border border-slate-700/70 select-none">
+              MAL API Ready
+            </span>
+          </div>
+        </div>
+
+        <!-- AUTOCOMPLETE DROPDOWN MENU -->
+        <div
+          id="autocompleteDropdown"
+          class="hidden absolute left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-slate-700/90 rounded-2xl shadow-2xl overflow-hidden z-40 max-h-[440px] overflow-y-auto divide-y divide-slate-800/70"
+        >
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+
+      <!-- QUICK-PICK UNRATED SUGGESTION CHIPS -->
+      <div class="max-w-3xl mx-auto mt-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-fire text-orange-400"></i>
+            Quick-Rate Popular Anime (Click any title to rate 0–10):
+          </span>
+          <button
+            id="btnShuffleSuggestions"
+            type="button"
+            class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition"
+          >
+            <i class="fa-solid fa-shuffle"></i> Shuffle
+          </button>
+        </div>
+        <div id="quickChipsContainer" class="flex flex-wrap gap-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE STATS & TIER DISTRIBUTION BAR -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <!-- 4 Key Metric Cards -->
+      <div class="lg:col-span-5 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3">
+        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-medium">Rated Animes</span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="statTotalAnimes" class="font-display text-2xl sm:text-3xl font-bold text-white">0</span>
+            <i class="fa-solid fa-tv text-indigo-400/70 text-lg"></i>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-medium">H2H Comparisons</span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="statTotalComparisons" class="font-display text-2xl sm:text-3xl font-bold text-pink-400">0</span>
+            <i class="fa-solid fa-bolt text-pink-400/70 text-lg"></i>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-medium">Average Score</span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="statAvgScore" class="font-display text-2xl sm:text-3xl font-bold text-emerald-400">—</span>
+            <i class="fa-solid fa-star text-emerald-400/70 text-lg"></i>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
+          <span class="text-xs text-slate-400 font-medium">Highest Rated</span>
+          <div class="mt-2 flex items-baseline justify-between gap-2">
+            <span id="statTopAnime" class="font-semibold text-xs sm:text-sm text-amber-300 truncate">—</span>
+            <i class="fa-solid fa-crown text-amber-400/80 text-lg shrink-0"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 0 to 10 Base Tier Overview Matrix -->
+      <div class="lg:col-span-7 rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Base Tier Distribution (0–10)
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              Click any tier column to filter or inspect animes in that base score bucket
+            </p>
+          </div>
+          <button
+            id="btnClearTierFilter"
+            type="button"
+            class="hidden text-xs px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 transition"
+          >
+            Showing Tier <span id="activeTierFilterNum"></span> &times; Show All
+          </button>
+        </div>
+
+        <div id="tierMatrixGrid" class="grid grid-cols-11 gap-1.5 items-end h-24 pt-4">
+          <!-- Populated by JS: columns 0 through 10 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW CONTROLS & RANKED ANIME COLLECTION -->
+    <section class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <!-- View Switcher Tabs -->
+        <div class="inline-flex p-1 rounded-xl bg-slate-900 border border-slate-800">
+          <button
+            id="tabLeaderboard"
+            type="button"
+            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow"
+          >
+            <i class="fa-solid fa-ranking-star"></i>
+            <span>Overall Leaderboard</span>
+          </button>
+          <button
+            id="tabTierBuckets"
+            type="button"
+            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Tier Buckets (0–10)</span>
+          </button>
+          <button
+            id="tabHistory"
+            type="button"
+            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Battle Log</span>
+            <span id="badgeBattleCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300">0</span>
+          </button>
+        </div>
+
+        <!-- Filter / Search within User's Rated List -->
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <i class="fa-solid fa-filter text-xs text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input
+              id="collectionFilterInput"
+              type="text"
+              placeholder="Filter rated list..."
+              class="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- DYNAMIC CONTENT VIEW AREA -->
+      <div id="collectionViewContainer" class="min-h-[320px]">
+        <!-- Populated by JS based on active tab -->
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-900/90 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>AniRank Arena &mdash; Powered by MyAnimeList / Jikan API v4 + Binary Search Pairwise Tier Calibration</p>
+      <p>Tip: Use keys <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">1</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">2</kbd> or <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">&larr;</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">&rarr;</kbd> during Head-to-Head Battles</p>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: INITIAL 0–10 BASE RATING SELECTOR MODAL                      -->
+  <!-- ===================================================================== -->
+  <div
+    id="ratingModalOverlay"
+    class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+  >
+    <div class="bg-slate-900 border border-slate-700/90 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl animate-pop my-8">
+      <!-- Top Header -->
+      <div class="flex items-center justify-between px-6 py-4 bg-slate-950/60 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+          <h3 class="font-display font-bold text-base sm:text-lg text-white" id="ratingModalHeaderTitle">
+            Step 1: Choose Base Rating (0–10)
+          </h3>
+        </div>
+        <button
+          id="btnCloseRatingModal"
+          type="button"
+          class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Anime Info Summary -->
+      <div class="p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
+          <img
+            id="modalAnimeCover"
+            src=""
+            alt="Anime Cover"
+            class="w-28 h-40 sm:w-32 sm:h-44 object-cover rounded-2xl shadow-lg border border-slate-700 shrink-0 bg-slate-800"
+          />
+          <div class="space-y-2 text-center sm:text-left flex-1">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <span id="modalAnimeTypeYear" class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                TV • 2020
+              </span>
+              <span id="modalAnimeMalScore" class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                ★ 8.50 MAL
+              </span>
+              <span id="modalAnimeEpisodes" class="text-xs text-slate-400">
+                24 eps
+              </span>
+            </div>
+
+            <h4 id="modalAnimeTitle" class="font-display font-bold text-xl sm:text-2xl text-white leading-tight">
+              Anime Title
+            </h4>
+            <p id="modalAnimeSubtitle" class="text-xs text-slate-400 italic"></p>
+
+            <div id="modalAnimeGenres" class="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-1">
+              <!-- Genre pills -->
+            </div>
+
+            <p id="modalAnimeSynopsis" class="text-xs sm:text-sm text-slate-300 line-clamp-3 pt-1 leading-relaxed">
+              Synopsis goes here...
+            </p>
+          </div>
+        </div>
+
+        <!-- 0-10 Selector Grid -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Select a Base Score Tier (0 to 10):
+            </label>
+            <span id="selectedTierPreviewLabel" class="text-xs font-semibold text-indigo-300">
+              Hover or click a tier below
+            </span>
+          </div>
+
+          <div id="baseScoreButtonsGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <!-- Buttons 0 through 10 dynamically rendered with count badges -->
+          </div>
+        </div>
+
+        <!-- Dynamic Tier Explanation Callout -->
+        <div id="tierSelectionCallout" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-4 flex items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div id="tierCalloutIcon" class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div>
+              <p id="tierCalloutTitle" class="text-sm font-semibold text-white">
+                Pick a base tier from 0 to 10 above
+              </p>
+              <p id="tierCalloutDesc" class="text-xs text-slate-400 mt-0.5">
+                If no other anime is in that tier, it gets <code class="text-indigo-300">N.0/10</code>. If other animes share that tier, you'll compare them head-to-head!
+              </p>
+            </div>
+          </div>
+
+          <button
+            id="btnConfirmBaseScore"
+            type="button"
+            disabled
+            class="px-5 py-3 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white transition-all shrink-0 shadow-lg shadow-indigo-600/25 disabled:shadow-none flex items-center gap-2"
+          >
+            <span id="btnConfirmBaseScoreText">Select Score</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: HEAD-TO-HEAD COMPARISON ARENA MODAL                          -->
+  <!-- ===================================================================== -->
+  <div
+    id="arenaModalOverlay"
+    class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+  >
+    <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl animate-pop my-6">
+      <!-- Arena Header -->
+      <div class="px-6 py-4 bg-gradient-to-r from-indigo-950/80 via-slate-900 to-pink-950/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-pink-500/20 text-pink-300 border border-pink-500/40 flex items-center gap-1.5">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+            <span id="arenaTierBadge">Tier 4/10 Head-to-Head</span>
+          </span>
+          <span id="arenaStepCounter" class="text-xs text-slate-300 font-medium">
+            Comparison 1 of 1
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] text-slate-400 hidden sm:inline">
+            Binary Search Calibration
+          </span>
+          <button
+            id="btnCancelArena"
+            type="button"
+            class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs transition"
+            title="Cancel comparison"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- ACTIVE COMPARISON VIEW -->
+      <div id="arenaActiveBody" class="p-5 sm:p-8 space-y-6">
+        <div class="text-center space-y-1.5">
+          <h3 id="arenaPromptHeadline" class="font-display text-xl sm:text-2xl font-bold text-white">
+            You also rated <span class="text-amber-300">Anime A</span> a 4/10. Which anime did you like more?
+          </h3>
+          <p id="arenaPromptSubtext" class="text-xs sm:text-sm text-slate-400">
+            Choosing the winner automatically calibrates their decimal scores inside the <span class="text-indigo-300 font-semibold">4.0 – 4.9</span> range!
+          </p>
+        </div>
+
+        <!-- Side-by-Side Contenders Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-11 gap-4 items-stretch relative">
+          <!-- LEFT CARD: NEW / CHALLENGER ANIME (ANIME B) -->
+          <div
+            id="cardCandidateLeft"
+            class="md:col-span-5 group relative rounded-2xl bg-slate-950/90 border-2 border-indigo-500/50 hover:border-indigo-400 p-5 flex flex-col justify-between transition-all cursor-pointer hover:shadow-xl hover:shadow-indigo-500/10"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  New in Tier <span class="arenaTierNumText">4</span>
+                </span>
+                <span class="text-xs text-slate-400 font-mono">Key: [1] or [&larr;]</span>
+              </div>
+
+              <div class="flex sm:flex-col items-center gap-4 text-left sm:text-center">
+                <img
+                  id="arenaLeftImg"
+                  src=""
+                  alt="Challenger Anime"
+                  class="w-24 h-36 sm:w-36 sm:h-52 object-cover rounded-xl shadow-lg border border-slate-700 shrink-0 bg-slate-800 group-hover:scale-[1.02] transition-transform"
+                />
+                <div class="space-y-1.5 flex-1">
+                  <h4 id="arenaLeftTitle" class="font-display font-bold text-lg sm:text-xl text-white group-hover:text-indigo-300 transition-colors">
+                    Challenger Title
+                  </h4>
+                  <p id="arenaLeftMeta" class="text-xs text-slate-400">TV • 2021 • ★ 8.2</p>
+                  <p id="arenaLeftSynopsis" class="text-xs text-slate-400 line-clamp-2 hidden sm:block pt-1"></p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              id="btnPickLeft"
+              type="button"
+              class="mt-5 w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-indigo-600 group-hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2"
+            >
+              <i class="fa-solid fa-thumbs-up"></i>
+              <span id="btnPickLeftLabel">I Liked Anime B More</span>
+            </button>
+          </div>
+
+          <!-- CENTER VS COLUMN & EQUAL BUTTON -->
+          <div class="md:col-span-1 flex md:flex-col items-center justify-center gap-3 py-1">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-indigo-600 flex items-center justify-center font-display font-extrabold text-white text-sm vs-badge-shadow shrink-0">
+              VS
+            </div>
+            <button
+              id="btnPickTie"
+              type="button"
+              class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition flex flex-col items-center gap-0.5 shrink-0"
+              title="Give both animes the exact same rank slot in this tier"
+            >
+              <span>Equal</span>
+              <span class="text-[10px] text-slate-400 font-normal">[=]</span>
+            </button>
+          </div>
+
+          <!-- RIGHT CARD: EXISTING TIER DEFENDER ANIME (ANIME A) -->
+          <div
+            id="cardDefenderRight"
+            class="md:col-span-5 group relative rounded-2xl bg-slate-950/90 border-2 border-pink-500/50 hover:border-pink-400 p-5 flex flex-col justify-between transition-all cursor-pointer hover:shadow-xl hover:shadow-pink-500/10"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span id="arenaRightScoreBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                  Currently 4.0/10
+                </span>
+                <span class="text-xs text-slate-400 font-mono">Key: [2] or [&rarr;]</span>
+              </div>
+
+              <div class="flex sm:flex-col items-center gap-4 text-left sm:text-center">
+                <img
+                  id="arenaRightImg"
+                  src=""
+                  alt="Defender Anime"
+                  class="w-24 h-36 sm:w-36 sm:h-52 object-cover rounded-xl shadow-lg border border-slate-700 shrink-0 bg-slate-800 group-hover:scale-[1.02] transition-transform"
+                />
+                <div class="space-y-1.5 flex-1">
+                  <h4 id="arenaRightTitle" class="font-display font-bold text-lg sm:text-xl text-white group-hover:text-pink-300 transition-colors">
+                    Defender Title
+                  </h4>
+                  <p id="arenaRightMeta" class="text-xs text-slate-400">TV • 2019 • ★ 8.4</p>
+                  <p id="arenaRightSynopsis" class="text-xs text-slate-400 line-clamp-2 hidden sm:block pt-1"></p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              id="btnPickRight"
+              type="button"
+              class="mt-5 w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-pink-600 group-hover:bg-pink-500 text-white shadow-lg shadow-pink-600/25 transition flex items-center justify-center gap-2"
+            >
+              <i class="fa-solid fa-thumbs-up"></i>
+              <span id="btnPickRightLabel">I Liked Anime A More</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview of Current Tier Ladder -->
+        <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span>Current Animes in Base Tier <strong class="arenaTierNumText text-white">4</strong>:</span>
+            <span id="arenaSearchBoundsText" class="font-mono text-[11px] text-indigo-300"></span>
+          </div>
+          <div id="arenaMiniLadder" class="flex flex-wrap gap-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- CALIBRATION RESULT SUMMARY VIEW (SHOWN IMMEDIATELY AFTER H2H COMPLETES) -->
+      <div id="arenaResultBody" class="hidden p-6 sm:p-8 space-y-6 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-lg shadow-emerald-500/10">
+          <i class="fa-solid fa-check-double"></i>
+        </div>
+
+        <div class="space-y-1">
+          <h3 id="resultHeadline" class="font-display text-2xl font-bold text-white">
+            Tier 4/10 Calibrated!
+          </h3>
+          <p id="resultSubheadline" class="text-sm text-slate-300">
+            Here is the updated decimal ranking inside Base Tier 4:
+          </p>
+        </div>
+
+        <!-- Updated Tier Ladder Cards -->
+        <div id="resultTierLadderList" class="max-w-xl mx-auto space-y-2.5 text-left">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
+          <button
+            id="btnCloseResultModal"
+            type="button"
+            class="px-6 py-3 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition"
+          >
+            Done &amp; View Rankings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: CUSTOM CONFIRMATION / MESSAGE MODAL (NO BROWSER ALERTS)      -->
+  <!-- ===================================================================== -->
+  <div
+    id="confirmModalOverlay"
+    class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+  >
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-pop">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+        </div>
+        <div>
+          <h4 id="confirmModalTitle" class="font-display font-bold text-lg text-white">Confirm Action</h4>
+          <p id="confirmModalMessage" class="text-xs text-slate-400 mt-0.5">Are you sure you want to proceed?</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button
+          id="btnConfirmCancel"
+          type="button"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+        >
+          Cancel
+        </button>
+        <button
+          id="btnConfirmProceed"
+          type="button"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION JAVASCRIPT                                                -->
+  <!-- ===================================================================== -->
+  <script>
+    /*************************************************************************
+     * 1. TIER METADATA & DESCRIPTIONS (0 TO 10)
+     *************************************************************************/
+    const TIER_DEFINITIONS = [
+      { tier: 0,  label: "Unwatchable",   desc: "Complete disaster",     color: "from-red-900 to-rose-950",     badge: "bg-red-950/80 text-red-300 border-red-800/60",       bar: "bg-red-500" },
+      { tier: 1,  label: "Appalling",     desc: "Almost no redeeming qualities", color: "from-rose-800 to-red-900", badge: "bg-rose-950/80 text-rose-300 border-rose-800/60", bar: "bg-rose-500" },
+      { tier: 2,  label: "Horrible",      desc: "Painful to sit through", color: "from-orange-800 to-rose-900",  badge: "bg-orange-950/80 text-orange-300 border-orange-800/60", bar: "bg-orange-500" },
+      { tier: 3,  label: "Very Bad",      desc: "Heavily flawed execution", color: "from-amber-800 to-orange-900", badge: "bg-amber-950/80 text-amber-300 border-amber-800/60", bar: "bg-amber-500" },
+      { tier: 4,  label: "Below Average", desc: "Subpar, noticeable issues", color: "from-yellow-700 to-amber-800", badge: "bg-yellow-950/80 text-yellow-300 border-yellow-700/60", bar: "bg-yellow-400" },
+      { tier: 5,  label: "Average",       desc: "Passable / middle of the road", color: "from-lime-700 to-yellow-800", badge: "bg-lime-950/80 text-lime-300 border-lime-700/60", bar: "bg-lime-400" },
+      { tier: 6,  label: "Fine",          desc: "Decent & enjoyable with flaws", color: "from-emerald-700 to-teal-800", badge: "bg-emerald-950/80 text-emerald-300 border-emerald-700/60", bar: "bg-emerald-400" },
+      { tier: 7,  label: "Good",          desc: "Solid recommendation",    color: "from-teal-600 to-cyan-800",    badge: "bg-teal-950/80 text-teal-300 border-teal-700/60",     bar: "bg-teal-400" },
+      { tier: 8,  label: "Great",         desc: "High quality & memorable", color: "from-sky-600 to-indigo-800",  badge: "bg-sky-950/80 text-sky-300 border-sky-700/60",        bar: "bg-sky-400" },
+      { tier: 9,  label: "Incredible",    desc: "All-time favorite contender", color: "from-indigo-600 to-purple-800", badge: "bg-indigo-950/80 text-indigo-300 border-indigo-600/60", bar: "bg-indigo-400" },
+      { tier: 10, label: "Masterpiece",   desc: "Peak fiction / flawless", color: "from-fuchsia-600 to-pink-700", badge: "bg-fuchsia-950/80 text-fuchsia-200 border-fuchsia-500/60", bar: "bg-pink-400" }
+    ];
+
+    /*************************************************************************
+     * 2. BUILT-IN CURATED ANIME DATASET (~28 POPULAR ANIMES FOR INSTANT SEARCH & OFFLINE FALLBACK)
+     *************************************************************************/
+    const FALLBACK_ANIME_DB = [
+      {
+        mal_id: 16498,
+        title: "Attack on Titan",
+        title_japanese: "Shingeki no Kyojin",
+        year: 2013,
+        type: "TV",
+        episodes: 25,
+        mal_score: 8.55,
+        genres: ["Action", "Award Winning", "Drama", "Suspense"],
+        image: "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+        synopsis: "Centuries ago, mankind was slaughtered to near extinction by monstrous humanoid creatures called Titans, forcing humans to hide in fear behind enormous concentric walls."
+      },
+      {
+        mal_id: 5114,
+        title: "Fullmetal Alchemist: Brotherhood",
+        title_japanese: "Hagane no Renkinjutsushi: Fullmetal Alchemist",
+        year: 2009,
+        type: "TV",
+        episodes: 64,
+        mal_score: 9.09,
+        genres: ["Action", "Adventure", "Drama", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1208/94745.jpg",
+        synopsis: "After a horrific alchemy experiment goes wrong in the Elric household, brothers Edward and Alphonse are left in a catastrophic new reality."
+      },
+      {
+        mal_id: 9253,
+        title: "Steins;Gate",
+        title_japanese: "Steins;Gate",
+        year: 2011,
+        type: "TV",
+        episodes: 24,
+        mal_score: 9.07,
+        genres: ["Drama", "Sci-Fi", "Suspense"],
+        image: "https://cdn.myanimelist.net/images/anime/1935/127974.jpg",
+        synopsis: "Eccentric scientist Rintarou Okabe discovers that his makeshift Phone Microwave can send text messages backward through time."
+      },
+      {
+        mal_id: 1535,
+        title: "Death Note",
+        title_japanese: "Death Note",
+        year: 2006,
+        type: "TV",
+        episodes: 37,
+        mal_score: 8.62,
+        genres: ["Supernatural", "Suspense"],
+        image: "https://cdn.myanimelist.net/images/anime/1079/138100.jpg",
+        synopsis: "Brutal murders and petty thefts pollute the human world. High school prodigy Light Yagami stumbles upon the Death Note, a supernatural notebook dropped by a Shinigami."
+      },
+      {
+        mal_id: 52991,
+        title: "Frieren: Beyond Journey's End",
+        title_japanese: "Sousou no Frieren",
+        year: 2023,
+        type: "TV",
+        episodes: 28,
+        mal_score: 9.32,
+        genres: ["Adventure", "Drama", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
+        synopsis: "During their decade-long quest to defeat the Demon King, the members of the hero's party—Himmel himself, the priest Heiter, the dwarf warrior Eisen, and the elven mage Frieren—forge bonds through adventures and battles."
+      },
+      {
+        mal_id: 40748,
+        title: "Jujutsu Kaisen",
+        title_japanese: "Jujutsu Kaisen",
+        year: 2020,
+        type: "TV",
+        episodes: 24,
+        mal_score: 8.59,
+        genres: ["Action", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1171/109222.jpg",
+        synopsis: "Idly indulging in baseless paranormal activities with the Occult Club, high schooler Yuuji Itadori swallows a cursed talisman—the finger of Ryomen Sukuna."
+      },
+      {
+        mal_id: 11061,
+        title: "Hunter x Hunter (2011)",
+        title_japanese: "Hunter x Hunter",
+        year: 2011,
+        type: "TV",
+        episodes: 148,
+        mal_score: 9.03,
+        genres: ["Action", "Adventure", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1337/99013.jpg",
+        synopsis: "Hunters devote themselves to accomplishing hazardous tasks, all from traversing the world's uncharted territories to locating rare items and monsters."
+      },
+      {
+        mal_id: 1,
+        title: "Cowboy Bebop",
+        title_japanese: "Cowboy Bebop",
+        year: 1998,
+        type: "TV",
+        episodes: 26,
+        mal_score: 8.75,
+        genres: ["Action", "Award Winning", "Sci-Fi"],
+        image: "https://cdn.myanimelist.net/images/anime/4/19644.jpg",
+        synopsis: "Crime is timeless. By the year 2071, humanity has expanded across the galaxy, filling the surface of other planets with settlements like those on Earth."
+      },
+      {
+        mal_id: 38000,
+        title: "Demon Slayer: Kimetsu no Yaiba",
+        title_japanese: "Kimetsu no Yaiba",
+        year: 2019,
+        type: "TV",
+        episodes: 26,
+        mal_score: 8.45,
+        genres: ["Action", "Award Winning", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+        synopsis: "Ever since the death of his father, the burden of supporting the family has fallen upon Tanjirou Kamado's shoulders."
+      },
+      {
+        mal_id: 44511,
+        title: "Chainsaw Man",
+        title_japanese: "Chainsaw Man",
+        year: 2022,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.47,
+        genres: ["Action", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1806/126216.jpg",
+        synopsis: "Denji is robbed of a normal teenage life, left with nothing but his deadbeat father's overwhelming debt. His only companion is his pet, the chainsaw devil Pochita."
+      },
+      {
+        mal_id: 42310,
+        title: "Cyberpunk: Edgerunners",
+        title_japanese: "Cyberpunk: Edgerunners",
+        year: 2022,
+        type: "ONA",
+        episodes: 10,
+        mal_score: 8.61,
+        genres: ["Action", "Sci-Fi"],
+        image: "https://cdn.myanimelist.net/images/anime/1818/126435.jpg",
+        synopsis: "Dreams are doomed to die in Night City, a futuristic Californian metropolis. As a teenager living in the city's slums, David Martinez tries to fulfill his mother's lifelong wish."
+      },
+      {
+        mal_id: 32182,
+        title: "Mob Psycho 100",
+        title_japanese: "Mob Psycho 100",
+        year: 2016,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.49,
+        genres: ["Action", "Comedy", "Supernatural"],
+        image: "https://cdn.myanimelist.net/images/anime/8/80356.jpg",
+        synopsis: "Eighth-grader Shigeo 'Mob' Kageyama has tapped into his inner wellspring of psychic prowess at a young age."
+      },
+      {
+        mal_id: 1575,
+        title: "Code Geass: Lelouch of the Rebellion",
+        title_japanese: "Code Geass: Hangyaku no Lelouch",
+        year: 2006,
+        type: "TV",
+        episodes: 25,
+        mal_score: 8.70,
+        genres: ["Action", "Award Winning", "Drama", "Sci-Fi"],
+        image: "https://cdn.myanimelist.net/images/anime/1032/135088.jpg",
+        synopsis: "In the year 2010, the Holy Empire of Britannia is establishing itself as a dominant military nation, starting with the conquest of Japan."
+      },
+      {
+        mal_id: 37521,
+        title: "Vinland Saga",
+        title_japanese: "Vinland Saga",
+        year: 2019,
+        type: "TV",
+        episodes: 24,
+        mal_score: 8.76,
+        genres: ["Action", "Adventure", "Drama"],
+        image: "https://cdn.myanimelist.net/images/anime/1500/103005.jpg",
+        synopsis: "Young Thorfinn grew up listening to the stories of old sailors that had traveled the ocean and reached the place of legend, Vinland."
+      },
+      {
+        mal_id: 20,
+        title: "Naruto",
+        title_japanese: "Naruto",
+        year: 2002,
+        type: "TV",
+        episodes: 220,
+        mal_score: 8.00,
+        genres: ["Action", "Adventure", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/13/17405.jpg",
+        synopsis: "Moments prior to Naruto Uzumaki's birth, a huge demon known as the Kyuubi, the Nine-Tailed Fox, attacked Konohagakure, the Hidden Leaf Village."
+      },
+      {
+        mal_id: 21,
+        title: "One Piece",
+        title_japanese: "One Piece",
+        year: 1999,
+        type: "TV",
+        episodes: 1100,
+        mal_score: 8.72,
+        genres: ["Action", "Adventure", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1244/138851.jpg",
+        synopsis: "Barely surviving in a barrel after passing through a terrible whirlpool at sea, carefree Monkey D. Luffy ends up aboard a ship under attack by fearsome pirates."
+      },
+      {
+        mal_id: 11757,
+        title: "Sword Art Online",
+        title_japanese: "Sword Art Online",
+        year: 2012,
+        type: "TV",
+        episodes: 25,
+        mal_score: 7.21,
+        genres: ["Action", "Adventure", "Fantasy", "Romance"],
+        image: "https://cdn.myanimelist.net/images/anime/11/39717.jpg",
+        synopsis: "Ever since the release of the innovative NerveGear, gamers from all around the globe have been given the opportunity to experience a completely immersive virtual reality."
+      },
+      {
+        mal_id: 22319,
+        title: "Tokyo Ghoul",
+        title_japanese: "Tokyo Ghoul",
+        year: 2014,
+        type: "TV",
+        episodes: 12,
+        mal_score: 7.79,
+        genres: ["Action", "Fantasy", "Horror", "Suspense"],
+        image: "https://cdn.myanimelist.net/images/anime/1498/134443.jpg",
+        synopsis: "A sinister threat is invading Tokyo: flesh-eating 'ghouls' who appear identical to humans and blend into their population."
+      },
+      {
+        mal_id: 39617,
+        title: "The Promised Neverland Season 2",
+        title_japanese: "Yakusoku no Neverland 2nd Season",
+        year: 2021,
+        type: "TV",
+        episodes: 11,
+        mal_score: 5.29,
+        genres: ["Mystery", "Sci-Fi", "Suspense"],
+        image: "https://cdn.myanimelist.net/images/anime/1815/110626.jpg",
+        synopsis: "Emma, Ray, and the rest of the older children have escaped the clutches of the Grace Field House and entered the dangerous outside world."
+      },
+      {
+        mal_id: 34572,
+        title: "Black Clover",
+        title_japanese: "Black Clover",
+        year: 2017,
+        type: "TV",
+        episodes: 170,
+        mal_score: 8.15,
+        genres: ["Action", "Comedy", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/2/88336.jpg",
+        synopsis: "Asta and Yuno were abandoned at the same church on the same day. Raised together as children, they came to know of the 'Wizard King'."
+      },
+      {
+        mal_id: 30,
+        title: "Neon Genesis Evangelion",
+        title_japanese: "Shinseiki Evangelion",
+        year: 1995,
+        type: "TV",
+        episodes: 26,
+        mal_score: 8.35,
+        genres: ["Action", "Award Winning", "Drama", "Sci-Fi"],
+        image: "https://cdn.myanimelist.net/images/anime/1314/108941.jpg",
+        synopsis: "Fifteen years after a cataclysmic event known as the Second Impact, the world faces a new threat: monstrous celestial beings called Angels."
+      },
+      {
+        mal_id: 30276,
+        title: "One Punch Man",
+        title_japanese: "One Punch Man",
+        year: 2015,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.50,
+        genres: ["Action", "Comedy"],
+        image: "https://cdn.myanimelist.net/images/anime/12/76049.jpg",
+        synopsis: "The seemingly unimpressive Saitama has a rather unique hobby: being a hero. In order to pursue his childhood dream, Saitama relentlessly trained for three years."
+      },
+      {
+        mal_id: 269,
+        title: "Bleach",
+        title_japanese: "Bleach",
+        year: 2004,
+        type: "TV",
+        episodes: 366,
+        mal_score: 7.95,
+        genres: ["Action", "Adventure", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/3/40451.jpg",
+        synopsis: "Ichigo Kurosaki is an ordinary high schooler—until his family is attacked by a Hollow, a corrupt spirit that seeks to devour human souls."
+      },
+      {
+        mal_id: 31964,
+        title: "My Hero Academia",
+        title_japanese: "Boku no Hero Academia",
+        year: 2016,
+        type: "TV",
+        episodes: 13,
+        mal_score: 7.87,
+        genres: ["Action"],
+        image: "https://cdn.myanimelist.net/images/anime/10/78745.jpg",
+        synopsis: "The appearance of 'quirks', newly discovered super powers, has been steadily increasing over the years, with 80 percent of humanity possessing various abilities."
+      },
+      {
+        mal_id: 32281,
+        title: "Your Name.",
+        title_japanese: "Kimi no Na wa.",
+        year: 2016,
+        type: "Movie",
+        episodes: 1,
+        mal_score: 8.83,
+        genres: ["Award Winning", "Drama", "Supernatural"],
+        image: "https://cdn.myanimelist.net/images/anime/5/87048.jpg",
+        synopsis: "Mitsuha Miyamizu, a high school girl, yearns to live the life of a boy in the bustling city of Tokyo—a dream that stands in stark contrast to her present life in the countryside."
+      },
+      {
+        mal_id: 50265,
+        title: "Spy x Family",
+        title_japanese: "Spy x Family",
+        year: 2022,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.50,
+        genres: ["Action", "Award Winning", "Comedy"],
+        image: "https://cdn.myanimelist.net/images/anime/1441/122795.jpg",
+        synopsis: "Corrupt politicians, frenzied nationalists, and other warmongering forces constantly jeopardize the thin veneer of peace between neighboring countries Ostania and Westalis."
+      }
+    ];
+
+    /*************************************************************************
+     * 3. APPLICATION STATE & STORAGE MANAGEMENT
+     *************************************************************************/
+    const STORAGE_KEY = "anirank_arena_state_v1";
+
+    /**
+     * State structure:
+     * - items: Array of rated anime objects:
+     *   {
+     *     mal_id, title, title_japanese, year, type, episodes, mal_score, genres, image, synopsis,
+     *     baseTier: 0..10,
+     *     rankSlot: integer (0 = lowest in baseTier, m-1 = highest in baseTier),
+     *     finalScore: float (e.g. 4.0, 4.5),
+     *     comparisonsCount: integer,
+     *     ratedAt: timestamp
+     *   }
+     * - battleHistory: Array of past H2H comparisons
+     */
+    let appState = {
+      items: [],
+      battleHistory: [],
+      activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'history'
+      tierFilter: null,         // null or 0..10
+      searchQuery: ""
+    };
+
+    // Pending rating / H2H Arena session state
+    let modalCandidateAnime = null;
+    let modalSelectedBaseTier = null;
+
+    let arenaSession = null;
+    /*
+      arenaSession structure during Binary Search H2H inside Tier N:
+      {
+        baseTier: number,
+        candidate: animeObj,
+        groups: [ [animeAtSlot0], [animeAtSlot1], ... ], // ordered from lowest to highest in Tier N
+        low: number,
+        high: number,
+        mid: number,
+        stepCount: number,
+        maxStepsEstimate: number,
+        decisions: [] // records each comparison made in this session
+      }
+    */
+
+    function loadStateFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.items)) {
+            appState.items = parsed.items;
+            appState.battleHistory = Array.isArray(parsed.battleHistory) ? parsed.battleHistory : [];
+            // Recalculate all tiers to ensure strict consistency
+            for (let t = 0; t <= 10; t++) {
+              recalculateScoresInTier(t);
+            }
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not read localStorage state:", err);
+      }
+      // If empty on first visit, seed a balanced starter set so the app looks alive immediately
+      seedDefaultStarterData(false);
+    }
+
+    function saveStateToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          items: appState.items,
+          battleHistory: appState.battleHistory
+        }));
+      } catch (err) {
+        console.warn("Could not save state to localStorage:", err);
+      }
+    }
+
+    /*************************************************************************
+     * 4. CORE DECIMAL CALIBRATION ENGINE WITHIN A BASE TIER (0–10)
+     *
+     * Rules:
+     * - Every anime in Base Tier N has a `rankSlot` from 0 (lowest in Tier N)
+     *   to m - 1 (highest in Tier N), where m is the number of distinct rank slots.
+     * - If m === 1:
+     *     rankSlot 0 -> N.0 (e.g. 4.0/10)
+     * - If m === 2:
+     *     rankSlot 0 -> N.0 (e.g. 4.0/10)
+     *     rankSlot 1 -> N.5 (e.g. 4.5/10)  <-- Exact match to prompt specification!
+     * - If m >= 3:
+     *     For Base Tier N < 10:
+     *       Interpolates cleanly across [N.0, N.9] so that:
+     *       slot r gets N + round((r / m) * 10) / 10, with strict monotonic separation
+     *       clamped to [N.0, N.9].
+     *     For Base Tier 10:
+     *       Capped at 10.0 as specified ("only assign 10.0 at max for Tier 10").
+     *************************************************************************/
+    function recalculateScoresInTier(baseTier) {
+      const tierItems = appState.items.filter(it => it.baseTier === baseTier);
+      if (tierItems.length === 0) return;
+
+      // Normalize rankSlot values to be contiguous 0, 1, ..., m-1
+      const uniqueSlots = [...new Set(tierItems.map(it => it.rankSlot))].sort((a, b) => a - b);
+      const m = uniqueSlots.length;
+
+      uniqueSlots.forEach((oldSlot, normalizedIndex) => {
+        const decimalScore = computeCalibratedScore(baseTier, normalizedIndex, m);
+        tierItems
+          .filter(it => it.rankSlot === oldSlot)
+          .forEach(it => {
+            it.rankSlot = normalizedIndex;
+            it.finalScore = decimalScore;
+          });
+      });
+    }
+
+    function computeCalibratedScore(baseTier, slotIndex, totalSlots) {
+      if (baseTier === 10) {
+        return 10.0;
+      }
+      if (totalSlots <= 1) {
+        return Number(baseTier.toFixed(1));
+      }
+      if (totalSlots === 2) {
+        // Exact specification: lower is N.0 (4.0), higher is N.5 (4.5)
+        return Number((baseTier + (slotIndex === 0 ? 0.0 : 0.5)).toFixed(1));
+      }
+      // For 3 or more distinct rank slots in Tier N:
+      // Distribute across [N.0, N.9]
+      if (totalSlots <= 10) {
+        const rawOffset = Math.round((slotIndex / totalSlots) * 10) / 10;
+        const clampedOffset = Math.min(0.9, Math.max(0.0, rawOffset));
+        return Number((baseTier + clampedOffset).toFixed(1));
+      } else {
+        // If someone puts >10 items in the exact same tier, use 2 decimal precision up to .95
+        const rawOffset = Math.round((slotIndex / totalSlots) * 95) / 100;
+        return Number((baseTier + Math.min(0.95, rawOffset)).toFixed(2));
+      }
+    }
+
+    /**
+     * Helper to format scores cleanly (e.g. 4.0, 4.5, 8.5, 10.0)
+     */
+    function formatScore(score) {
+      if (typeof score !== "number" || isNaN(score)) return "0.0";
+      // Check if 2 decimals needed
+      if (Math.round(score * 10) !== Math.round(score * 100) / 10) {
+        return score.toFixed(2);
+      }
+      return score.toFixed(1);
+    }
+
+    /**
+     * Helper for fallback poster SVG if an external cover URL fails to load
+     */
+    function getFallbackPosterUrl(title) {
+      const encoded = encodeURIComponent((title || "Anime").slice(0, 18));
+      return `https://placehold.co/300x420/1e293b/a5b4fc?text=${encoded}`;
+    }
+
+    /*************************************************************************
+     * 5. LIVE AUTOCOMPLETE SEARCH (JIKAN API v4 + INSTANT FALLBACK)
+     *************************************************************************/
+    let searchDebounceTimer = null;
+    let currentSearchAbortController = null;
+
+    const searchInputEl = document.getElementById("animeSearchInput");
+    const dropdownEl = document.getElementById("autocompleteDropdown");
+    const searchIconEl = document.getElementById("searchIcon");
+    const searchSpinnerEl = document.getElementById("searchSpinner");
+    const btnClearSearchEl = document.getElementById("btnClearSearch");
+    const apiStatusBadgeEl = document.getElementById("apiStatusBadge");
+
+    function initSearchEvents() {
+      searchInputEl.addEventListener("input", (e) => {
+        const query = e.target.value.trim();
+        btnClearSearchEl.classList.toggle("hidden", query.length === 0);
+
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+
+        if (query.length === 0) {
+          renderDropdownSuggestions(FALLBACK_ANIME_DB.slice(0, 7), "Popular Anime Suggestions");
+          return;
+        }
+
+        // Immediate local match preview while API fetches
+        const localMatches = searchLocalFallback(query);
+        if (localMatches.length > 0) {
+          renderDropdownSuggestions(localMatches.slice(0, 6), "Instant Matches (Fetching live MAL results...)");
+        }
+
+        searchDebounceTimer = setTimeout(() => {
+          performLiveAnimeSearch(query);
+        }, 260);
+      });
+
+      searchInputEl.addEventListener("focus", () => {
+        const query = searchInputEl.value.trim();
+        if (query.length === 0) {
+          renderDropdownSuggestions(FALLBACK_ANIME_DB.slice(0, 7), "Popular Anime — Click any to rate 0–10");
+        } else {
+          dropdownEl.classList.remove("hidden");
+        }
+      });
+
+      btnClearSearchEl.addEventListener("click", () => {
+        searchInputEl.value = "";
+        btnClearSearchEl.classList.add("hidden");
+        dropdownEl.classList.add("hidden");
+        searchInputEl.focus();
+      });
+
+      // Close autocomplete when clicking outside
+      document.addEventListener("click", (e) => {
+        const container = document.getElementById("searchContainer");
+        if (container && !container.contains(e.target)) {
+          dropdownEl.classList.add("hidden");
+        }
+      });
+    }
+
+    function searchLocalFallback(query) {
+      const q = query.toLowerCase();
+      return FALLBACK_ANIME_DB.filter(a =>
+        a.title.toLowerCase().includes(q) ||
+        (a.title_japanese && a.title_japanese.toLowerCase().includes(q)) ||
+        (a.genres && a.genres.some(g => g.toLowerCase().includes(q)))
+      );
+    }
+
+    async function performLiveAnimeSearch(query) {
+      if (currentSearchAbortController) {
+        currentSearchAbortController.abort();
+      }
+      currentSearchAbortController = new AbortController();
+
+      searchIconEl.classList.add("hidden");
+      searchSpinnerEl.classList.remove("hidden");
+      apiStatusBadgeEl.textContent = "Searching MAL...";
+      apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-700/60 select-none";
+
+      try {
+        const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=8&sfw=true`;
+        const response = await fetch(url, { signal: currentSearchAbortController.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json = await response.json();
+
+        const apiResults = (json.data || []).map(item => normalizeJikanAnime(item));
+
+        // Merge with local fallback matches without duplicates
+        const localMatches = searchLocalFallback(query);
+        const seenIds = new Set(apiResults.map(a => a.mal_id));
+        const combined = [...apiResults];
+        for (const loc of localMatches) {
+          if (!seenIds.has(loc.mal_id) && combined.length < 10) {
+            combined.push(loc);
+          }
+        }
+
+        apiStatusBadgeEl.textContent = "MAL Live ✓";
+        apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 select-none";
+
+        renderDropdownSuggestions(combined, `Live MyAnimeList Results for "${query}"`);
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        // Fallback seamlessly to local dataset
+        const fallbackMatches = searchLocalFallback(query);
+        apiStatusBadgeEl.textContent = "Offline DB Mode";
+        apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-amber-950/90 text-amber-300 border border-amber-700/60 select-none";
+
+        renderDropdownSuggestions(
+          fallbackMatches,
+          fallbackMatches.length > 0
+            ? `Built-in Anime Matches for "${query}"`
+            : `No matches found for "${query}"`
+        );
+      } finally {
+        searchIconEl.classList.remove("hidden");
+        searchSpinnerEl.classList.add("hidden");
+      }
+    }
+
+    function normalizeJikanAnime(raw) {
+      const englishTitle = raw.title_english || raw.title || "Unknown Anime";
+      const defaultTitle = raw.title || englishTitle;
+      const year = raw.year || (raw.aired && raw.aired.prop && raw.aired.prop.from && raw.aired.prop.from.year) || "—";
+      const image =
+        (raw.images && raw.images.jpg && (raw.images.jpg.large_image_url || raw.images.jpg.image_url)) ||
+        getFallbackPosterUrl(englishTitle);
+      const genres = Array.isArray(raw.genres) ? raw.genres.map(g => g.name).slice(0, 4) : [];
+
+      return {
+        mal_id: raw.mal_id,
+        title: englishTitle,
+        title_japanese: defaultTitle !== englishTitle ? defaultTitle : (raw.title_japanese || ""),
+        year: year,
+        type: raw.type || "TV",
+        episodes: raw.episodes || "?",
+        mal_score: raw.score ? Number(raw.score).toFixed(2) : "N/A",
+        genres: genres,
+        image: image,
+        synopsis: raw.synopsis || "No synopsis available."
+      };
+    }
+
+    function renderDropdownSuggestions(animeList, headerLabel) {
+      dropdownEl.innerHTML = "";
+
+      const headerDiv = document.createElement("div");
+      headerDiv.className = "px-4 py-2 bg-slate-950/90 text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between";
+      headerDiv.innerHTML = `
+        <span>${escapeHtml(headerLabel)}</span>
+        <span class="text-slate-500">${animeList.length} result${animeList.length === 1 ? "" : "s"}</span>
+      `;
+      dropdownEl.appendChild(headerDiv);
+
+      if (animeList.length === 0) {
+        const emptyDiv = document.createElement("div");
+        emptyDiv.className = "p-6 text-center text-sm text-slate-400";
+        emptyDiv.innerHTML = `No matching anime found. Try searching another title!`;
+        dropdownEl.appendChild(emptyDiv);
+        dropdownEl.classList.remove("hidden");
+        return;
+      }
+
+      animeList.forEach(anime => {
+        const existing = appState.items.find(it => it.mal_id === anime.mal_id);
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "w-full px-4 py-3 text-left hover:bg-indigo-950/40 focus:bg-indigo-950/40 focus:outline-none transition flex items-center justify-between gap-3 group";
+
+        const existingBadgeHtml = existing
+          ? `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+               Rated ${formatScore(existing.finalScore)}/10
+             </span>`
+          : `<span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600/20 group-hover:bg-indigo-600 text-indigo-300 group-hover:text-white border border-indigo-500/30 transition shrink-0">
+               + Rate 0–10
+             </span>`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3.5 min-w-0">
+            <img
+              src="${escapeHtml(anime.image)}"
+              onerror="this.onerror=null;this.src='${getFallbackPosterUrl(anime.title)}';"
+              alt="${escapeHtml(anime.title)}"
+              class="w-11 h-16 object-cover rounded-lg border border-slate-700 shrink-0 bg-slate-800"
+            />
+            <div class="min-w-0">
+              <div class="font-semibold text-sm text-white group-hover:text-indigo-200 truncate">
+                ${escapeHtml(anime.title)}
+              </div>
+              ${anime.title_japanese && anime.title_japanese !== anime.title
+                ? `<div class="text-xs text-slate-400 truncate">${escapeHtml(anime.title_japanese)}</div>`
+                : ""}
+              <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-400">
+                <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">${escapeHtml(String(anime.type))}</span>
+                <span>${escapeHtml(String(anime.year))}</span>
+                <span>• ${escapeHtml(String(anime.episodes))} eps</span>
+                <span class="text-amber-300 font-medium">★ ${escapeHtml(String(anime.mal_score))}</span>
+              </div>
+            </div>
+          </div>
+          ${existingBadgeHtml}
+        `;
+
+        row.addEventListener("click", () => {
+          dropdownEl.classList.add("hidden");
+          openBaseRatingModal(anime);
+        });
+
+        dropdownEl.appendChild(row);
+      });
+
+      dropdownEl.classList.remove("hidden");
+    }
+
+    /*************************************************************************
+     * 6. QUICK-PICK CHIPS BAR
+     *************************************************************************/
+    let suggestionOffset = 0;
+
+    function renderQuickSuggestionChips() {
+      const container = document.getElementById("quickChipsContainer");
+      container.innerHTML = "";
+
+      const ratedIds = new Set(appState.items.map(i => i.mal_id));
+      const unratedList = FALLBACK_ANIME_DB.filter(a => !ratedIds.has(a.mal_id));
+      const sourcePool = unratedList.length >= 6 ? unratedList : FALLBACK_ANIME_DB;
+
+      const slice = [];
+      for (let i = 0; i < Math.min(8, sourcePool.length); i++) {
+        slice.push(sourcePool[(suggestionOffset + i) % sourcePool.length]);
+      }
+
+      slice.forEach(anime => {
+        const existing = appState.items.find(it => it.mal_id === anime.mal_id);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-950/90 hover:bg-indigo-950/80 text-slate-200 hover:text-white border border-slate-800 hover:border-indigo-500/50 transition-all shadow-sm active:scale-95";
+        btn.innerHTML = `
+          <img
+            src="${escapeHtml(anime.image)}"
+            onerror="this.onerror=null;this.src='${getFallbackPosterUrl(anime.title)}';"
+            alt=""
+            class="w-4 h-5 object-cover rounded"
+          />
+          <span>${escapeHtml(anime.title)}</span>
+          ${existing
+            ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">${formatScore(existing.finalScore)}</span>`
+            : `<i class="fa-solid fa-plus text-[10px] text-indigo-400"></i>`
+          }
+        `;
+        btn.addEventListener("click", () => openBaseRatingModal(anime));
+        container.appendChild(btn);
+      });
+    }
+
+    /*************************************************************************
+     * 7. STEP 1 MODAL: INITIAL 0–10 BASE SCORE SELECTION
+     *************************************************************************/
+    const ratingModalOverlayEl = document.getElementById("ratingModalOverlay");
+    const baseScoreButtonsGridEl = document.getElementById("baseScoreButtonsGrid");
+    const btnConfirmBaseScoreEl = document.getElementById("btnConfirmBaseScore");
+
+    function openBaseRatingModal(anime, preselectTier = null) {
+      modalCandidateAnime = { ...anime };
+      const existingItem = appState.items.find(it => it.mal_id === anime.mal_id);
+      modalSelectedBaseTier = preselectTier !== null
+        ? preselectTier
+        : (existingItem ? existingItem.baseTier : null);
+
+      // Populate anime details
+      const coverEl = document.getElementById("modalAnimeCover");
+      coverEl.src = anime.image;
+      coverEl.onerror = () => { coverEl.src = getFallbackPosterUrl(anime.title); };
+
+      document.getElementById("modalAnimeTitle").textContent = anime.title;
+      document.getElementById("modalAnimeSubtitle").textContent =
+        anime.title_japanese && anime.title_japanese !== anime.title ? anime.title_japanese : "";
+      document.getElementById("modalAnimeTypeYear").textContent = `${anime.type || "TV"} • ${anime.year || "—"}`;
+      document.getElementById("modalAnimeMalScore").textContent = `★ ${anime.mal_score || "N/A"} MAL`;
+      document.getElementById("modalAnimeEpisodes").textContent = `${anime.episodes || "?"} episodes`;
+      document.getElementById("modalAnimeSynopsis").textContent = anime.synopsis || "No synopsis available.";
+
+      const genresContainer = document.getElementById("modalAnimeGenres");
+      genresContainer.innerHTML = "";
+      (anime.genres || []).forEach(g => {
+        const span = document.createElement("span");
+        span.className = "text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700";
+        span.textContent = g;
+        genresContainer.appendChild(span);
+      });
+
+      renderBaseScoreButtons();
+      updateBaseTierCallout(modalSelectedBaseTier);
+
+      ratingModalOverlayEl.classList.remove("hidden");
+    }
+
+    function closeBaseRatingModal() {
+      ratingModalOverlayEl.classList.add("hidden");
+      modalCandidateAnime = null;
+      modalSelectedBaseTier = null;
+    }
+
+    function renderBaseScoreButtons() {
+      baseScoreButtonsGridEl.innerHTML = "";
+
+      for (let t = 0; t <= 10; t++) {
+        const def = TIER_DEFINITIONS[t];
+        // Count how many OTHER animes are already in this base tier
+        const othersInTier = appState.items.filter(
+          it => it.baseTier === t && (!modalCandidateAnime || it.mal_id !== modalCandidateAnime.mal_id)
+        );
+        const count = othersInTier.length;
+        const isSelected = modalSelectedBaseTier === t;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `relative p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
+          isSelected
+            ? "bg-indigo-600/30 border-indigo-400 ring-2 ring-indigo-400/50 shadow-lg"
+            : "bg-slate-950/80 hover:bg-slate-800/90 border-slate-800 hover:border-slate-600"
+        } ${t === 10 ? "col-span-3 sm:col-span-2" : ""}`;
+
+        btn.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <span class="font-display font-bold text-lg ${isSelected ? "text-white" : "text-slate-200"}">
+              ${t}<span class="text-xs font-normal text-slate-400">/10</span>
+            </span>
+            ${count > 0
+              ? `<span class="px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-pink-500/20 text-pink-300 border border-pink-500/30" title="${count} anime(s) already in Tier ${t}">
+                   <i class="fa-solid fa-bolt text-[9px]"></i> ${count}
+                 </span>`
+              : `<span class="text-[10px] text-slate-500">Empty</span>`
+            }
+          </div>
+          <div class="mt-1">
+            <div class="text-xs font-semibold ${isSelected ? "text-indigo-200" : "text-slate-300"} truncate">
+              ${escapeHtml(def.label)}
+            </div>
+          </div>
+        `;
+
+        btn.addEventListener("click", () => {
+          modalSelectedBaseTier = t;
+          renderBaseScoreButtons();
+          updateBaseTierCallout(t);
+        });
+
+        baseScoreButtonsGridEl.appendChild(btn);
+      }
+    }
+
+    function updateBaseTierCallout(tier) {
+      const labelEl = document.getElementById("selectedTierPreviewLabel");
+      const titleEl = document.getElementById("tierCalloutTitle");
+      const descEl = document.getElementById("tierCalloutDesc");
+      const btnTextEl = document.getElementById("btnConfirmBaseScoreText");
+
+      if (tier === null || tier === undefined) {
+        labelEl.textContent = "Select a base score tier (0–10)";
+        titleEl.textContent = "Pick a base tier from 0 to 10 above";
+        descEl.innerHTML = `If no other anime is in that tier, it gets <code class="text-indigo-300">N.0/10</code>. If other animes share that tier, you'll compare them head-to-head!`;
+        btnConfirmBaseScoreEl.disabled = true;
+        btnTextEl.textContent = "Select Score";
+        return;
+      }
+
+      const def = TIER_DEFINITIONS[tier];
+      const peers = appState.items.filter(
+        it => it.baseTier === tier && (!modalCandidateAnime || it.mal_id !== modalCandidateAnime.mal_id)
+      );
+
+      labelEl.textContent = `Selected: ${tier}/10 — ${def.label}`;
+      btnConfirmBaseScoreEl.disabled = false;
+
+      if (peers.length === 0) {
+        titleEl.innerHTML = `First anime in Tier ${tier} (<span class="text-indigo-300">${def.label}</span>)`;
+        descEl.innerHTML = `No other anime is rated <strong>${tier}/10</strong> yet. <strong>${escapeHtml(modalCandidateAnime.title)}</strong> will be saved at <strong class="text-emerald-300 font-mono">${tier}.0/10</strong> right away.`;
+        btnTextEl.textContent = `Save as ${tier}.0/10`;
+      } else {
+        const peerNames = peers.slice(0, 2).map(p => p.title).join(", ") + (peers.length > 2 ? ` +${peers.length - 2} more` : "");
+        titleEl.innerHTML = `<span class="text-pink-300">Head-to-Head Triggered!</span> (${peers.length} anime${peers.length > 1 ? "s" : ""} already in Tier ${tier})`;
+        descEl.innerHTML = `You also rated <strong>${escapeHtml(peerNames)}</strong> in Tier ${tier}. Next, you'll choose which you liked more to calibrate scores (e.g. <strong class="text-amber-300 font-mono">${tier}.0</strong> vs <strong class="text-emerald-300 font-mono">${tier}.5</strong>)!`;
+        btnTextEl.textContent = `Compare in Tier ${tier}/10`;
+      }
+    }
+
+    function handleConfirmBaseScore() {
+      if (!modalCandidateAnime || modalSelectedBaseTier === null) return;
+      const candidate = { ...modalCandidateAnime };
+      const chosenTier = modalSelectedBaseTier;
+
+      closeBaseRatingModal();
+      processAnimeTierAssignment(candidate, chosenTier);
+    }
+
+    /*************************************************************************
+     * 8. STEP 2 ENGINE: BINARY SEARCH HEAD-TO-HEAD COMPARISON ARENA
+     *************************************************************************/
+    function processAnimeTierAssignment(candidateAnime, baseTier) {
+      // Remove candidate if it was already in appState.items (e.g. re-rating or re-comparing)
+      const previousIndex = appState.items.findIndex(it => it.mal_id === candidateAnime.mal_id);
+      let previousBaseTier = null;
+      let existingComparisonsCount = 0;
+
+      if (previousIndex !== -1) {
+        previousBaseTier = appState.items[previousIndex].baseTier;
+        existingComparisonsCount = appState.items[previousIndex].comparisonsCount || 0;
+        appState.items.splice(previousIndex, 1);
+        if (previousBaseTier !== null) {
+          recalculateScoresInTier(previousBaseTier);
+        }
+      }
+
+      // Check how many animes are currently in `baseTier`
+      const existingInTier = appState.items.filter(it => it.baseTier === baseTier);
+
+      if (existingInTier.length === 0) {
+        // First anime in Tier N -> immediately assign N.0/10!
+        const newEntry = {
+          ...candidateAnime,
+          baseTier: baseTier,
+          rankSlot: 0,
+          finalScore: Number(baseTier.toFixed(1)),
+          comparisonsCount: existingComparisonsCount,
+          ratedAt: Date.now()
+        };
+        appState.items.push(newEntry);
+        recalculateScoresInTier(baseTier);
+        saveStateToStorage();
+        renderAllViews();
+        showToast(
+          `Rated "${newEntry.title}" a ${formatScore(newEntry.finalScore)}/10 (First in Tier ${baseTier})`,
+          "emerald"
+        );
+        return;
+      }
+
+      // Otherwise, 1 or more animes exist in `baseTier`!
+      // Group existing items in `baseTier` by their `rankSlot` sorted ascending (0 = lowest, m-1 = highest)
+      const slotNumbers = [...new Set(existingInTier.map(it => it.rankSlot))].sort((a, b) => a - b);
+      const groups = slotNumbers.map(slot => existingInTier.filter(it => it.rankSlot === slot));
+
+      const m = groups.length;
+      const maxSteps = Math.ceil(Math.log2(m + 1));
+
+      arenaSession = {
+        baseTier: baseTier,
+        candidate: {
+          ...candidateAnime,
+          comparisonsCount: existingComparisonsCount
+        },
+        groups: groups,
+        low: 0,
+        high: m - 1,
+        mid: Math.floor((0 + (m - 1)) / 2),
+        stepCount: 1,
+        maxStepsEstimate: maxSteps,
+        decisions: []
+      };
+
+      openArenaModalAndRenderStep();
+    }
+
+    function openArenaModalAndRenderStep() {
+      if (!arenaSession) return;
+
+      const overlay = document.getElementById("arenaModalOverlay");
+      const activeBody = document.getElementById("arenaActiveBody");
+      const resultBody = document.getElementById("arenaResultBody");
+
+      overlay.classList.remove("hidden");
+      activeBody.classList.remove("hidden");
+      resultBody.classList.add("hidden");
+
+      arenaSession.mid = Math.floor((arenaSession.low + arenaSession.high) / 2);
+      const currentGroup = arenaSession.groups[arenaSession.mid];
+      // Representative anime from the current comparison rank slot
+      const defender = currentGroup[0];
+      const challenger = arenaSession.candidate;
+      const tier = arenaSession.baseTier;
+
+      // Update Header & Badges
+      document.getElementById("arenaTierBadge").textContent = `Tier ${tier}/10 Head-to-Head`;
+      document.getElementById("arenaStepCounter").textContent =
+        `Comparison ${arenaSession.stepCount} of ~${Math.max(arenaSession.stepCount, arenaSession.maxStepsEstimate)}`;
+
+      document.querySelectorAll(".arenaTierNumText").forEach(el => {
+        el.textContent = String(tier);
+      });
+
+      // Headline prompt matching user's exact scenario
+      const promptHeadline = document.getElementById("arenaPromptHeadline");
+      promptHeadline.innerHTML = `You also rated <span class="text-pink-300 underline decoration-pink-500/40">${escapeHtml(defender.title)}</span> in the <span class="text-indigo-300">${tier}/10</span> tier. Which anime did you like more?`;
+
+      // Left Card: Challenger (New Anime B)
+      const leftImg = document.getElementById("arenaLeftImg");
+      leftImg.src = challenger.image;
+      leftImg.onerror = () => { leftImg.src = getFallbackPosterUrl(challenger.title); };
+      document.getElementById("arenaLeftTitle").textContent = challenger.title;
+      document.getElementById("arenaLeftMeta").textContent =
+        `${challenger.type || "TV"} • ${challenger.year || "—"} • ★ ${challenger.mal_score || "N/A"} MAL`;
+      document.getElementById("arenaLeftSynopsis").textContent = challenger.synopsis || "";
+      document.getElementById("btnPickLeftLabel").textContent = `I Liked "${truncateText(challenger.title, 22)}" More`;
+
+      // Right Card: Defender (Existing Anime A in Tier N)
+      const rightImg = document.getElementById("arenaRightImg");
+      rightImg.src = defender.image;
+      rightImg.onerror = () => { rightImg.src = getFallbackPosterUrl(defender.title); };
+      document.getElementById("arenaRightTitle").textContent =
+        currentGroup.length > 1
+          ? `${defender.title} (+${currentGroup.length - 1} tied)`
+          : defender.title;
+      document.getElementById("arenaRightMeta").textContent =
+        `${defender.type || "TV"} • ${defender.year || "—"} • ★ ${defender.mal_score || "N/A"} MAL`;
+      document.getElementById("arenaRightSynopsis").textContent = defender.synopsis || "";
+      document.getElementById("arenaRightScoreBadge").textContent = `Currently ${formatScore(defender.finalScore)}/10`;
+      document.getElementById("btnPickRightLabel").textContent = `I Liked "${truncateText(defender.title, 22)}" More`;
+
+      // Render Mini Ladder Preview at bottom of Arena
+      renderArenaMiniLadder();
+    }
+
+    function renderArenaMiniLadder() {
+      const container = document.getElementById("arenaMiniLadder");
+      const boundsText = document.getElementById("arenaSearchBoundsText");
+      container.innerHTML = "";
+
+      if (!arenaSession) return;
+      boundsText.textContent = `Comparing against rank slot #${arenaSession.mid + 1} of ${arenaSession.groups.length}`;
+
+      // Show from highest slot down to lowest slot
+      for (let i = arenaSession.groups.length - 1; i >= 0; i--) {
+        const grp = arenaSession.groups[i];
+        const first = grp[0];
+        const isCurrentTarget = i === arenaSession.mid;
+        const inActiveRange = i >= arenaSession.low && i <= arenaSession.high;
+
+        const pill = document.createElement("div");
+        pill.className = `px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 border transition ${
+          isCurrentTarget
+            ? "bg-pink-500/20 border-pink-400 text-white font-semibold shadow"
+            : inActiveRange
+            ? "bg-slate-900 border-slate-700 text-slate-300"
+            : "bg-slate-950/50 border-slate-800/60 text-slate-500 opacity-60"
+        }`;
+        pill.innerHTML = `
+          <span class="font-mono text-[11px] text-amber-300">${formatScore(first.finalScore)}</span>
+          <span class="truncate max-w-[140px]">${escapeHtml(first.title)}</span>
+        `;
+        container.appendChild(pill);
+      }
+    }
+
+    /**
+     * Handle User's Choice in the Head-to-Head Arena:
+     * choice: 'CANDIDATE' (Liked New Anime B More) | 'DEFENDER' (Liked Existing Anime A More) | 'TIE'
+     */
+    function handleArenaDecision(choice) {
+      if (!arenaSession) return;
+
+      const currentGroup = arenaSession.groups[arenaSession.mid];
+      const defender = currentGroup[0];
+      const challenger = arenaSession.candidate;
+      const tier = arenaSession.baseTier;
+
+      // Increment comparison counters
+      challenger.comparisonsCount = (challenger.comparisonsCount || 0) + 1;
+      currentGroup.forEach(item => {
+        item.comparisonsCount = (item.comparisonsCount || 0) + 1;
+      });
+
+      // Log battle history entry
+      const battleRecord = {
+        id: Date.now() + Math.random(),
+        timestamp: Date.now(),
+        baseTier: tier,
+        challengerTitle: challenger.title,
+        challengerImage: challenger.image,
+        defenderTitle: defender.title,
+        defenderImage: defender.image,
+        outcome: choice // 'CANDIDATE' | 'DEFENDER' | 'TIE'
+      };
+      appState.battleHistory.unshift(battleRecord);
+      if (appState.battleHistory.length > 60) {
+        appState.battleHistory.pop();
+      }
+
+      if (choice === "TIE") {
+        // Insert candidate into the exact same rank slot as `arenaSession.mid`
+        finalizeArenaPlacement(arenaSession.mid, true);
+        return;
+      }
+
+      if (choice === "CANDIDATE") {
+        // User liked Challenger (Anime B) MORE than Defender (Anime A)
+        // Search upper half (higher rank slots)
+        arenaSession.low = arenaSession.mid + 1;
+      } else {
+        // User liked Defender (Anime A) MORE than Challenger (Anime B)
+        // Search lower half (lower rank slots)
+        arenaSession.high = arenaSession.mid - 1;
+      }
+
+      if (arenaSession.low > arenaSession.high) {
+        // Binary search converged! `arenaSession.low` is the insertion index (0 .. m)
+        finalizeArenaPlacement(arenaSession.low, false);
+      } else {
+        arenaSession.stepCount += 1;
+        openArenaModalAndRenderStep();
+      }
+    }
+
+    function finalizeArenaPlacement(insertSlotIndex, isTieWithSlot) {
+      const tier = arenaSession.baseTier;
+      const challenger = arenaSession.candidate;
+
+      const existingInTier = appState.items.filter(it => it.baseTier === tier);
+
+      if (isTieWithSlot) {
+        // Shares the exact rankSlot of `insertSlotIndex`
+        const newEntry = {
+          ...challenger,
+          baseTier: tier,
+          rankSlot: insertSlotIndex,
+          finalScore: Number(tier.toFixed(1)),
+          ratedAt: Date.now()
+        };
+        appState.items.push(newEntry);
+      } else {
+        // Shift all existing items in `tier` with rankSlot >= insertSlotIndex up by +1
+        existingInTier.forEach(it => {
+          if (it.rankSlot >= insertSlotIndex) {
+            it.rankSlot += 1;
+          }
+        });
+
+        const newEntry = {
+          ...challenger,
+          baseTier: tier,
+          rankSlot: insertSlotIndex,
+          finalScore: Number(tier.toFixed(1)),
+          ratedAt: Date.now()
+        };
+        appState.items.push(newEntry);
+      }
+
+      // Recalculate all decimal scores in this base tier (e.g. 4.0 and 4.5!)
+      recalculateScoresInTier(tier);
+      saveStateToStorage();
+      renderAllViews();
+
+      // Show Post-Comparison Calibration Summary inside the modal
+      renderArenaCalibrationResult(tier, challenger.mal_id);
+      arenaSession = null;
+    }
+
+    function renderArenaCalibrationResult(baseTier, highlightMalId) {
+      const activeBody = document.getElementById("arenaActiveBody");
+      const resultBody = document.getElementById("arenaResultBody");
+
+      activeBody.classList.add("hidden");
+      resultBody.classList.remove("hidden");
+
+      const tierDef = TIER_DEFINITIONS[baseTier];
+      document.getElementById("resultHeadline").textContent =
+        `Tier ${baseTier}/10 (${tierDef.label}) Calibrated!`;
+
+      const itemsInTier = appState.items
+        .filter(it => it.baseTier === baseTier)
+        .sort((a, b) => b.finalScore - a.finalScore || b.rankSlot - a.rankSlot);
+
+      const highlightedItem = itemsInTier.find(it => it.mal_id === highlightMalId);
+      document.getElementById("resultSubheadline").innerHTML = highlightedItem
+        ? `<strong>${escapeHtml(highlightedItem.title)}</strong> is now calibrated at <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">${formatScore(highlightedItem.finalScore)}/10</span>!`
+        : `Updated decimal rankings inside Base Tier ${baseTier}:`;
+
+      const listContainer = document.getElementById("resultTierLadderList");
+      listContainer.innerHTML = "";
+
+      itemsInTier.forEach((item, idx) => {
+        const isJustRated = item.mal_id === highlightMalId;
+        const row = document.createElement("div");
+        row.className = `p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition ${
+          isJustRated
+            ? "bg-indigo-950/60 border-indigo-400 shadow-lg shadow-indigo-500/10"
+            : "bg-slate-950/80 border-slate-800"
+        }`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center shrink-0">
+              #${idx + 1}
+            </span>
+            <img
+              src="${escapeHtml(item.image)}"
+              onerror="this.onerror=null;this.src='${getFallbackPosterUrl(item.title)}';"
+              alt=""
+              class="w-10 h-14 object-cover rounded-lg border border-slate-700 shrink-0"
+            />
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-white truncate">${escapeHtml(item.title)}</span>
+                ${isJustRated
+                  ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Calibrated</span>`
+                  : ""
+                }
+              </div>
+              <div class="text-xs text-slate-400">
+                Base Tier ${item.baseTier}/10 • Slot ${item.rankSlot + 1}
+              </div>
+            </div>
+          </div>
+
+          <div class="text-right shrink-0">
+            <div class="font-display font-bold text-lg ${isJustRated ? "text-emerald-300" : "text-amber-300"}">
+              ${formatScore(item.finalScore)}<span class="text-xs text-slate-400 font-normal">/10</span>
+            </div>
+          </div>
+        `;
+        listContainer.appendChild(row);
+      });
+    }
+
+    function cancelArenaModal() {
+      if (arenaSession && arenaSession.candidate) {
+        // If user cancels mid-comparison, place candidate at base score N.0 (slot 0) so their rating isn't lost
+        const tier = arenaSession.baseTier;
+        const candidate = arenaSession.candidate;
+        appState.items.push({
+          ...candidate,
+          baseTier: tier,
+          rankSlot: 0,
+          finalScore: Number(tier.toFixed(1)),
+          ratedAt: Date.now()
+        });
+        recalculateScoresInTier(tier);
+        saveStateToStorage();
+        renderAllViews();
+        showToast(`Placed "${candidate.title}" in Tier ${tier}`, "indigo");
+      }
+      arenaSession = null;
+      document.getElementById("arenaModalOverlay").classList.add("hidden");
+    }
+
+    /*************************************************************************
+     * 9. DASHBOARD STATS, 0–10 TIER MATRIX & MAIN COLLECTION VIEWS
+     *************************************************************************/
+    function renderAllViews() {
+      renderStatsAndMatrix();
+      renderQuickSuggestionChips();
+      renderMainCollectionArea();
+    }
+
+    function renderStatsAndMatrix() {
+      const totalAnimes = appState.items.length;
+      const totalBattles = appState.battleHistory.length;
+
+      document.getElementById("statTotalAnimes").textContent = String(totalAnimes);
+      document.getElementById("statTotalComparisons").textContent = String(totalBattles);
+      document.getElementById("badgeBattleCount").textContent = String(totalBattles);
+
+      if (totalAnimes > 0) {
+        const sum = appState.items.reduce((acc, it) => acc + it.finalScore, 0);
+        const avg = (sum / totalAnimes).toFixed(2);
+        document.getElementById("statAvgScore").textContent = `${avg}`;
+
+        const sorted = [...appState.items].sort((a, b) => b.finalScore - a.finalScore || b.rankSlot - a.rankSlot);
+        const top = sorted[0];
+        document.getElementById("statTopAnime").textContent = `${top.title} (${formatScore(top.finalScore)})`;
+      } else {
+        document.getElementById("statAvgScore").textContent = "—";
+        document.getElementById("statTopAnime").textContent = "—";
+      }
+
+      // Render 0-10 Tier Distribution Matrix
+      const matrixEl = document.getElementById("tierMatrixGrid");
+      matrixEl.innerHTML = "";
+
+      const countsByTier = Array(11).fill(0);
+      appState.items.forEach(it => {
+        if (it.baseTier >= 0 && it.baseTier <= 10) {
+          countsByTier[it.baseTier]++;
+        }
+      });
+      const maxCount = Math.max(1, ...countsByTier);
+
+      for (let t = 0; t <= 10; t++) {
+        const count = countsByTier[t];
+        const heightPct = count === 0 ? 10 : Math.max(22, Math.round((count / maxCount) * 100));
+        const isFiltered = appState.tierFilter === t;
+        const def = TIER_DEFINITIONS[t];
+
+        const colBtn = document.createElement("button");
+        colBtn.type = "button";
+        colBtn.className = `group h-full flex flex-col items-center justify-end gap-1 rounded-xl p-1 transition ${
+          isFiltered ? "bg-indigo-500/20 ring-1 ring-indigo-400" : "hover:bg-slate-800/70"
+        }`;
+        colBtn.title = `Base Tier ${t}/10 (${def.label}): ${count} anime(s)`;
+
+        colBtn.innerHTML = `
+          <span class="text-[10px] font-mono ${count > 0 ? "text-slate-200 font-bold" : "text-slate-600"}">
+            ${count}
+          </span>
+          <div class="w-full rounded-t-md transition-all ${count > 0 ? def.bar : "bg-slate-800"}" style="height: ${heightPct}%"></div>
+          <span class="text-[11px] font-display font-bold ${isFiltered ? "text-indigo-300" : "text-slate-400 group-hover:text-white"}">
+            ${t}
+          </span>
+        `;
+
+        colBtn.addEventListener("click", () => {
+          appState.tierFilter = appState.tierFilter === t ? null : t;
+          updateTierFilterButtonUI();
+          renderStatsAndMatrix();
+          renderMainCollectionArea();
+        });
+
+        matrixEl.appendChild(colBtn);
+      }
+
+      updateTierFilterButtonUI();
+    }
+
+    function updateTierFilterButtonUI() {
+      const btn = document.getElementById("btnClearTierFilter");
+      const numSpan = document.getElementById("activeTierFilterNum");
+      if (appState.tierFilter !== null) {
+        btn.classList.remove("hidden");
+        numSpan.textContent = `${appState.tierFilter}/10`;
+      } else {
+        btn.classList.add("hidden");
+      }
+    }
+
+    function getFilteredSortedItems() {
+      const q = (appState.searchQuery || "").toLowerCase().trim();
+      return appState.items
+        .filter(it => {
+          if (appState.tierFilter !== null && it.baseTier !== appState.tierFilter) return false;
+          if (q && !it.title.toLowerCase().includes(q) && !(it.title_japanese && it.title_japanese.toLowerCase().includes(q))) {
+            return false;
+          }
+          return true;
+        })
+        .sort((a, b) => {
+          if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
+          if (b.baseTier !== a.baseTier) return b.baseTier - a.baseTier;
+          return b.rankSlot - a.rankSlot;
+        });
+    }
+
+    function renderMainCollectionArea() {
+      const container = document.getElementById("collectionViewContainer");
+      container.innerHTML = "";
+
+      if (appState.activeTab === "history") {
+        renderBattleHistoryTab(container);
+        return;
+      }
+
+      const filteredItems = getFilteredSortedItems();
+
+      if (filteredItems.length === 0) {
+        container.innerHTML = `
+          <div class="rounded-3xl bg-slate-900/50 border border-slate-800/80 p-12 text-center space-y-4">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto text-2xl">
+              <i class="fa-solid fa-Layer-group"></i>
+            </div>
+            <div class="space-y-1 max-w-md mx-auto">
+              <h3 class="font-display font-bold text-lg text-white">
+                ${appState.tierFilter !== null ? `No Animes Rated in Base Tier ${appState.tierFilter}/10 Yet` : "Your Anime Ranking List is Empty"}
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-400">
+                Search for any anime in the bar above, click a quick-pick chip, or test the <strong>4/10 vs 4/10 Scenario</strong> in one click!
+              </p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onclick="trigger410ScenarioDemo()"
+                class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 transition"
+              >
+                <i class="fa-solid fa-bolt mr-1"></i> Launch 4/10 vs 4/10 Demo
+              </button>
+              <button
+                type="button"
+                onclick="seedDefaultStarterData(true)"
+                class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition"
+              >
+                Load Sample Collection
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (appState.activeTab === "leaderboard") {
+        renderLeaderboardView(container, filteredItems);
+      } else {
+        renderTierBucketsView(container, filteredItems);
+      }
+    }
+
+    /**
+     * VIEW 1: OVERALL LEADERBOARD VIEW
+     */
+    function renderLeaderboardView(container, items) {
+      const listWrapper = document.createElement("div");
+      listWrapper.className = "space-y-3";
+
+      items.forEach((item, index) => {
+        const def = TIER_DEFINITIONS[item.baseTier];
+        const peersInSameTier = appState.items.filter(it => it.baseTier === item.baseTier);
+
+        const rankBadgeStyle =
+          index === 0
+            ? "bg-gradient-to-br from-amber-400 to-yellow-600 text-slate-950 font-extrabold shadow-lg shadow-amber-500/20"
+            : index === 1
+            ? "bg-gradient-to-br from-slate-300 to-slate-400 text-slate-950 font-extrabold"
+            : index === 2
+            ? "bg-gradient-to-br from-amber-600 to-orange-700 text-white font-extrabold"
+            : "bg-slate-800/90 text-slate-300 font-bold border border-slate-700";
+
+        const card = document.createElement("div");
+        card.className = "group rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-slate-700 p-3.5 sm:p-4 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3.5 min-w-0 w-full sm:w-auto">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${rankBadgeStyle} flex items-center justify-center font-display text-sm shrink-0">
+              #${index + 1}
+            </div>
+
+            <img
+              src="${escapeHtml(item.image)}"
+              onerror="this.onerror=null;this.src='${getFallbackPosterUrl(item.title)}';"
+              alt="${escapeHtml(item.title)}"
+              class="w-14 h-20 object-cover rounded-xl border border-slate-700 shrink-0 bg-slate-800"
+            />
+
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h4 class="font-display font-bold text-base sm:text-lg text-white truncate">
+                  ${escapeHtml(item.title)}
+                </h4>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border ${def.badge}">
+                  Base Tier ${item.baseTier}/10 • ${escapeHtml(def.label)}
+                </span>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                <span>${escapeHtml(String(item.type || "TV"))} (${escapeHtml(String(item.year || "—"))})</span>
+                <span>• ★ ${escapeHtml(String(item.mal_score || "N/A"))} MAL</span>
+                <span>• <strong class="text-slate-300">${peersInSameTier.length}</strong> in Tier ${item.baseTier}</span>
+                ${item.comparisonsCount > 0
+                  ? `<span class="text-pink-300"><i class="fa-solid fa-scale-balanced mr-1"></i>${item.comparisonsCount} H2H battle${item.comparisonsCount === 1 ? "" : "s"}</span>`
+                  : `<span class="text-slate-500">Solo in tier</span>`
+                }
+              </div>
+
+              <div class="flex flex-wrap gap-1 pt-0.5">
+                ${(item.genres || []).slice(0, 3).map(g => `<span class="text-[10px] px-2 py-0.2 rounded bg-slate-800/90 text-slate-400">${escapeHtml(g)}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Score Display & Quick Actions -->
+          <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 border-slate-800/80 pt-2.5 sm:pt-0">
+            <div class="flex items-center gap-1.5">
+              ${peersInSameTier.length > 1
+                ? `<button
+                     type="button"
+                     data-action="recompare"
+                     data-id="${item.mal_id}"
+                     class="px-2.5 py-1.5 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 border border-pink-500/30 text-xs font-medium transition flex items-center gap-1"
+                     title="Re-run Head-to-Head comparison inside Tier ${item.baseTier}"
+                   >
+                     <i class="fa-solid fa-swords"></i>
+                     <span class="hidden md:inline">Re-Compare</span>
+                   </button>`
+                : ""
+              }
+              <button
+                type="button"
+                data-action="edit-tier"
+                data-id="${item.mal_id}"
+                class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition"
+                title="Change 0–10 Base Score"
+              >
+                <i class="fa-solid fa-sliders mr-1"></i>Change Tier
+              </button>
+              <button
+                type="button"
+                data-action="delete"
+                data-id="${item.mal_id}"
+                class="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-rose-950 text-slate-400 hover:text-rose-300 transition flex items-center justify-center"
+                title="Remove from list"
+              >
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
+
+            <!-- Calibrated Decimal Score Pill -->
+            <div class="px-3.5 py-2 rounded-2xl bg-slate-950 border border-slate-800 text-right min-w-[92px]">
+              <div class="font-display font-bold text-xl sm:text-2xl text-emerald-400 leading-none">
+                ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">
+                ${peersInSameTier.length > 1 ? `Calibrated` : `Base ${item.baseTier}.0`}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Bind card action buttons
+        bindItemActionButtons(card, item);
+        listWrapper.appendChild(card);
+      });
+
+      container.appendChild(listWrapper);
+    }
+
+    /**
+     * VIEW 2: TIER BUCKETS VIEW (GROUPED BY BASE TIERS 10 DOWN TO 0)
+     */
+    function renderTierBucketsView(container, filteredItems) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "space-y-6";
+
+      for (let t = 10; t >= 0; t--) {
+        const tierItems = filteredItems
+          .filter(it => it.baseTier === t)
+          .sort((a, b) => b.finalScore - a.finalScore || b.rankSlot - a.rankSlot);
+
+        if (tierItems.length === 0) continue;
+
+        const def = TIER_DEFINITIONS[t];
+        const bucket = document.createElement("div");
+        bucket.className = "rounded-3xl bg-slate-900/75 border border-slate-800/90 overflow-hidden shadow-lg";
+
+        bucket.innerHTML = `
+          <div class="px-5 py-3.5 bg-gradient-to-r ${def.color} bg-opacity-30 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1 rounded-xl bg-slate-950/80 text-white font-display font-bold text-base border border-white/10">
+                Tier ${t}/10
+              </span>
+              <div>
+                <h4 class="font-display font-bold text-white text-base">${escapeHtml(def.label)}</h4>
+                <p class="text-xs text-slate-200/80">${escapeHtml(def.desc)} • Range ${t}.0 – ${t === 10 ? "10.0" : t + ".9"}</p>
+              </div>
+            </div>
+            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-950/60 text-slate-200 border border-white/10">
+              ${tierItems.length} anime${tierItems.length === 1 ? "" : "s"} in tier
+            </span>
+          </div>
+
+          <div class="p-4 divide-y divide-slate-800/70" id="bucketListTier_${t}"></div>
+        `;
+
+        const listEl = bucket.querySelector(`#bucketListTier_${t}`);
+
+        tierItems.forEach((item, idx) => {
+          const row = document.createElement("div");
+          row.className = "py-3 first:pt-1 last:pb-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3";
+
+          row.innerHTML = `
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center shrink-0" title="Internal rank #${idx + 1} inside Tier ${t}">
+                #${idx + 1}
+              </span>
+              <img
+                src="${escapeHtml(item.image)}"
+                onerror="this.onerror=null;this.src='${getFallbackPosterUrl(item.title)}';"
+                alt=""
+                class="w-11 h-16 object-cover rounded-lg border border-slate-700 shrink-0"
+              />
+              <div class="min-w-0">
+                <div class="font-bold text-sm sm:text-base text-white truncate">${escapeHtml(item.title)}</div>
+                <div class="text-xs text-slate-400">
+                  Slot ${item.rankSlot + 1} in Tier ${t} • ${item.comparisonsCount || 0} comparisons
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <!-- Manual Nudge Up / Down within Tier -->
+              ${tierItems.length > 1
+                ? `<div class="inline-flex rounded-xl bg-slate-950 border border-slate-800 p-0.5">
+                     <button
+                       type="button"
+                       data-action="nudge-up"
+                       data-id="${item.mal_id}"
+                       ${idx === 0 ? "disabled" : ""}
+                       class="px-2 py-1 rounded-lg text-xs text-slate-300 hover:bg-slate-800 disabled:opacity-30 transition"
+                       title="Move higher within Tier ${t}"
+                     >
+                       <i class="fa-solid fa-arrow-up"></i>
+                     </button>
+                     <button
+                       type="button"
+                       data-action="nudge-down"
+                       data-id="${item.mal_id}"
+                       ${idx === tierItems.length - 1 ? "disabled" : ""}
+                       class="px-2 py-1 rounded-lg text-xs text-slate-300 hover:bg-slate-800 disabled:opacity-30 transition"
+                       title="Move lower within Tier ${t}"
+                     >
+                       <i class="fa-solid fa-arrow-down"></i>
+                     </button>
+                   </div>
+                   <button
+                     type="button"
+                     data-action="recompare"
+                     data-id="${item.mal_id}"
+                     class="px-2.5 py-1.5 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 border border-pink-500/30 text-xs font-medium transition"
+                   >
+                     Re-Compare
+                   </button>`
+                : ""
+              }
+
+              <button
+                type="button"
+                data-action="edit-tier"
+                data-id="${item.mal_id}"
+                class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition"
+              >
+                Tier
+              </button>
+
+              <div class="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 font-display font-bold text-lg text-emerald-400 min-w-[78px] text-center">
+                ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
+              </div>
+            </div>
+          `;
+
+          bindItemActionButtons(row, item);
+          listEl.appendChild(row);
+        });
+
+        wrapper.appendChild(bucket);
+      }
+
+      container.appendChild(wrapper);
+    }
+
+    /**
+     * VIEW 3: HEAD-TO-HEAD BATTLE LOG HISTORY
+     */
+    function renderBattleHistoryTab(container) {
+      if (appState.battleHistory.length === 0) {
+        container.innerHTML = `
+          <div class="rounded-3xl bg-slate-900/50 border border-slate-800/80 p-12 text-center space-y-3">
+            <i class="fa-solid fa-clock-rotate-left text-3xl text-slate-500"></i>
+            <h3 class="font-display font-bold text-lg text-white">No Head-to-Head Battles Recorded Yet</h3>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+              Whenever you rate two or more animes with the same base integer score (e.g., two 4/10s or two 8/10s), your comparison decisions will appear here.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const list = document.createElement("div");
+      list.className = "space-y-2.5";
+
+      appState.battleHistory.forEach(entry => {
+        const winnerTitle =
+          entry.outcome === "CANDIDATE"
+            ? entry.challengerTitle
+            : entry.outcome === "DEFENDER"
+            ? entry.defenderTitle
+            : "Tied";
+
+        const row = document.createElement("div");
+        row.className = "rounded-2xl bg-slate-900/75 border border-slate-800 p-3.5 flex flex-wrap items-center justify-between gap-3";
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              Tier ${entry.baseTier}/10
+            </span>
+            <div class="text-xs sm:text-sm text-slate-200">
+              <strong class="${entry.outcome === "CANDIDATE" ? "text-emerald-300" : "text-white"}">${escapeHtml(entry.challengerTitle)}</strong>
+              <span class="text-slate-500 mx-1.5">vs</span>
+              <strong class="${entry.outcome === "DEFENDER" ? "text-emerald-300" : "text-white"}">${escapeHtml(entry.defenderTitle)}</strong>
+            </div>
+          </div>
+          <div class="text-xs text-slate-400">
+            ${entry.outcome === "TIE"
+              ? `<span class="text-amber-300 font-semibold">Marked Equal</span>`
+              : `Winner: <strong class="text-emerald-300">${escapeHtml(winnerTitle)}</strong>`
+            }
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      container.appendChild(list);
+    }
+
+    function bindItemActionButtons(containerEl, item) {
+      const btnRecompare = containerEl.querySelector('[data-action="recompare"]');
+      if (btnRecompare) {
+        btnRecompare.addEventListener("click", () => {
+          processAnimeTierAssignment(item, item.baseTier);
+        });
+      }
+
+      const btnEditTier = containerEl.querySelector('[data-action="edit-tier"]');
+      if (btnEditTier) {
+        btnEditTier.addEventListener("click", () => {
+          openBaseRatingModal(item, item.baseTier);
+        });
+      }
+
+      const btnDelete = containerEl.querySelector('[data-action="delete"]');
+      if (btnDelete) {
+        btnDelete.addEventListener("click", () => {
+          const tier = item.baseTier;
+          appState.items = appState.items.filter(it => it.mal_id !== item.mal_id);
+          recalculateScoresInTier(tier);
+          saveStateToStorage();
+          renderAllViews();
+          showToast(`Removed "${item.title}" and recalibrated Tier ${tier}`, "rose");
+        });
+      }
+
+      const btnNudgeUp = containerEl.querySelector('[data-action="nudge-up"]');
+      if (btnNudgeUp) {
+        btnNudgeUp.addEventListener("click", () => nudgeItemInTier(item.mal_id, +1));
+      }
+
+      const btnNudgeDown = containerEl.querySelector('[data-action="nudge-down"]');
+      if (btnNudgeDown) {
+        btnNudgeDown.addEventListener("click", () => nudgeItemInTier(item.mal_id, -1));
+      }
+    }
+
+    function nudgeItemInTier(malId, direction) {
+      const target = appState.items.find(it => it.mal_id === malId);
+      if (!target) return;
+      const tier = target.baseTier;
+      const tierItems = appState.items
+        .filter(it => it.baseTier === tier)
+        .sort((a, b) => a.rankSlot - b.rankSlot);
+
+      // Re-index strictly 0..k-1 first so swap is unambiguous
+      tierItems.forEach((it, idx) => { it.rankSlot = idx; });
+      const currentIdx = tierItems.findIndex(it => it.mal_id === malId);
+      const swapIdx = currentIdx + direction;
+      if (swapIdx < 0 || swapIdx >= tierItems.length) return;
+
+      const temp = tierItems[currentIdx].rankSlot;
+      tierItems[currentIdx].rankSlot = tierItems[swapIdx].rankSlot;
+      tierItems[swapIdx].rankSlot = temp;
+
+      recalculateScoresInTier(tier);
+      saveStateToStorage();
+      renderAllViews();
+      showToast(`Updated Tier ${tier} order (${target.title} → ${formatScore(target.finalScore)}/10)`, "indigo");
+    }
+
+    /*************************************************************************
+     * 10. ONE-CLICK "4/10 vs 4/10" SCENARIO DEMO & SAMPLE COLLECTION SEEDER
+     *************************************************************************/
+    function trigger410ScenarioDemo() {
+      // Ensure Anime A ("Sword Art Online") is in Base Tier 4 at 4.0/10,
+      // and immediately launch the Head-to-Head Comparison Arena for Anime B ("Tokyo Ghoul") rated 4/10!
+      const animeA = FALLBACK_ANIME_DB.find(a => a.mal_id === 11757) || FALLBACK_ANIME_DB[16]; // Sword Art Online
+      const animeB = FALLBACK_ANIME_DB.find(a => a.mal_id === 22319) || FALLBACK_ANIME_DB[17]; // Tokyo Ghoul
+
+      // Remove any existing Tier 4 items so the exact 2-item 4.0 -> 4.5 example is crystal clear
+      appState.items = appState.items.filter(it => it.baseTier !== 4 && it.mal_id !== animeA.mal_id && it.mal_id !== animeB.mal_id);
+
+      // Insert Anime A at 4.0/10
+      appState.items.push({
+        ...animeA,
+        baseTier: 4,
+        rankSlot: 0,
+        finalScore: 4.0,
+        comparisonsCount: 0,
+        ratedAt: Date.now() - 5000
+      });
+
+      recalculateScoresInTier(4);
+      saveStateToStorage();
+      renderAllViews();
+
+      showToast(`Demo Step 1: "${animeA.title}" rated 4.0/10. Now rating "${animeB.title}" a 4/10...`, "amber");
+
+      // Launch Head-to-Head comparison for Anime B in Tier 4
+      processAnimeTierAssignment(animeB, 4);
+    }
+
+    function seedDefaultStarterData(notify = true) {
+      const findById = (id) => FALLBACK_ANIME_DB.find(a => a.mal_id === id);
+
+      const fma = findById(5114);       // FMAB -> Tier 9
+      const steins = findById(9253);    // Steins;Gate -> Tier 9
+      const aot = findById(16498);      // Attack on Titan -> Tier 9
+      const jjk = findById(40748);      // Jujutsu Kaisen -> Tier 8
+      const demon = findById(38000);    // Demon Slayer -> Tier 8
+      const sao = findById(11757);      // Sword Art Online -> Tier 4 (4.0/10 ready for user to test rating another 4/10!)
+
+      appState.items = [
+        { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 9.7, comparisonsCount: 2, ratedAt: Date.now() - 60000 },
+        { ...steins, baseTier: 9, rankSlot: 1, finalScore: 9.3, comparisonsCount: 2, ratedAt: Date.now() - 50000 },
+        { ...aot,    baseTier: 9, rankSlot: 0, finalScore: 9.0, comparisonsCount: 1, ratedAt: Date.now() - 40000 },
+        { ...jjk,    baseTier: 8, rankSlot: 1, finalScore: 8.5, comparisonsCount: 1, ratedAt: Date.now() - 30000 },
+        { ...demon,  baseTier: 8, rankSlot: 0, finalScore: 8.0, comparisonsCount: 1, ratedAt: Date.now() - 20000 },
+        { ...sao,    baseTier: 4, rankSlot: 0, finalScore: 4.0, comparisonsCount: 0, ratedAt: Date.now() - 10000 }
+      ];
+
+      appState.battleHistory = [
+        {
+          id: 1,
+          timestamp: Date.now() - 25000,
+          baseTier: 8,
+          challengerTitle: jjk.title,
+          challengerImage: jjk.image,
+          defenderTitle: demon.title,
+          defenderImage: demon.image,
+          outcome: "CANDIDATE"
+        },
+        {
+          id: 2,
+          timestamp: Date.now() - 45000,
+          baseTier: 9,
+          challengerTitle: fma.title,
+          challengerImage: fma.image,
+          defenderTitle: steins.title,
+          defenderImage: steins.image,
+          outcome: "CANDIDATE"
+        }
+      ];
+
+      for (let t = 0; t <= 10; t++) {
+        recalculateScoresInTier(t);
+      }
+      saveStateToStorage();
+      renderAllViews();
+
+      if (notify) {
+        showToast("Loaded sample collection! Try rating another anime 4/10 or 8/10 to see H2H battles.", "indigo");
+      }
+    }
+
+    /*************************************************************************
+     * 11. UTILITIES: TOASTS, CUSTOM CONFIRM MODAL, EXPORT & KEYBOARD SHORTCUTS
+     *************************************************************************/
+    function showToast(message, color = "indigo") {
+      const container = document.getElementById("toastContainer");
+      const colorMap = {
+        indigo: "bg-indigo-950/95 border-indigo-500/50 text-indigo-200",
+        emerald: "bg-emerald-950/95 border-emerald-500/50 text-emerald-200",
+        amber: "bg-amber-950/95 border-amber-500/50 text-amber-200",
+        rose: "bg-rose-950/95 border-rose-500/50 text-rose-200"
+      };
+
+      const toast = document.createElement("div");
+      toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-xl backdrop-blur-md text-xs font-medium flex items-center justify-between gap-3 animate-pop ${colorMap[color] || colorMap.indigo}`;
+      toast.innerHTML = `
+        <span>${escapeHtml(message)}</span>
+        <button type="button" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      `;
+      toast.querySelector("button").addEventListener("click", () => toast.remove());
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 4200);
+    }
+
+    let confirmCallback = null;
+    function openConfirmModal(title, message, onConfirm) {
+      document.getElementById("confirmModalTitle").textContent = title;
+      document.getElementById("confirmModalMessage").textContent = message;
+      confirmCallback = onConfirm;
+      document.getElementById("confirmModalOverlay").classList.remove("hidden");
+    }
+
+    function closeConfirmModal() {
+      document.getElementById("confirmModalOverlay").classList.add("hidden");
+      confirmCallback = null;
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function truncateText(str, maxLen) {
+      if (!str) return "";
+      return str.length > maxLen ? str.slice(0, maxLen - 1) + "…" : str;
+    }
+
+    /*************************************************************************
+     * 12. EVENT LISTENERS & INITIALIZATION
+     *************************************************************************/
+    window.onload = function () {
+      loadStateFromStorage();
+      initSearchEvents();
+      renderAllViews();
+
+      // Shuffle quick suggestions
+      document.getElementById("btnShuffleSuggestions").addEventListener("click", () => {
+        suggestionOffset = (suggestionOffset + 5) % FALLBACK_ANIME_DB.length;
+        renderQuickSuggestionChips();
+      });
+
+      // Header Demo & Utility Buttons
+      document.getElementById("btnRun410Demo").addEventListener("click", trigger410ScenarioDemo);
+      document.getElementById("btnLoadStarter").addEventListener("click", () => seedDefaultStarterData(true));
+
+      document.getElementById("btnExportJson").addEventListener("click", () => {
+        const dataStr = JSON.stringify(appState.items, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "anirank-ratings.json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast("Exported your calibrated anime rankings as JSON!", "emerald");
+      });
+
+      document.getElementById("btnClearAll").addEventListener("click", () => {
+        openConfirmModal(
+          "Reset All Ratings?",
+          "This will clear all rated animes and head-to-head comparison history.",
+          () => {
+            appState.items = [];
+            appState.battleHistory = [];
+            appState.tierFilter = null;
+            saveStateToStorage();
+            renderAllViews();
+            showToast("Cleared all anime ratings.", "rose");
+          }
+        );
+      });
+
+      // Confirm Modal buttons
+      document.getElementById("btnConfirmCancel").addEventListener("click", closeConfirmModal);
+      document.getElementById("btnConfirmProceed").addEventListener("click", () => {
+        if (typeof confirmCallback === "function") confirmCallback();
+        closeConfirmModal();
+      });
+
+      // Clear Tier Filter button
+      document.getElementById("btnClearTierFilter").addEventListener("click", () => {
+        appState.tierFilter = null;
+        renderStatsAndMatrix();
+        renderMainCollectionArea();
+      });
+
+      // View Tabs
+      const tabLeaderboard = document.getElementById("tabLeaderboard");
+      const tabTierBuckets = document.getElementById("tabTierBuckets");
+      const tabHistory = document.getElementById("tabHistory");
+
+      function setActiveTab(tabName) {
+        appState.activeTab = tabName;
+        const activeClass = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow";
+        const inactiveClass = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+
+        tabLeaderboard.className = tabName === "leaderboard" ? activeClass : inactiveClass;
+        tabTierBuckets.className = tabName === "tiers" ? activeClass : inactiveClass;
+        tabHistory.className = tabName === "history" ? activeClass : inactiveClass;
+
+        renderMainCollectionArea();
+      }
+
+      tabLeaderboard.addEventListener("click", () => setActiveTab("leaderboard"));
+      tabTierBuckets.addEventListener("click", () => setActiveTab("tiers"));
+      tabHistory.addEventListener("click", () => setActiveTab("history"));
+
+      // Filter within user's rated collection
+      document.getElementById("collectionFilterInput").addEventListener("input", (e) => {
+        appState.searchQuery = e.target.value;
+        renderMainCollectionArea();
+      });
+
+      // Rating Modal Events
+      document.getElementById("btnCloseRatingModal").addEventListener("click", closeBaseRatingModal);
+      document.getElementById("btnConfirmBaseScore").addEventListener("click", handleConfirmBaseScore);
+      ratingModalOverlayEl.addEventListener("click", (e) => {
+        if (e.target === ratingModalOverlayEl) closeBaseRatingModal();
+      });
+
+      // Head-to-Head Arena Modal Events
+      document.getElementById("cardCandidateLeft").addEventListener("click", () => handleArenaDecision("CANDIDATE"));
+      document.getElementById("cardDefenderRight").addEventListener("click", () => handleArenaDecision("DEFENDER"));
+      document.getElementById("btnPickTie").addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleArenaDecision("TIE");
+      });
+      document.getElementById("btnCancelArena").addEventListener("click", cancelArenaModal);
+      document.getElementById("btnCloseResultModal").addEventListener("click", () => {
+        document.getElementById("arenaModalOverlay").classList.add("hidden");
+      });
+
+      // Keyboard shortcuts for Head-to-Head Arena (1 / ArrowLeft, 2 / ArrowRight, = for Tie, Esc to close)
+      document.addEventListener("keydown", (e) => {
+        const arenaOpen = !document.getElementById("arenaModalOverlay").classList.contains("hidden");
+        const activeArenaVisible = !document.getElementById("arenaActiveBody").classList.contains("hidden");
+
+        if (arenaOpen && activeArenaVisible && arenaSession) {
+          if (e.key === "1" || e.key === "ArrowLeft") {
+            e.preventDefault();
+            handleArenaDecision("CANDIDATE");
+          } else if (e.key === "2" || e.key === "ArrowRight") {
+            e.preventDefault();
+            handleArenaDecision("DEFENDER");
+          } else if (e.key === "=" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+            handleArenaDecision("TIE");
+          }
+        } else if (e.key === "Escape") {
+          if (!ratingModalOverlayEl.classList.contains("hidden")) {
+            closeBaseRatingModal();
+          } else if (arenaOpen && !activeArenaVisible) {
+            document.getElementById("arenaModalOverlay").classList.add("hidden");
+          }
+        }
+      });
+    };
+  </script>
+</body>
+</html>
