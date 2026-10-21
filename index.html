@@ -1353,13 +1353,57 @@
       return String(username || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
     }
 
+    function getOrCreateDeviceUid() {
+      try {
+        let uid = localStorage.getItem("aar_device_uid");
+        if (!uid) {
+          uid = "user_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+          localStorage.setItem("aar_device_uid", uid);
+        }
+        return uid;
+      } catch (e) {
+        return "guest_default_session";
+      }
+    }
+
+    function saveLocalBackup() {
+      try {
+        localStorage.setItem("aar_local_backup", JSON.stringify({
+          items: appState.items,
+          battleHistory: appState.battleHistory,
+          accountUsername: appState.accountUsername,
+          accountPasswordHash: appState.accountPasswordHash
+        }));
+      } catch (e) {}
+    }
+
+    function loadLocalBackup() {
+      try {
+        const raw = localStorage.getItem("aar_local_backup");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {
+          appState.items = parsed.items;
+          appState.battleHistory = Array.isArray(parsed.battleHistory) ? parsed.battleHistory : [];
+          if (parsed.accountUsername) appState.accountUsername = parsed.accountUsername;
+          if (parsed.accountPasswordHash) appState.accountPasswordHash = parsed.accountPasswordHash;
+          for (let t = 0; t <= 10; t++) {
+            recalculateScoresInTier(t);
+          }
+          renderAllViews();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
     function getPrivateSessionDocRef() {
       if (!db || !currentUser) return null;
       return doc(db, "artifacts", appId, "users", currentUser.uid, "rankings", "main_list");
     }
 
     function getNamedAccountDocRef(normalizedUser) {
-      if (!db || !currentUser || !normalizedUser) return null;
+      if (!db || !normalizedUser) return null;
       return doc(db, "artifacts", appId, "public", "data", "user_accounts", normalizedUser);
     }
 
@@ -1431,24 +1475,34 @@
           if (supported) analytics = getAnalytics(app);
         }).catch(() => {});
 
-        // Authenticate FIRST before any Firestore operation
-        if (typeof __initial_auth_token !== "undefined" && __initial_auth_token && !CUSTOM_FIREBASE_CONFIG) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+        // Try Firebase Auth; if Anonymous Auth isn't enabled in Firebase Console yet,
+        // gracefully fall back to a persistent device ID so Firestore still works!
+        try {
+          if (typeof __initial_auth_token !== "undefined" && __initial_auth_token && !CUSTOM_FIREBASE_CONFIG) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+          currentUser = auth.currentUser;
+        } catch (authErr) {
+          console.warn("Firebase Anonymous Auth not enabled in console yet; using device ID for Firestore:", authErr);
+          currentUser = { uid: getOrCreateDeviceUid() };
         }
 
-        currentUser = auth.currentUser;
         onAuthStateChanged(auth, (user) => {
-          currentUser = user;
-          updateAuthHeaderUI();
+          if (user) {
+            currentUser = user;
+            updateAuthHeaderUI();
+          }
         });
 
         updateAuthHeaderUI();
         await subscribeToPrivateSessionData();
       } catch (err) {
         console.warn("Cloud storage initialization fallback:", err);
-        seedDefaultStarterData(false);
+        if (!loadLocalBackup()) {
+          seedDefaultStarterData(false);
+        }
         updateAuthHeaderUI();
       }
     }
@@ -1475,7 +1529,9 @@
           }
           applyLoadedListState(data.items, data.battleHistory);
         } else {
-          seedDefaultStarterData(false);
+          if (!loadLocalBackup()) {
+            seedDefaultStarterData(false);
+          }
           await saveStateToStorage();
         }
 
@@ -1494,7 +1550,9 @@
         );
       } catch (err) {
         console.warn("Error fetching initial private session:", err);
-        seedDefaultStarterData(false);
+        if (!loadLocalBackup()) {
+          seedDefaultStarterData(false);
+        }
       }
     }
 
@@ -1510,6 +1568,7 @@
           for (let t = 0; t <= 10; t++) {
             recalculateScoresInTier(t);
           }
+          saveLocalBackup();
           renderAllViews();
         }
       } catch (e) {
@@ -1520,13 +1579,17 @@
     }
 
     async function saveStateToStorage() {
-      if (!db || !currentUser) return;
+      // Always save a local backup in the browser immediately
+      saveLocalBackup();
+
+      if (!db) return;
+      const effectiveUid = currentUser ? currentUser.uid : getOrCreateDeviceUid();
 
       const payload = {
         items: JSON.stringify(appState.items),
         battleHistory: JSON.stringify(appState.battleHistory),
         updatedAt: Date.now(),
-        ownerUid: currentUser.uid
+        ownerUid: effectiveUid
       };
 
       try {
@@ -1557,7 +1620,7 @@
     }
 
     async function connectNamedAccount(rawUsername, passwordHash, showNotifications = true) {
-      if (!db || !currentUser) return false;
+      if (!db) return false;
       const cleanUser = normalizeUsername(rawUsername);
       if (!cleanUser) return false;
 
@@ -1573,6 +1636,7 @@
       appState.accountUsername = cleanUser;
       appState.accountPasswordHash = passwordHash;
       applyLoadedListState(data.items, data.battleHistory);
+      saveLocalBackup();
       updateAuthHeaderUI();
 
       if (activeSnapshotUnsubscribe) {
@@ -1629,8 +1693,8 @@
         errorBox.classList.remove("hidden");
         return;
       }
-      if (!db || !currentUser) {
-        errorBox.textContent = "Cloud database is not connected in this environment yet. Use Export/Import JSON or add a Firebase config.";
+      if (!db) {
+        errorBox.textContent = "Cloud database is not initialized.";
         errorBox.classList.remove("hidden");
         return;
       }
@@ -1675,7 +1739,13 @@
           document.getElementById("authModalOverlay").classList.add("hidden");
         }
       } catch (err) {
-        errorBox.textContent = "Could not complete cloud request. Please try again.";
+        console.error("Cloud auth error:", err);
+        const code = err && err.code ? String(err.code) : "";
+        if (code.includes("permission-denied")) {
+          errorBox.innerHTML = `<strong>Firestore Rules Blocked Save:</strong> Go to your Firebase Console &rarr; <strong>Firestore Database</strong> &rarr; <strong>Rules</strong> tab, set <code>allow read, write: if true;</code> and click Publish.`;
+        } else {
+          errorBox.innerHTML = `<strong>Firestore Database Not Created Yet:</strong> Go to your Firebase Console &rarr; <strong>Build &rarr; Firestore Database</strong> &rarr; click <strong>Create database</strong> (choose <strong>Start in test mode</strong>).`;
+        }
         errorBox.classList.remove("hidden");
       } finally {
         submitBtn.disabled = false;
@@ -1685,15 +1755,20 @@
     async function handleSignOutAccount() {
       appState.accountUsername = null;
       appState.accountPasswordHash = null;
+      saveLocalBackup();
 
       if (db && currentUser) {
         const privateRef = getPrivateSessionDocRef();
         if (privateRef) {
-          await setDoc(privateRef, {
-            linkedUsername: null,
-            linkedPasswordHash: null,
-            updatedAt: Date.now()
-          }, { merge: true });
+          try {
+            await setDoc(privateRef, {
+              linkedUsername: null,
+              linkedPasswordHash: null,
+              updatedAt: Date.now()
+            }, { merge: true });
+          } catch (e) {
+            console.warn("Could not unlink account on sign out:", e);
+          }
         }
       }
 
@@ -1703,15 +1778,8 @@
 
     /*************************************************************************
      * 4. CORE DECIMAL CALIBRATION ENGINE WITHIN A BASE TIER (0–10)
-     *
-     * Rules:
-     * - Every anime in Base Tier N has a `rankSlot` from 0 (lowest in Tier N)
-     *   to m - 1 (highest in Tier N), where m is the number of distinct rank slots.
-     * - If m === 1:
-     *     rankSlot 0 -> N.0 (e.g. 4.0/10)
-     * - If m === 2:
-     *     rankSlot 0 -> N.0 (e.g. 4.0/10)
-     *     rankSlot 1 -> N.5 (e.g. 4.5/10)  <-- Exact match to prompt specification!
+     * - If 1 item in Tier N: score is N.0 (e.g. 4.0)
+     * - If 2 items in Tier N: lower is N.0 (4.0), higher is N.5 (4.5)
      * - If m >= 3:
      *     For Base Tier N < 10:
      *       Interpolates cleanly across [N.0, N.9] so that:
