@@ -161,6 +161,17 @@
         </button>
 
         <button
+          id="btnImportJson"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-slate-800/90 hover:bg-slate-700/90 text-slate-300 border border-slate-700 transition-all active:scale-95"
+          title="Import a saved JSON anime list"
+        >
+          <i class="fa-solid fa-upload text-emerald-400"></i>
+          <span class="hidden sm:inline">Import</span>
+        </button>
+        <input id="importFileInput" type="file" accept=".json,application/json" class="hidden" />
+
+        <button
           id="btnClearAll"
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 transition-all active:scale-95"
@@ -181,7 +192,7 @@
       <div class="max-w-3xl mx-auto text-center space-y-3 mb-6">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Live MyAnimeList (Jikan v4) Autocomplete + Smart Sub-Tier Calibration</span>
+          <span>Dual-Engine Live Search (MyAnimeList + AniList GraphQL) + Smart Sub-Tier Calibration</span>
         </div>
         <h2 class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white">
           Search an Anime. Pick a <span class="text-indigo-400">0–10</span> Base Score. Let Battles Decide the Decimal.
@@ -203,8 +214,8 @@
             id="animeSearchInput"
             type="text"
             autocomplete="off"
-            placeholder="Search any anime (e.g. Attack on Titan, Death Note, Naruto, Sword Art Online, Bleach...)"
-            class="w-full pl-12 pr-28 py-4 rounded-2xl bg-slate-950/90 border-2 border-slate-700/80 focus:border-indigo-500 focus:outline-none text-white placeholder-slate-500 text-sm sm:text-base shadow-inner transition-colors"
+            placeholder="Search any anime (e.g. Tougen Anki, Dandadan, Solo Leveling, Attack on Titan, Bleach...)"
+            class="w-full pl-12 pr-44 py-4 rounded-2xl bg-slate-950/90 border-2 border-slate-700/80 focus:border-indigo-500 focus:outline-none text-white placeholder-slate-500 text-sm sm:text-base shadow-inner transition-colors"
           />
           <div class="absolute right-3 flex items-center gap-1.5">
             <button
@@ -215,415 +226,13 @@
             >
               <i class="fa-solid fa-xmark"></i>
             </button>
-            <span id="apiStatusBadge" class="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-400 border border-slate-700/70 select-none">
-              MAL API Ready
-            </span>
-          </div>
-        </div>
-
-        <!-- AUTOCOMPLETE DROPDOWN MENU -->
-        <div
-          id="autocompleteDropdown"
-          class="hidden absolute left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-slate-700/90 rounded-2xl shadow-2xl overflow-hidden z-40 max-h-[440px] overflow-y-auto divide-y divide-slate-800/70"
-        >
-          <!-- Dynamically populated by JS -->
-        </div>
-      </div>
-
-      <!-- QUICK-PICK UNRATED SUGGESTION CHIPS -->
-      <div class="max-w-3xl mx-auto mt-5">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i class="fa-solid fa-fire text-orange-400"></i>
-            Quick-Rate Popular Anime (Click any title to rate 0–10):
-          </span>
-          <button
-            id="btnShuffleSuggestions"
-            type="button"
-            class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition"
-          >
-            <i class="fa-solid fa-shuffle"></i> Shuffle
-          </button>
-        </div>
-        <div id="quickChipsContainer" class="flex flex-wrap gap-2">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- LIVE STATS & TIER DISTRIBUTION BAR -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <!-- 4 Key Metric Cards -->
-      <div class="lg:col-span-5 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3">
-        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
-          <span class="text-xs text-slate-400 font-medium">Rated Animes</span>
-          <div class="mt-2 flex items-baseline justify-between">
-            <span id="statTotalAnimes" class="font-display text-2xl sm:text-3xl font-bold text-white">0</span>
-            <i class="fa-solid fa-tv text-indigo-400/70 text-lg"></i>
-          </div>
-        </div>
-
-        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
-          <span class="text-xs text-slate-400 font-medium">H2H Comparisons</span>
-          <div class="mt-2 flex items-baseline justify-between">
-            <span id="statTotalComparisons" class="font-display text-2xl sm:text-3xl font-bold text-pink-400">0</span>
-            <i class="fa-solid fa-bolt text-pink-400/70 text-lg"></i>
-          </div>
-        </div>
-
-        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
-          <span class="text-xs text-slate-400 font-medium">Average Score</span>
-          <div class="mt-2 flex items-baseline justify-between">
-            <span id="statAvgScore" class="font-display text-2xl sm:text-3xl font-bold text-emerald-400">—</span>
-            <i class="fa-solid fa-star text-emerald-400/70 text-lg"></i>
-          </div>
-        </div>
-
-        <div class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
-          <span class="text-xs text-slate-400 font-medium">Highest Rated</span>
-          <div class="mt-2 flex items-baseline justify-between gap-2">
-            <span id="statTopAnime" class="font-semibold text-xs sm:text-sm text-amber-300 truncate">—</span>
-            <i class="fa-solid fa-crown text-amber-400/80 text-lg shrink-0"></i>
-          </div>
-        </div>
-      </div>
-
-      <!-- 0 to 10 Base Tier Overview Matrix -->
-      <div class="lg:col-span-7 rounded-2xl bg-slate-900/70 border border-slate-800/80 p-4 flex flex-col justify-between">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Base Tier Distribution (0–10)
-            </h3>
-            <p class="text-[11px] text-slate-400">
-              Click any tier column to filter or inspect animes in that base score bucket
-            </p>
-          </div>
-          <button
-            id="btnClearTierFilter"
-            type="button"
-            class="hidden text-xs px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 transition"
-          >
-            Showing Tier <span id="activeTierFilterNum"></span> &times; Show All
-          </button>
-        </div>
-
-        <div id="tierMatrixGrid" class="grid grid-cols-11 gap-1.5 items-end h-24 pt-4">
-          <!-- Populated by JS: columns 0 through 10 -->
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEW CONTROLS & RANKED ANIME COLLECTION -->
-    <section class="space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-        <!-- View Switcher Tabs -->
-        <div class="inline-flex p-1 rounded-xl bg-slate-900 border border-slate-800">
-          <button
-            id="tabLeaderboard"
-            type="button"
-            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow"
-          >
-            <i class="fa-solid fa-ranking-star"></i>
-            <span>Overall Leaderboard</span>
-          </button>
-          <button
-            id="tabTierBuckets"
-            type="button"
-            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
-          >
-            <i class="fa-solid fa-layer-group"></i>
-            <span>Tier Buckets (0–10)</span>
-          </button>
-          <button
-            id="tabHistory"
-            type="button"
-            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
-          >
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>Battle Log</span>
-            <span id="badgeBattleCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300">0</span>
-          </button>
-        </div>
-
-        <!-- Filter / Search within User's Rated List -->
-        <div class="flex items-center gap-2">
-          <div class="relative">
-            <i class="fa-solid fa-filter text-xs text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
-            <input
-              id="collectionFilterInput"
-              type="text"
-              placeholder="Filter rated list..."
-              class="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- DYNAMIC CONTENT VIEW AREA -->
-      <div id="collectionViewContainer" class="min-h-[320px]">
-        <!-- Populated by JS based on active tab -->
-      </div>
-    </section>
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="border-t border-slate-900/90 py-6 mt-12 text-center text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <p>AniRank Arena &mdash; Powered by MyAnimeList / Jikan API v4 + Binary Search Pairwise Tier Calibration</p>
-      <p>Tip: Use keys <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">1</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">2</kbd> or <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">&larr;</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">&rarr;</kbd> during Head-to-Head Battles</p>
-    </div>
-  </footer>
-
-  <!-- ===================================================================== -->
-  <!-- MODAL 1: INITIAL 0–10 BASE RATING SELECTOR MODAL                      -->
-  <!-- ===================================================================== -->
-  <div
-    id="ratingModalOverlay"
-    class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-  >
-    <div class="bg-slate-900 border border-slate-700/90 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl animate-pop my-8">
-      <!-- Top Header -->
-      <div class="flex items-center justify-between px-6 py-4 bg-slate-950/60 border-b border-slate-800">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
-          <h3 class="font-display font-bold text-base sm:text-lg text-white" id="ratingModalHeaderTitle">
-            Step 1: Choose Base Rating (0–10)
-          </h3>
-        </div>
-        <button
-          id="btnCloseRatingModal"
-          type="button"
-          class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
-        >
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <!-- Anime Info Summary -->
-      <div class="p-6 space-y-6">
-        <div class="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
-          <img
-            id="modalAnimeCover"
-            src=""
-            alt="Anime Cover"
-            class="w-28 h-40 sm:w-32 sm:h-44 object-cover rounded-2xl shadow-lg border border-slate-700 shrink-0 bg-slate-800"
-          />
-          <div class="space-y-2 text-center sm:text-left flex-1">
-            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span id="modalAnimeTypeYear" class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                TV • 2020
-              </span>
-              <span id="modalAnimeMalScore" class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                ★ 8.50 MAL
-              </span>
-              <span id="modalAnimeEpisodes" class="text-xs text-slate-400">
-                24 eps
-              </span>
-            </div>
-
-            <h4 id="modalAnimeTitle" class="font-display font-bold text-xl sm:text-2xl text-white leading-tight">
-              Anime Title
-            </h4>
-            <p id="modalAnimeSubtitle" class="text-xs text-slate-400 italic"></p>
-
-            <div id="modalAnimeGenres" class="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-1">
-              <!-- Genre pills -->
-            </div>
-
-            <p id="modalAnimeSynopsis" class="text-xs sm:text-sm text-slate-300 line-clamp-3 pt-1 leading-relaxed">
-              Synopsis goes here...
-            </p>
-          </div>
-        </div>
-
-        <!-- 0-10 Selector Grid -->
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <label class="text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Select a Base Score Tier (0 to 10):
-            </label>
-            <span id="selectedTierPreviewLabel" class="text-xs font-semibold text-indigo-300">
-              Hover or click a tier below
-            </span>
-          </div>
-
-          <div id="baseScoreButtonsGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            <!-- Buttons 0 through 10 dynamically rendered with count badges -->
-          </div>
-        </div>
-
-        <!-- Dynamic Tier Explanation Callout -->
-        <div id="tierSelectionCallout" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-4 flex items-center justify-between gap-4">
-          <div class="flex items-start gap-3">
-            <div id="tierCalloutIcon" class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center shrink-0 mt-0.5">
-              <i class="fa-solid fa-circle-info"></i>
-            </div>
-            <div>
-              <p id="tierCalloutTitle" class="text-sm font-semibold text-white">
-                Pick a base tier from 0 to 10 above
-              </p>
-              <p id="tierCalloutDesc" class="text-xs text-slate-400 mt-0.5">
-                If no other anime is in that tier, it gets <code class="text-indigo-300">N.0/10</code>. If other animes share that tier, you'll compare them head-to-head!
-              </p>
-            </div>
-          </div>
-
-          <button
-            id="btnConfirmBaseScore"
-            type="button"
-            disabled
-            class="px-5 py-3 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white transition-all shrink-0 shadow-lg shadow-indigo-600/25 disabled:shadow-none flex items-center gap-2"
-          >
-            <span id="btnConfirmBaseScoreText">Select Score</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- MODAL 2: HEAD-TO-HEAD COMPARISON ARENA MODAL                          -->
-  <!-- ===================================================================== -->
-  <div
-    id="arenaModalOverlay"
-    class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
-  >
-    <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl animate-pop my-6">
-      <!-- Arena Header -->
-      <div class="px-6 py-4 bg-gradient-to-r from-indigo-950/80 via-slate-900 to-pink-950/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-pink-500/20 text-pink-300 border border-pink-500/40 flex items-center gap-1.5">
-            <i class="fa-solid fa-fire-flame-curved"></i>
-            <span id="arenaTierBadge">Tier 4/10 Head-to-Head</span>
-          </span>
-          <span id="arenaStepCounter" class="text-xs text-slate-300 font-medium">
-            Comparison 1 of 1
-          </span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <span class="text-[11px] text-slate-400 hidden sm:inline">
-            Binary Search Calibration
-          </span>
-          <button
-            id="btnCancelArena"
-            type="button"
-            class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs transition"
-            title="Cancel comparison"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-
-      <!-- ACTIVE COMPARISON VIEW -->
-      <div id="arenaActiveBody" class="p-5 sm:p-8 space-y-6">
-        <div class="text-center space-y-1.5">
-          <h3 id="arenaPromptHeadline" class="font-display text-xl sm:text-2xl font-bold text-white">
-            You also rated <span class="text-amber-300">Anime A</span> a 4/10. Which anime did you like more?
-          </h3>
-          <p id="arenaPromptSubtext" class="text-xs sm:text-sm text-slate-400">
-            Choosing the winner automatically calibrates their decimal scores inside the <span class="text-indigo-300 font-semibold">4.0 – 4.9</span> range!
-          </p>
-        </div>
-
-        <!-- Side-by-Side Contenders Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-11 gap-4 items-stretch relative">
-          <!-- LEFT CARD: NEW / CHALLENGER ANIME (ANIME B) -->
-          <div
-            id="cardCandidateLeft"
-            class="md:col-span-5 group relative rounded-2xl bg-slate-950/90 border-2 border-indigo-500/50 hover:border-indigo-400 p-5 flex flex-col justify-between transition-all cursor-pointer hover:shadow-xl hover:shadow-indigo-500/10"
-          >
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  New in Tier <span class="arenaTierNumText">4</span>
-                </span>
-                <span class="text-xs text-slate-400 font-mono">Key: [1] or [&larr;]</span>
-              </div>
-
-              <div class="flex sm:flex-col items-center gap-4 text-left sm:text-center">
-                <img
-                  id="arenaLeftImg"
-                  src=""
-                  alt="Challenger Anime"
-                  class="w-24 h-36 sm:w-36 sm:h-52 object-cover rounded-xl shadow-lg border border-slate-700 shrink-0 bg-slate-800 group-hover:scale-[1.02] transition-transform"
-                />
-                <div class="space-y-1.5 flex-1">
-                  <h4 id="arenaLeftTitle" class="font-display font-bold text-lg sm:text-xl text-white group-hover:text-indigo-300 transition-colors">
-                    Challenger Title
-                  </h4>
-                  <p id="arenaLeftMeta" class="text-xs text-slate-400">TV • 2021 • ★ 8.2</p>
-                  <p id="arenaLeftSynopsis" class="text-xs text-slate-400 line-clamp-2 hidden sm:block pt-1"></p>
-                </div>
-              </div>
-            </div>
-
             <button
-              id="btnPickLeft"
+              id="apiStatusBadge"
               type="button"
-              class="mt-5 w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-indigo-600 group-hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2"
+              title="Click to test live connection to MyAnimeList & AniList APIs"
+              class="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 select-none transition cursor-pointer"
             >
-              <i class="fa-solid fa-thumbs-up"></i>
-              <span id="btnPickLeftLabel">I Liked Anime B More</span>
-            </button>
-          </div>
-
-          <!-- CENTER VS COLUMN & EQUAL BUTTON -->
-          <div class="md:col-span-1 flex md:flex-col items-center justify-center gap-3 py-1">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-indigo-600 flex items-center justify-center font-display font-extrabold text-white text-sm vs-badge-shadow shrink-0">
-              VS
-            </div>
-            <button
-              id="btnPickTie"
-              type="button"
-              class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition flex flex-col items-center gap-0.5 shrink-0"
-              title="Give both animes the exact same rank slot in this tier"
-            >
-              <span>Equal</span>
-              <span class="text-[10px] text-slate-400 font-normal">[=]</span>
-            </button>
-          </div>
-
-          <!-- RIGHT CARD: EXISTING TIER DEFENDER ANIME (ANIME A) -->
-          <div
-            id="cardDefenderRight"
-            class="md:col-span-5 group relative rounded-2xl bg-slate-950/90 border-2 border-pink-500/50 hover:border-pink-400 p-5 flex flex-col justify-between transition-all cursor-pointer hover:shadow-xl hover:shadow-pink-500/10"
-          >
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <span id="arenaRightScoreBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-pink-500/20 text-pink-300 border border-pink-500/30">
-                  Currently 4.0/10
-                </span>
-                <span class="text-xs text-slate-400 font-mono">Key: [2] or [&rarr;]</span>
-              </div>
-
-              <div class="flex sm:flex-col items-center gap-4 text-left sm:text-center">
-                <img
-                  id="arenaRightImg"
-                  src=""
-                  alt="Defender Anime"
-                  class="w-24 h-36 sm:w-36 sm:h-52 object-cover rounded-xl shadow-lg border border-slate-700 shrink-0 bg-slate-800 group-hover:scale-[1.02] transition-transform"
-                />
-                <div class="space-y-1.5 flex-1">
-                  <h4 id="arenaRightTitle" class="font-display font-bold text-lg sm:text-xl text-white group-hover:text-pink-300 transition-colors">
-                    Defender Title
-                  </h4>
-                  <p id="arenaRightMeta" class="text-xs text-slate-400">TV • 2019 • ★ 8.4</p>
-                  <p id="arenaRightSynopsis" class="text-xs text-slate-400 line-clamp-2 hidden sm:block pt-1"></p>
-                </div>
-              </div>
-            </div>
-
-            <button
-              id="btnPickRight"
-              type="button"
-              class="mt-5 w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-pink-600 group-hover:bg-pink-500 text-white shadow-lg shadow-pink-600/25 transition flex items-center justify-center gap-2"
-            >
-              <i class="fa-solid fa-thumbs-up"></i>
-              <span id="btnPickRightLabel">I Liked Anime A More</span>
+              Live API Ready (MAL + AniList)
             </button>
           </div>
         </div>
@@ -734,9 +343,105 @@
     ];
 
     /*************************************************************************
-     * 2. BUILT-IN CURATED ANIME DATASET (~28 POPULAR ANIMES FOR INSTANT SEARCH & OFFLINE FALLBACK)
+     * 2. BUILT-IN CURATED ANIME DATASET (INCLUDES TOUGEN ANKI & 2025-2026 HITS)
      *************************************************************************/
     const FALLBACK_ANIME_DB = [
+      {
+        mal_id: 58811,
+        title: "Tougen Anki",
+        title_japanese: "Tougen Anki: Dark Demon of Paradise",
+        year: 2025,
+        type: "TV",
+        episodes: 24,
+        mal_score: 7.85,
+        genres: ["Action", "Dark Fantasy", "Supernatural", "Shounen"],
+        image: "https://placehold.co/300x420/3b0764/f472b6?text=Tougen+Anki",
+        synopsis: "Shiki Ichinose discovers that he possesses the blood of the Oni after a sudden attack by a Momotaro assassin, thrusting him into the centuries-long war between Oni and Momotaro. Animated by Studio Hibari."
+      },
+      {
+        mal_id: 61290,
+        title: "Tougen Anki: Nikko Kegon Falls Arc",
+        title_japanese: "Tougen Anki Season 2",
+        year: 2026,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.05,
+        genres: ["Action", "Dark Fantasy", "Supernatural"],
+        image: "https://placehold.co/300x420/4c0519/fb7185?text=Tougen+Anki+S2",
+        synopsis: "Continuation of Shiki Ichinose and the Oni academy's fierce battle against the Momotaro Agency in the Nikko Kegon Falls arc."
+      },
+      {
+        mal_id: 57334,
+        title: "Dandadan",
+        title_japanese: "Dandadan",
+        year: 2024,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.75,
+        genres: ["Action", "Comedy", "Sci-Fi", "Supernatural"],
+        image: "https://cdn.myanimelist.net/images/anime/1584/143719.jpg",
+        synopsis: "Momo Ayase believes in ghosts but not aliens, while her classmate Okarun believes in aliens but not ghosts. Their bet to prove each other wrong spirals into paranormal chaos."
+      },
+      {
+        mal_id: 52299,
+        title: "Solo Leveling",
+        title_japanese: "Ore dake Level Up na Ken",
+        year: 2024,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.38,
+        genres: ["Action", "Adventure", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1801/142390.jpg",
+        synopsis: "In a world where hunters battle deadly monsters inside dimensional gates, notoriously weak E-rank hunter Sung Jinwoo awakens a mysterious program that allows only him to level up."
+      },
+      {
+        mal_id: 58939,
+        title: "Sakamoto Days",
+        title_japanese: "Sakamoto Days",
+        year: 2025,
+        type: "TV",
+        episodes: 22,
+        mal_score: 8.20,
+        genres: ["Action", "Comedy"],
+        image: "https://placehold.co/300x420/1e293b/facc15?text=Sakamoto+Days",
+        synopsis: "Legendary hitman Taro Sakamoto retired after falling in love, opening a quiet neighborhood convenience store—until his past catches up with a massive bounty on his head."
+      },
+      {
+        mal_id: 59062,
+        title: "Gachiakuta",
+        title_japanese: "Gachiakuta",
+        year: 2025,
+        type: "TV",
+        episodes: 24,
+        mal_score: 8.30,
+        genres: ["Action", "Dark Fantasy"],
+        image: "https://placehold.co/300x420/18181b/a3e635?text=Gachiakuta",
+        synopsis: "Falsely accused of murder, young Rudo is cast down into the Pit—a terrifying wasteland of garbage and monsters—where he awakens the power of a Giver to fight his way back up."
+      },
+      {
+        mal_id: 47917,
+        title: "Bocchi the Rock!",
+        title_japanese: "Bocchi the Rock!",
+        year: 2022,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.78,
+        genres: ["Comedy", "Music"],
+        image: "https://cdn.myanimelist.net/images/anime/1448/127956.jpg",
+        synopsis: " painfully shy guitarist Hitori 'Bocchi' Gotou dreams of performing in a band, and her life changes when drummer Nijika Ijichi recruits her into Kessoku Band."
+      },
+      {
+        mal_id: 49596,
+        title: "Blue Lock",
+        title_japanese: "Blue Lock",
+        year: 2022,
+        type: "TV",
+        episodes: 24,
+        mal_score: 8.23,
+        genres: ["Sports", "Suspense"],
+        image: "https://cdn.myanimelist.net/images/anime/1258/126929.jpg",
+        synopsis: "Three hundred high school strikers are locked in a high-stakes training facility called Blue Lock to create the world's most egoistic and unstoppable forward for Japan."
+      },
       {
         mal_id: 16498,
         title: "Attack on Titan",
@@ -1213,7 +918,7 @@
     }
 
     /*************************************************************************
-     * 5. LIVE AUTOCOMPLETE SEARCH (JIKAN API v4 + INSTANT FALLBACK)
+     * 5. DUAL-ENGINE LIVE AUTOCOMPLETE SEARCH (JIKAN v4 + ANILIST GRAPHQL + CATALOG)
      *************************************************************************/
     let searchDebounceTimer = null;
     let currentSearchAbortController = null;
@@ -1233,25 +938,29 @@
         if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 
         if (query.length === 0) {
-          renderDropdownSuggestions(FALLBACK_ANIME_DB.slice(0, 7), "Popular Anime Suggestions");
+          renderDropdownSuggestions(FALLBACK_ANIME_DB.slice(0, 8), "Popular & 2025–2026 Anime Suggestions", "");
           return;
         }
 
-        // Immediate local match preview while API fetches
+        // Immediate local match preview while live APIs respond
         const localMatches = searchLocalFallback(query);
         if (localMatches.length > 0) {
-          renderDropdownSuggestions(localMatches.slice(0, 6), "Instant Matches (Fetching live MAL results...)");
+          renderDropdownSuggestions(
+            localMatches.slice(0, 8),
+            `Instant Matches for "${query}" (Searching live MAL & AniList...)`,
+            query
+          );
         }
 
         searchDebounceTimer = setTimeout(() => {
           performLiveAnimeSearch(query);
-        }, 260);
+        }, 250);
       });
 
       searchInputEl.addEventListener("focus", () => {
         const query = searchInputEl.value.trim();
         if (query.length === 0) {
-          renderDropdownSuggestions(FALLBACK_ANIME_DB.slice(0, 7), "Popular Anime — Click any to rate 0–10");
+          renderDropdownSuggestions(FALLBACK_ANIME_DB.slice(0, 8), "Popular & 2025–2026 Anime — Click any to rate 0–10", "");
         } else {
           dropdownEl.classList.remove("hidden");
         }
@@ -1264,6 +973,12 @@
         searchInputEl.focus();
       });
 
+      if (apiStatusBadgeEl) {
+        apiStatusBadgeEl.addEventListener("click", () => {
+          testLiveApiConnection();
+        });
+      }
+
       // Close autocomplete when clicking outside
       document.addEventListener("click", (e) => {
         const container = document.getElementById("searchContainer");
@@ -1274,7 +989,8 @@
     }
 
     function searchLocalFallback(query) {
-      const q = query.toLowerCase();
+      const q = query.toLowerCase().trim();
+      if (!q) return [];
       return FALLBACK_ANIME_DB.filter(a =>
         a.title.toLowerCase().includes(q) ||
         (a.title_japanese && a.title_japanese.toLowerCase().includes(q)) ||
@@ -1282,55 +998,205 @@
       );
     }
 
+    /**
+     * Primary Engine: MyAnimeList via Jikan v4 REST API
+     * - No custom headers (avoids CORS preflight blocks)
+     * - No order_by/sort params (preserves relevance sorting for titles like "Tougen Anki")
+     */
+    async function fetchJikanResults(query, signal) {
+      const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=12&sfw=true`;
+      const response = await fetch(url, { method: "GET", signal });
+      if (!response.ok) throw new Error(`Jikan HTTP ${response.status}`);
+      const json = await response.json();
+      return (json.data || []).map(item => normalizeJikanAnime(item));
+    }
+
+    /**
+     * Secondary Engine: AniList GraphQL API
+     * - Extremely fast, CORS-enabled, and indexes all Japanese/English titles ("Tougen Anki", etc.)
+     */
+    async function fetchAniListResults(query, signal) {
+      const graphqlQuery = `
+        query ($search: String) {
+          Page(page: 1, perPage: 10) {
+            media(search: $search, type: ANIME, isAdult: false, sort: SEARCH_MATCH) {
+              id
+              idMal
+              title {
+                romaji
+                english
+                native
+              }
+              startDate {
+                year
+              }
+              format
+              episodes
+              averageScore
+              genres
+              coverImage {
+                large
+                extraLarge
+              }
+              description(asHtml: false)
+            }
+          }
+        }
+      `;
+
+      const response = await fetch("https://graphql.anilist.co", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables: { search: query }
+        }),
+        signal
+      });
+
+      if (!response.ok) throw new Error(`AniList HTTP ${response.status}`);
+      const json = await response.json();
+      const mediaList = (json && json.data && json.data.Page && json.data.Page.media) || [];
+      return mediaList.map(item => normalizeAniListAnime(item));
+    }
+
     async function performLiveAnimeSearch(query) {
       if (currentSearchAbortController) {
         currentSearchAbortController.abort();
       }
       currentSearchAbortController = new AbortController();
+      const signal = currentSearchAbortController.signal;
 
       searchIconEl.classList.add("hidden");
       searchSpinnerEl.classList.remove("hidden");
-      apiStatusBadgeEl.textContent = "Searching MAL...";
-      apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-700/60 select-none";
+      apiStatusBadgeEl.textContent = "Searching MAL + AniList...";
+      apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-700/60 select-none transition cursor-pointer";
 
       try {
-        const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=8&sfw=true`;
-        const response = await fetch(url, { signal: currentSearchAbortController.signal });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const json = await response.json();
+        // Query both MyAnimeList (Jikan v4) and AniList GraphQL in parallel
+        const [jikanOutcome, anilistOutcome] = await Promise.allSettled([
+          fetchJikanResults(query, signal),
+          fetchAniListResults(query, signal)
+        ]);
 
-        const apiResults = (json.data || []).map(item => normalizeJikanAnime(item));
+        if (signal.aborted) return;
 
-        // Merge with local fallback matches without duplicates
+        const jikanOk = jikanOutcome.status === "fulfilled";
+        const anilistOk = anilistOutcome.status === "fulfilled";
+
+        const jikanResults = jikanOk ? jikanOutcome.value : [];
+        const anilistResults = anilistOk ? anilistOutcome.value : [];
         const localMatches = searchLocalFallback(query);
-        const seenIds = new Set(apiResults.map(a => a.mal_id));
-        const combined = [...apiResults];
-        for (const loc of localMatches) {
-          if (!seenIds.has(loc.mal_id) && combined.length < 10) {
-            combined.push(loc);
-          }
+
+        // Merge & deduplicate results (prioritizing exact/closest matches)
+        const combined = mergeAnimeResults(localMatches, jikanResults, anilistResults, query);
+
+        if (jikanOk || anilistOk) {
+          const sourcesLabel = jikanOk && anilistOk
+            ? "Live (MAL + AniList) ✓"
+            : jikanOk
+            ? "MAL Live ✓"
+            : "AniList Live ✓";
+
+          apiStatusBadgeEl.textContent = sourcesLabel;
+          apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-emerald-950/90 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 select-none transition cursor-pointer";
+
+          renderDropdownSuggestions(
+            combined,
+            `Live Search Results for "${query}"`,
+            query
+          );
+        } else {
+          // Both live APIs failed or are blocked by network/firewall — use built-in catalog without locking out future searches
+          apiStatusBadgeEl.textContent = "Local Catalog (Click to Retry API)";
+          apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-amber-950/90 hover:bg-amber-900/80 text-amber-300 border border-amber-700/60 select-none transition cursor-pointer";
+
+          renderDropdownSuggestions(
+            localMatches,
+            localMatches.length > 0
+              ? `Built-in Catalog Matches for "${query}"`
+              : `No built-in matches for "${query}" — Add it below!`,
+            query
+          );
         }
-
-        apiStatusBadgeEl.textContent = "MAL Live ✓";
-        apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 select-none";
-
-        renderDropdownSuggestions(combined, `Live MyAnimeList Results for "${query}"`);
       } catch (err) {
         if (err.name === "AbortError") return;
-        // Fallback seamlessly to local dataset
         const fallbackMatches = searchLocalFallback(query);
-        apiStatusBadgeEl.textContent = "Offline DB Mode";
-        apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-amber-950/90 text-amber-300 border border-amber-700/60 select-none";
-
-        renderDropdownSuggestions(
-          fallbackMatches,
-          fallbackMatches.length > 0
-            ? `Built-in Anime Matches for "${query}"`
-            : `No matches found for "${query}"`
-        );
+        renderDropdownSuggestions(fallbackMatches, `Results for "${query}"`, query);
       } finally {
         searchIconEl.classList.remove("hidden");
         searchSpinnerEl.classList.add("hidden");
+      }
+    }
+
+    function mergeAnimeResults(localMatches, jikanResults, anilistResults, query) {
+      const seenIds = new Set();
+      const seenTitles = new Set();
+      const merged = [];
+
+      const normTitle = (str) => (str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      const addUnique = (anime) => {
+        if (!anime || !anime.title) return;
+        const tKey = normTitle(anime.title);
+        const jKey = normTitle(anime.title_japanese);
+        if (seenIds.has(anime.mal_id) || (tKey && seenTitles.has(tKey))) {
+          // If the existing entry had a placeholder image and the live API has a real cover image, upgrade the cover!
+          const existing = merged.find(
+            m => m.mal_id === anime.mal_id || normTitle(m.title) === tKey || (jKey && normTitle(m.title_japanese) === jKey)
+          );
+          if (existing && existing.image && existing.image.includes("placehold.co") && anime.image && !anime.image.includes("placehold.co")) {
+            existing.image = anime.image;
+          }
+          return;
+        }
+        seenIds.add(anime.mal_id);
+        if (tKey) seenTitles.add(tKey);
+        if (jKey) seenTitles.add(jKey);
+        merged.push({ ...anime });
+      };
+
+      // 1. Add exact/strong local matches first so curated titles like "Tougen Anki" are always at the top
+      localMatches.forEach(addUnique);
+      // 2. Add Jikan (MyAnimeList) live matches
+      jikanResults.forEach(addUnique);
+      // 3. Add AniList GraphQL live matches
+      anilistResults.forEach(addUnique);
+
+      // Sort so titles that start with or contain the query string come first
+      const qLower = (query || "").toLowerCase().trim();
+      merged.sort((a, b) => {
+        const aStarts = a.title.toLowerCase().startsWith(qLower) || (a.title_japanese && a.title_japanese.toLowerCase().startsWith(qLower)) ? 1 : 0;
+        const bStarts = b.title.toLowerCase().startsWith(qLower) || (b.title_japanese && b.title_japanese.toLowerCase().startsWith(qLower)) ? 1 : 0;
+        return bStarts - aStarts;
+      });
+
+      return merged.slice(0, 12);
+    }
+
+    async function testLiveApiConnection() {
+      apiStatusBadgeEl.textContent = "Testing APIs...";
+      try {
+        const [jikanRes, anilistRes] = await Promise.allSettled([
+          fetchJikanResults("Tougen Anki"),
+          fetchAniListResults("Tougen Anki")
+        ]);
+        const jikanOk = jikanRes.status === "fulfilled" && jikanRes.value.length > 0;
+        const anilistOk = anilistRes.status === "fulfilled" && anilistRes.value.length > 0;
+
+        if (jikanOk || anilistOk) {
+          apiStatusBadgeEl.textContent = "Live API Ready (MAL + AniList) ✓";
+          apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 select-none transition cursor-pointer";
+          showToast(`Live API connection verified! (${jikanOk ? "MyAnimeList" : ""}${jikanOk && anilistOk ? " + " : ""}${anilistOk ? "AniList" : ""} online)`, "emerald");
+        } else {
+          apiStatusBadgeEl.textContent = "Local Catalog Mode";
+          showToast("Live APIs were unreachable from this network; using built-in anime catalog.", "amber");
+        }
+      } catch (e) {
+        apiStatusBadgeEl.textContent = "Local Catalog Mode";
       }
     }
 
@@ -1357,7 +1223,36 @@
       };
     }
 
-    function renderDropdownSuggestions(animeList, headerLabel) {
+    function normalizeAniListAnime(raw) {
+      const romaji = (raw.title && raw.title.romaji) || "";
+      const english = (raw.title && raw.title.english) || "";
+      const primaryTitle = english || romaji || "Unknown Anime";
+      const secondaryTitle = romaji && romaji !== primaryTitle ? romaji : ((raw.title && raw.title.native) || "");
+      const year = (raw.startDate && raw.startDate.year) || "—";
+      const image =
+        (raw.coverImage && (raw.coverImage.extraLarge || raw.coverImage.large)) ||
+        getFallbackPosterUrl(primaryTitle);
+      const malScore = raw.averageScore ? (Number(raw.averageScore) / 10).toFixed(2) : "N/A";
+      const cleanSynopsis = (raw.description || "No synopsis available.")
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return {
+        mal_id: raw.idMal || (900000 + Number(raw.id || Math.floor(Math.random() * 99999))),
+        title: primaryTitle,
+        title_japanese: secondaryTitle,
+        year: year,
+        type: raw.format || "TV",
+        episodes: raw.episodes || "?",
+        mal_score: malScore,
+        genres: Array.isArray(raw.genres) ? raw.genres.slice(0, 4) : [],
+        image: image,
+        synopsis: cleanSynopsis
+      };
+    }
+
+    function renderDropdownSuggestions(animeList, headerLabel, rawQuery = "") {
       dropdownEl.innerHTML = "";
 
       const headerDiv = document.createElement("div");
@@ -1370,11 +1265,9 @@
 
       if (animeList.length === 0) {
         const emptyDiv = document.createElement("div");
-        emptyDiv.className = "p-6 text-center text-sm text-slate-400";
-        emptyDiv.innerHTML = `No matching anime found. Try searching another title!`;
+        emptyDiv.className = "p-5 text-center text-sm text-slate-400";
+        emptyDiv.innerHTML = `No automatic matches found for "${escapeHtml(rawQuery)}". You can add it directly below!`;
         dropdownEl.appendChild(emptyDiv);
-        dropdownEl.classList.remove("hidden");
-        return;
       }
 
       animeList.forEach(anime => {
@@ -1424,6 +1317,38 @@
 
         dropdownEl.appendChild(row);
       });
+
+      // Always offer a "+ Add '[query]' as a custom anime" button when a user types a query
+      const trimmedQuery = (rawQuery || searchInputEl.value || "").trim();
+      if (trimmedQuery.length >= 2) {
+        const customBtn = document.createElement("button");
+        customBtn.type = "button";
+        customBtn.className = "w-full px-4 py-3 text-left bg-slate-950/90 hover:bg-indigo-950/60 text-indigo-300 hover:text-white text-xs font-semibold transition flex items-center justify-between gap-2";
+        customBtn.innerHTML = `
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-plus text-indigo-400"></i>
+            <span>Don't see the exact version? Add <strong>"${escapeHtml(trimmedQuery)}"</strong> as a custom anime</span>
+          </span>
+          <span class="px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/30">+ Custom</span>
+        `;
+        customBtn.addEventListener("click", () => {
+          dropdownEl.classList.add("hidden");
+          const customAnime = {
+            mal_id: 800000 + Math.floor(Math.random() * 199999),
+            title: trimmedQuery,
+            title_japanese: "",
+            year: new Date().getFullYear(),
+            type: "TV",
+            episodes: "?",
+            mal_score: "N/A",
+            genres: ["Custom Entry"],
+            image: getFallbackPosterUrl(trimmedQuery),
+            synopsis: "Custom anime entry added by user."
+          };
+          openBaseRatingModal(customAnime);
+        });
+        dropdownEl.appendChild(customBtn);
+      }
 
       dropdownEl.classList.remove("hidden");
     }
@@ -2645,6 +2570,36 @@
         URL.revokeObjectURL(url);
         showToast("Exported your calibrated anime rankings as JSON!", "emerald");
       });
+
+      const btnImportJson = document.getElementById("btnImportJson");
+      const importFileInput = document.getElementById("importFileInput");
+      if (btnImportJson && importFileInput) {
+        btnImportJson.addEventListener("click", () => importFileInput.click());
+        importFileInput.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            try {
+              const parsed = JSON.parse(evt.target.result);
+              const itemsArray = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.items) ? parsed.items : null);
+              if (!itemsArray) throw new Error("Invalid JSON format");
+              appState.items = itemsArray;
+              for (let t = 0; t <= 10; t++) {
+                recalculateScoresInTier(t);
+              }
+              saveStateToStorage();
+              renderAllViews();
+              showToast(`Imported ${itemsArray.length} rated anime(s) successfully!`, "emerald");
+            } catch (err) {
+              showToast("Could not import JSON file. Please check the file format.", "rose");
+            } finally {
+              importFileInput.value = "";
+            }
+          };
+          reader.readAsText(file);
+        });
+      }
 
       document.getElementById("btnClearAll").addEventListener("click", () => {
         openConfirmModal(
