@@ -1213,6 +1213,24 @@
             <span id="btnSubmitBugText">Submit Bug Report</span>
           </button>
         </div>
+
+        <!-- Recent Locally Saved Bug Reports & 1-Click Re-Send to Google Sheets -->
+        <div id="localBugQueuePanel" class="hidden pt-4 border-t border-slate-800/90 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span>Your Submitted Reports (<span id="localBugQueueCount">0</span> saved in browser)</span>
+            </span>
+            <button
+              id="btnResendAllBugs"
+              type="button"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition"
+            >
+              <i class="fa-solid fa-rotate mr-1"></i>Re-Send All to Sheet &amp; Firebase
+            </button>
+          </div>
+          <div id="localBugQueueList" class="max-h-36 overflow-y-auto space-y-1.5 pr-1"></div>
+        </div>
       </form>
     </div>
   </div>
@@ -5085,6 +5103,7 @@
       }
 
       overlay.classList.remove("hidden");
+      renderLocalBugQueue();
       setTimeout(() => {
         const descInput = document.getElementById("bugDescriptionInput");
         if (descInput) descInput.focus();
@@ -5093,6 +5112,109 @@
 
     function closeBugReportModal() {
       document.getElementById("bugModalOverlay").classList.add("hidden");
+    }
+
+    function getLocalSubmittedBugs() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem("aar_submitted_bugs") || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function renderLocalBugQueue() {
+      const panel = document.getElementById("localBugQueuePanel");
+      const countEl = document.getElementById("localBugQueueCount");
+      const listEl = document.getElementById("localBugQueueList");
+      if (!panel || !listEl) return;
+
+      const bugs = getLocalSubmittedBugs();
+      if (bugs.length === 0) {
+        panel.classList.add("hidden");
+        return;
+      }
+
+      panel.classList.remove("hidden");
+      if (countEl) countEl.textContent = String(bugs.length);
+      listEl.innerHTML = "";
+
+      bugs.slice(0, 10).forEach((b) => {
+        const item = document.createElement("div");
+        item.className = "p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] flex items-start justify-between gap-2";
+        item.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold text-amber-200 truncate">${escapeHtml(b.category || "Bug")} • <span class="text-slate-400 font-normal">${escapeHtml(b.localTime || "")}</span></div>
+            <div class="text-slate-300 review-comment-wrap mt-0.5">${escapeHtml(b.description || "")}</div>
+          </div>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    async function sendSingleBugPayloadToCloud(fullReportPayload) {
+      let sheetSent = false;
+      let firebaseSent = false;
+
+      // 1. Send to Google Sheets Apps Script Webhook (POST + Query Param fallback)
+      if (GOOGLE_SHEETS_BUG_WEBHOOK_URL && GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim().startsWith("https://")) {
+        const cleanUrl = GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim();
+        try {
+          await fetch(cleanUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(fullReportPayload)
+          });
+          sheetSent = true;
+        } catch (sheetErr) {
+          console.warn("Google Sheets webhook warning:", sheetErr);
+        }
+      }
+
+      // 2. Save to Firebase Firestore (both top-level `bug_reports` collection AND artifact path)
+      if (db) {
+        const rId = fullReportPayload.reportId || ("bug_" + Date.now());
+        try {
+          await setDoc(doc(db, "bug_reports", rId), fullReportPayload);
+          firebaseSent = true;
+        } catch (topErr) {
+          console.warn("Top-level Firestore bug_reports blocked by rules:", topErr.message);
+        }
+
+        try {
+          const bugDocRef = doc(db, "artifacts", appId, "public", "data", "bug_reports", rId);
+          await setDoc(bugDocRef, fullReportPayload);
+          firebaseSent = true;
+        } catch (fireErr) {
+          console.warn("Nested Firestore bug_reports blocked by rules:", fireErr.message);
+        }
+      }
+
+      return { sheetSent, firebaseSent };
+    }
+
+    async function handleResendAllLocalBugs() {
+      const bugs = getLocalSubmittedBugs();
+      if (bugs.length === 0) return;
+
+      const btn = document.getElementById("btnResendAllBugs");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Sending...";
+      }
+
+      for (const bug of [...bugs].reverse()) {
+        await sendSingleBugPayloadToCloud(bug);
+      }
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-rotate mr-1"></i>Re-Send All to Sheet &amp; Firebase`;
+      }
+      showToast(`Re-sent ${bugs.length} bug report(s) to Google Sheets & Firebase!`, "emerald");
     }
 
     async function handleBugReportSubmit() {
@@ -5131,53 +5253,23 @@
       if (submitText) submitText.textContent = "Sending Report...";
       if (statusBox) statusBox.classList.add("hidden");
 
-      let sentSuccessfully = false;
-
-      // 1. Send directly to your private Google Sheet (if GOOGLE_SHEETS_BUG_WEBHOOK_URL is set)
-      if (GOOGLE_SHEETS_BUG_WEBHOOK_URL && GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim().startsWith("https://")) {
-        try {
-          await fetch(GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim(), {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-              "Content-Type": "text/plain;charset=utf-8"
-            },
-            body: JSON.stringify(fullReportPayload)
-          });
-          sentSuccessfully = true;
-        } catch (sheetErr) {
-          console.warn("Google Sheets webhook warning:", sheetErr);
-        }
-      }
-
-      // 2. Also save a backup copy to Firebase Firestore under `bug_reports`
-      if (db) {
-        try {
-          const bugDocRef = doc(db, "artifacts", appId, "public", "data", "bug_reports", reportId);
-          await setDoc(bugDocRef, fullReportPayload);
-          sentSuccessfully = true;
-        } catch (fireErr) {
-          console.warn("Firestore bug backup note:", fireErr);
-        }
-      }
-
-      // 3. Always keep a local copy in localStorage just in case
+      // Keep a local copy in localStorage first
       try {
-        const existingLocalBugs = JSON.parse(localStorage.getItem("aar_submitted_bugs") || "[]");
+        const existingLocalBugs = getLocalSubmittedBugs();
         existingLocalBugs.unshift(fullReportPayload);
         localStorage.setItem("aar_submitted_bugs", JSON.stringify(existingLocalBugs.slice(0, 30)));
-        sentSuccessfully = true;
       } catch (e) {}
+
+      await sendSingleBugPayloadToCloud(fullReportPayload);
 
       submitBtn.disabled = false;
       if (submitText) submitText.textContent = "Submit Bug Report";
 
-      if (sentSuccessfully) {
-        if (descEl) descEl.value = "";
-        if (contactEl) contactEl.value = "";
-        closeBugReportModal();
-        showToast("Thank you! Your bug report & diagnostics were sent.", "emerald");
-      }
+      if (descEl) descEl.value = "";
+      if (contactEl) contactEl.value = "";
+      renderLocalBugQueue();
+      closeBugReportModal();
+      showToast("Thank you! Your bug report & diagnostics were sent.", "emerald");
     }
 
     /*************************************************************************
@@ -5491,6 +5583,10 @@
         e.preventDefault();
         handleBugReportSubmit();
       });
+      const btnResendAllBugs = document.getElementById("btnResendAllBugs");
+      if (btnResendAllBugs) {
+        btnResendAllBugs.addEventListener("click", handleResendAllLocalBugs);
+      }
 
       // Keyboard shortcuts for Head-to-Head Arena (1 / ArrowLeft, 2 / ArrowRight, = for Tie, Esc to close)
       document.addEventListener("keydown", (e) => {
