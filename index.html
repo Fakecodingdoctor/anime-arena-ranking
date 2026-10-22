@@ -101,6 +101,14 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+
+    /* Safe text wrapping for long user descriptions and reviews */
+    .review-comment-wrap {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      max-width: 100%;
+    }
   </style>
 </head>
 <body class="bg-aurora min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
@@ -139,6 +147,26 @@
           <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
           <i class="fa-solid fa-user-astronaut text-indigo-300"></i>
           <span id="headerAccountLabel">Demo Mode • Sign In</span>
+        </button>
+
+        <button
+          id="btnHeaderOpenSocial"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-sky-500/15 hover:bg-sky-500/25 text-sky-200 border border-sky-500/30 transition-all active:scale-95"
+          title="View your Followers and Following lists"
+        >
+          <i class="fa-solid fa-user-group text-sky-400"></i>
+          <span id="headerSocialCountLabel">0 Following • 0 Followers</span>
+        </button>
+
+        <button
+          id="btnHeaderActivityFeed"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-500/30 transition-all active:scale-95"
+          title="See recent reviews and rankings from users you follow"
+        >
+          <i class="fa-solid fa-rss text-emerald-400"></i>
+          <span>Activity Feed</span>
         </button>
 
         <button
@@ -410,6 +438,15 @@
             <span id="badgeBattleCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300">0</span>
           </button>
           <button
+            id="tabActivityFeed"
+            type="button"
+            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <i class="fa-solid fa-rss text-emerald-400"></i>
+            <span>Following Activity</span>
+            <span id="badgeFollowingCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700/40">0</span>
+          </button>
+          <button
             id="tabUserSearch"
             type="button"
             class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
@@ -506,14 +543,14 @@
         <div class="space-y-1.5">
           <label for="modalAnimeComment" class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-300">
             <span><i class="fa-regular fa-comment-dots text-indigo-400 mr-1.5"></i>Your Thoughts / Review Note (Optional):</span>
-            <span class="text-[11px] font-normal normal-case text-slate-500">Shown on your list &amp; public profile</span>
+            <span class="text-[11px] font-normal normal-case text-slate-500">Wraps automatically • Shown on profile &amp; feed</span>
           </label>
           <textarea
             id="modalAnimeComment"
-            rows="2"
-            maxlength="400"
+            rows="3"
+            maxlength="1200"
             placeholder="Write what you loved, hated, favorite characters, or why it deserves this tier..."
-            class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-950/90 border border-slate-700/80 focus:border-indigo-500 focus:outline-none text-xs sm:text-sm text-white placeholder-slate-500 resize-none"
+            class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-950/90 border border-slate-700/80 focus:border-indigo-500 focus:outline-none text-xs sm:text-sm text-white placeholder-slate-500 resize-y"
           ></textarea>
         </div>
 
@@ -806,16 +843,41 @@
 
         <!-- Logged-In Account View (Shown when signed into a named username) -->
         <div id="authLoggedInPanel" class="hidden space-y-4">
-          <div class="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-2 text-center">
+          <div class="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-3 text-center">
             <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center mx-auto text-xl">
               <i class="fa-solid fa-user-check"></i>
             </div>
-            <h4 class="font-display font-bold text-lg text-white">
-              Signed in as <span id="loggedInUsernameText" class="text-emerald-300">@user</span>
-            </h4>
-            <p class="text-xs text-slate-300">
-              Every rating and head-to-head comparison you make is automatically synced to your cloud account in real time.
-            </p>
+            <div>
+              <h4 class="font-display font-bold text-lg text-white">
+                Signed in as <span id="loggedInUsernameText" class="text-emerald-300">@user</span>
+              </h4>
+              <p class="text-xs text-slate-300 mt-0.5">
+                Every rating, review, and follow is automatically synced to your cloud account.
+              </p>
+            </div>
+            <!-- Followers / Following Summary inside Account Modal -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button
+                id="btnModalViewFollowing"
+                type="button"
+                class="p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-slate-800 text-center transition"
+              >
+                <div id="modalFollowingCount" class="font-display font-bold text-base text-sky-300">0</div>
+                <div class="text-[10px] uppercase tracking-wider text-slate-400">Following</div>
+              </button>
+              <button
+                id="btnModalViewFollowers"
+                type="button"
+                class="p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-slate-800 text-center transition"
+              >
+                <div id="modalFollowersCount" class="font-display font-bold text-base text-purple-300">0</div>
+                <div class="text-[10px] uppercase tracking-wider text-slate-400">Followers</div>
+              </button>
+            </div>
+            <div class="text-[11px] text-slate-400 bg-slate-950/70 rounded-xl px-3 py-2 border border-slate-800/80 text-left flex items-center justify-between gap-2">
+              <span><i class="fa-solid fa-lightbulb text-amber-400 mr-1.5"></i>Saved Password Hint:</span>
+              <span id="loggedInHintText" class="font-medium text-amber-200 truncate">—</span>
+            </div>
           </div>
           <div class="flex items-center justify-between gap-3">
             <button
@@ -878,9 +940,20 @@
             </div>
 
             <div>
-              <label for="authPasswordInput" class="block text-xs font-semibold text-slate-300 mb-1">
-                Password / Secret PIN
-              </label>
+              <div class="flex items-center justify-between mb-1">
+                <label for="authPasswordInput" class="block text-xs font-semibold text-slate-300">
+                  Password / Secret PIN
+                </label>
+                <button
+                  id="btnShowPasswordHint"
+                  type="button"
+                  class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition"
+                  title="Forgot your password? Click to view the password hint for this username"
+                >
+                  <i class="fa-regular fa-lightbulb"></i>
+                  <span>Hint</span>
+                </button>
+              </div>
               <div class="relative">
                 <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                 <input
@@ -891,6 +964,30 @@
                   autocomplete="current-password"
                   placeholder="At least 4 characters"
                   class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-indigo-500 focus:outline-none text-sm text-white placeholder-slate-500"
+                />
+              </div>
+            </div>
+
+            <!-- Password Hint Display Box (Shown when user clicks "Hint" on Login) -->
+            <div id="authHintDisplayBox" class="hidden p-3 rounded-xl bg-amber-950/60 border border-amber-500/40 text-xs text-amber-200 flex items-start gap-2.5">
+              <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5 shrink-0"></i>
+              <div id="authHintDisplayText" class="flex-1 review-comment-wrap"></div>
+            </div>
+
+            <!-- Required Password Hint Input (Shown when creating an account) -->
+            <div id="authHintInputWrapper" class="hidden space-y-1">
+              <label for="authPasswordHintInput" class="flex items-center justify-between text-xs font-semibold text-slate-300">
+                <span>Password Hint <span class="text-rose-400">* (Required)</span></span>
+                <span class="text-[10px] font-normal text-slate-400">Shown if you click "Hint" when logging in</span>
+              </label>
+              <div class="relative">
+                <i class="fa-regular fa-lightbulb absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-400 text-xs"></i>
+                <input
+                  id="authPasswordHintInput"
+                  type="text"
+                  maxlength="100"
+                  placeholder="e.g. First anime I ever watched + birth year"
+                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-sm text-white placeholder-slate-500"
                 />
               </div>
             </div>
@@ -911,6 +1008,81 @@
             Logging in loads your saved anime list from the cloud so you can continue rating from any device.
           </p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 5: FOLLOWERS & FOLLOWING LIST MODAL                             -->
+  <!-- ===================================================================== -->
+  <div
+    id="socialModalOverlay"
+    class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+  >
+    <div class="bg-slate-900 border border-slate-700/90 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-pop my-8">
+      <div class="px-6 py-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-500/40 text-sky-300 flex items-center justify-center">
+            <i class="fa-solid fa-user-group"></i>
+          </div>
+          <div>
+            <h3 id="socialModalTitle" class="font-display font-bold text-base sm:text-lg text-white">
+              Connections
+            </h3>
+            <p id="socialModalSubtitle" class="text-[11px] text-slate-400">
+              Following &amp; Followers
+            </p>
+          </div>
+        </div>
+        <button
+          id="btnCloseSocialModal"
+          type="button"
+          class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- Switcher between Following and Followers -->
+        <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800">
+          <button
+            id="tabSocialFollowing"
+            type="button"
+            class="py-2 rounded-lg text-xs font-bold transition bg-sky-600 text-white shadow"
+          >
+            Following (<span id="socialModalFollowingCount">0</span>)
+          </button>
+          <button
+            id="tabSocialFollowers"
+            type="button"
+            class="py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white"
+          >
+            Followers (<span id="socialModalFollowersCount">0</span>)
+          </button>
+        </div>
+
+        <!-- Quick Add User to Follow Input -->
+        <form id="quickFollowForm" class="flex gap-2" onsubmit="return false;">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-at absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input
+              id="quickFollowUsernameInput"
+              type="text"
+              placeholder="Follow a username (e.g. otaku_king)..."
+              class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none text-xs text-white placeholder-slate-500"
+            />
+          </div>
+          <button
+            type="submit"
+            class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shrink-0"
+          >
+            + Follow
+          </button>
+        </form>
+
+        <!-- Dynamic User List -->
+        <div id="socialModalListContainer" class="max-h-80 overflow-y-auto space-y-2 pr-1"></div>
       </div>
     </div>
   </div>
@@ -1398,14 +1570,112 @@
     let appState = {
       items: [],
       battleHistory: [],
-      activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'history' | 'user-search'
+      activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'history' | 'activity' | 'user-search'
       tierFilter: null,         // null or 0..9
       searchQuery: "",
       accountUsername: null,
       accountPasswordHash: null,
-      searchedUserResult: null, // Holds { username, items, battleHistory, updatedAt } or { error }
+      accountPasswordHint: "",
+      following: [],            // Array of usernames this user follows
+      followers: [],            // Array of usernames who follow this user
+      activityFeedItems: [],    // Aggregated recent items from followed users
+      activityFeedLoading: false,
+      activityFilterUser: "ALL", // 'ALL' or specific username
+      activityReviewsOnly: false,
+      searchedUserResult: null, // Holds { username, items, battleHistory, following, followers, updatedAt } or { error }
       searchedUserLoading: false,
       lastSearchedUsername: ""
+    };
+
+    // Built-in Community Demo Profiles (so users can test Following, Followers & Activity Feed immediately)
+    const DEMO_COMMUNITY_USERS = {
+      otaku_king: {
+        username: "otaku_king",
+        passwordHint: "El Psy Kongroo",
+        followers: ["frieren_fan", "shonen_critic"],
+        following: ["frieren_fan"],
+        items: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 52991),
+            baseTier: 9,
+            rankSlot: 1,
+            finalScore: 10.0,
+            comparisonsCount: 3,
+            comment: "Frieren is an absolute masterpiece in storytelling, atmosphere, and emotional weight. The way it explores time and memory after the main quest is unlike any other fantasy anime.",
+            ratedAt: Date.now() - 45 * 60 * 1000 // 45 mins ago
+          },
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 58811),
+            baseTier: 8,
+            rankSlot: 1,
+            finalScore: 8.5,
+            comparisonsCount: 2,
+            comment: "Tougen Anki's blood eclipse powers and Oni vs Momotaro battles go super hard! Studio Hibari delivered great dark action scenes.",
+            ratedAt: Date.now() - 2 * 3600 * 1000 // 2 hours ago
+          },
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 57334),
+            baseTier: 9,
+            rankSlot: 0,
+            finalScore: 9.0,
+            comparisonsCount: 2,
+            comment: "Dandadan has the wildest animation energy of the decade. Episode 7 made me cry out of nowhere!",
+            ratedAt: Date.now() - 26 * 3600 * 1000 // 1 day ago
+          }
+        ]
+      },
+      frieren_fan: {
+        username: "frieren_fan",
+        passwordHint: "Zoltraak",
+        followers: ["otaku_king"],
+        following: ["otaku_king", "shonen_critic"],
+        items: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 47917),
+            baseTier: 9,
+            rankSlot: 0,
+            finalScore: 10.0,
+            comparisonsCount: 1,
+            comment: "Bocchi the Rock creative visual gags and live concert performances are 10/10 peak comedy and music.",
+            ratedAt: Date.now() - 1 * 3600 * 1000 // 1 hour ago
+          },
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 58939),
+            baseTier: 8,
+            rankSlot: 0,
+            finalScore: 8.0,
+            comparisonsCount: 1,
+            comment: "Sakamoto Days convenience store fight choreography is pure fun from start to finish.",
+            ratedAt: Date.now() - 5 * 3600 * 1000 // 5 hours ago
+          }
+        ]
+      },
+      shonen_critic: {
+        username: "shonen_critic",
+        passwordHint: "Bankai",
+        followers: ["frieren_fan"],
+        following: ["otaku_king"],
+        items: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 11061),
+            baseTier: 9,
+            rankSlot: 0,
+            finalScore: 10.0,
+            comparisonsCount: 2,
+            comment: "Hunter x Hunter's Chimera Ant arc and Nen power system remain undefeated in battle shonen history.",
+            ratedAt: Date.now() - 3 * 3600 * 1000 // 3 hours ago
+          },
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 59062),
+            baseTier: 7,
+            rankSlot: 0,
+            finalScore: 7.0,
+            comparisonsCount: 1,
+            comment: "Gachiakuta has gritty art direction and a super unique world concept.",
+            ratedAt: Date.now() - 49 * 3600 * 1000 // 2 days ago
+          }
+        ]
+      }
     };
 
     // Pending rating / H2H Arena session state
@@ -1413,6 +1683,29 @@
     let modalSelectedBaseTier = null;
     let arenaSession = null;
     let authModalMode = "login"; // 'login' | 'register'
+    let socialModalTargetUser = null; // null means current user, or an object { username, following, followers }
+    let socialModalActiveTab = "following"; // 'following' | 'followers'
+
+    /**
+     * Formats a timestamp into a human-friendly relative time string
+     * e.g., "Just now", "12 minutes ago", "1 hour ago", "2 hours ago", "1 day ago"
+     */
+    function formatRelativeTime(timestamp) {
+      if (!timestamp || typeof timestamp !== "number") return "Recently";
+      const diffMs = Math.max(0, Date.now() - timestamp);
+      const seconds = Math.floor(diffMs / 1000);
+      if (seconds < 60) return "Just now";
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+      const months = Math.floor(days / 30);
+      if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+      const years = Math.floor(days / 365);
+      return `${years} year${years === 1 ? "" : "s"} ago`;
+    }
 
     async function hashCredential(rawText) {
       const encoder = new TextEncoder();
@@ -1449,6 +1742,9 @@
           localStorage.setItem("aar_account_session", JSON.stringify({
             accountUsername: appState.accountUsername,
             accountPasswordHash: appState.accountPasswordHash,
+            accountPasswordHint: appState.accountPasswordHint || "",
+            following: appState.following || [],
+            followers: appState.followers || [],
             items: appState.items,
             battleHistory: appState.battleHistory
           }));
@@ -1488,6 +1784,30 @@
       const demoBanner = document.getElementById("demoModeBanner");
       const btnLoadStarter = document.getElementById("btnLoadStarter");
       const statModeSubtext = document.getElementById("statModeSubtext");
+      const headerSocialCountLabel = document.getElementById("headerSocialCountLabel");
+      const badgeFollowingCount = document.getElementById("badgeFollowingCount");
+      const modalFollowingCount = document.getElementById("modalFollowingCount");
+      const modalFollowersCount = document.getElementById("modalFollowersCount");
+      const loggedInHintText = document.getElementById("loggedInHintText");
+
+      const followingLen = Array.isArray(appState.following) ? appState.following.length : 0;
+      const followersLen = Array.isArray(appState.followers) ? appState.followers.length : 0;
+
+      if (headerSocialCountLabel) {
+        headerSocialCountLabel.textContent = `${followingLen} Following • ${followersLen} Follower${followersLen === 1 ? "" : "s"}`;
+      }
+      if (badgeFollowingCount) {
+        badgeFollowingCount.textContent = String(followingLen);
+      }
+      if (modalFollowingCount) {
+        modalFollowingCount.textContent = String(followingLen);
+      }
+      if (modalFollowersCount) {
+        modalFollowersCount.textContent = String(followersLen);
+      }
+      if (loggedInHintText) {
+        loggedInHintText.textContent = appState.accountPasswordHint || "No hint set";
+      }
 
       if (uidEl) {
         uidEl.textContent = appState.accountUsername
@@ -1507,26 +1827,40 @@
         if (formPanel) formPanel.classList.add("hidden");
         if (demoBanner) demoBanner.classList.add("hidden");
         if (btnLoadStarter) btnLoadStarter.classList.add("hidden");
-        if (statModeSubtext) statModeSubtext.textContent = `Saved to @${appState.accountUsername}`;
+        if (statModeSubtext) statModeSubtext.textContent = `@${appState.accountUsername}'s saved list`;
       } else {
         if (dotEl) dotEl.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
         if (labelEl) labelEl.textContent = "Demo Mode • Sign In";
         if (badgeEl) {
-          badgeEl.textContent = "Demo Mode (Unsaved)";
+          badgeEl.textContent = "Interactive Demo Mode (Unsaved)";
           badgeEl.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
         }
         if (loggedInPanel) loggedInPanel.classList.add("hidden");
         if (formPanel) formPanel.classList.remove("hidden");
         if (demoBanner) demoBanner.classList.remove("hidden");
         if (btnLoadStarter) btnLoadStarter.classList.remove("hidden");
-        if (statModeSubtext) statModeSubtext.textContent = "Demo Mode (Not Saved)";
+        if (statModeSubtext) statModeSubtext.textContent = "Demo Mode (Unsaved)";
+      }
+    }
+
+    function migrateAndRecalculateAllItems() {
+      appState.items.forEach(it => {
+        if (it.baseTier >= 10) {
+          it.baseTier = 9;
+          it.rankSlot = (it.rankSlot || 0) + 100;
+        }
+        it.baseTier = Math.min(9, Math.max(0, Number(it.baseTier) || 0));
+        if (typeof it.comment !== "string") {
+          it.comment = "";
+        }
+      });
+      for (let t = 0; t <= 9; t++) {
+        recalculateScoresInTier(t);
       }
     }
 
     async function initCloudStorageAndAuth() {
-      // Start in Demo Mode by default until verified account login
-      seedDefaultStarterData(false);
-      updateAuthHeaderUI();
+      const savedCreds = getSavedAccountCredentials();
 
       try {
         const rawConfig = CUSTOM_FIREBASE_CONFIG || (
@@ -1536,6 +1870,8 @@
         );
 
         if (!rawConfig) {
+          seedDefaultStarterData(false);
+          updateAuthHeaderUI();
           return;
         }
 
@@ -1548,61 +1884,62 @@
         }).catch(() => {});
 
         try {
-          if (typeof __initial_auth_token !== "undefined" && __initial_auth_token && !CUSTOM_FIREBASE_CONFIG) {
+          if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
             await signInWithCustomToken(auth, __initial_auth_token);
           } else {
             await signInAnonymously(auth);
           }
           currentUser = auth.currentUser;
-        } catch (authErr) {
-          currentUser = { uid: getOrCreateDeviceUid() };
-        }
-
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            currentUser = user;
+          onAuthStateChanged(auth, (user) => {
+            if (user) currentUser = user;
             updateAuthHeaderUI();
+          });
+        } catch (authErr) {
+          console.warn("Firebase Auth note (using device UID):", authErr.message);
+          currentUser = { uid: getOrCreateDeviceUid(), isLocalFallback: true };
+        }
+
+        if (savedCreds && savedCreds.accountUsername && savedCreds.accountPasswordHash) {
+          const ok = await connectNamedAccount(savedCreds.accountUsername, savedCreds.accountPasswordHash, false);
+          if (ok) {
+            updateAuthHeaderUI();
+            return;
           }
-        });
-
-        // If the user was already logged into a named account on this browser, restore their account session
-        const savedAccount = getSavedAccountCredentials();
-        if (savedAccount && savedAccount.accountUsername && savedAccount.accountPasswordHash) {
-          await connectNamedAccount(savedAccount.accountUsername, savedAccount.accountPasswordHash, false);
         }
+
+        seedDefaultStarterData(false);
+        updateAuthHeaderUI();
       } catch (err) {
-        console.warn("Cloud storage initialization warning:", err);
+        console.warn("Cloud storage initialization fallback:", err);
+        seedDefaultStarterData(false);
+        updateAuthHeaderUI();
       }
     }
 
-    function migrateAndRecalculateAllItems() {
-      // Migrate any legacy baseTier === 10 items into baseTier 9 (9+ tier)
-      appState.items.forEach(it => {
-        if (it.baseTier >= 10) {
-          it.baseTier = 9;
-        } else if (it.baseTier < 0 || typeof it.baseTier !== "number") {
-          it.baseTier = 0;
-        }
-        if (typeof it.comment !== "string") {
-          it.comment = "";
-        }
-      });
-      for (let t = 0; t <= 9; t++) {
-        recalculateScoresInTier(t);
-      }
-    }
-
-    function applyLoadedListState(itemsPayload, historyPayload) {
+    function applyLoadedListState(itemsPayload, historyPayload, extraData = null) {
       isApplyingRemoteUpdate = true;
       try {
         const parsedItems = typeof itemsPayload === "string" ? JSON.parse(itemsPayload) : itemsPayload;
         const parsedHistory = typeof historyPayload === "string" ? JSON.parse(historyPayload) : historyPayload;
+
+        if (extraData && typeof extraData === "object") {
+          if (typeof extraData.passwordHint === "string") {
+            appState.accountPasswordHint = extraData.passwordHint;
+          }
+          if (Array.isArray(extraData.following)) {
+            appState.following = [...new Set(extraData.following.map(u => normalizeUsername(u)).filter(Boolean))];
+          }
+          if (Array.isArray(extraData.followers)) {
+            appState.followers = [...new Set(extraData.followers.map(u => normalizeUsername(u)).filter(Boolean))];
+          }
+        }
 
         if (Array.isArray(parsedItems)) {
           appState.items = parsedItems;
           appState.battleHistory = Array.isArray(parsedHistory) ? parsedHistory : [];
           migrateAndRecalculateAllItems();
           saveAccountSessionToLocal();
+          updateAuthHeaderUI();
           renderAllViews();
         }
       } catch (e) {
@@ -1633,7 +1970,10 @@
         updatedAt: Date.now(),
         ownerUid: effectiveUid,
         username: appState.accountUsername,
-        passwordHash: appState.accountPasswordHash
+        passwordHash: appState.accountPasswordHash,
+        passwordHint: appState.accountPasswordHint || "",
+        following: Array.isArray(appState.following) ? appState.following : [],
+        followers: Array.isArray(appState.followers) ? appState.followers : []
       };
 
       try {
@@ -1667,7 +2007,11 @@
 
       appState.accountUsername = cleanUser;
       appState.accountPasswordHash = passwordHash;
-      applyLoadedListState(data.items || "[]", data.battleHistory || "[]");
+      appState.accountPasswordHint = data.passwordHint || "";
+      appState.following = Array.isArray(data.following) ? data.following : [];
+      appState.followers = Array.isArray(data.followers) ? data.followers : [];
+
+      applyLoadedListState(data.items || "[]", data.battleHistory || "[]", data);
       saveAccountSessionToLocal();
       updateAuthHeaderUI();
 
@@ -1680,7 +2024,7 @@
           if (isApplyingRemoteUpdate) return;
           if (docSnap.exists()) {
             const d = docSnap.data();
-            applyLoadedListState(d.items, d.battleHistory);
+            applyLoadedListState(d.items, d.battleHistory, d);
           }
         },
         (err) => {
@@ -1694,16 +2038,71 @@
       return true;
     }
 
+    /**
+     * Fetches and displays the password hint for the username typed in the Login modal
+     */
+    async function handleShowPasswordHint() {
+      const usernameInput = document.getElementById("authUsernameInput");
+      const hintBox = document.getElementById("authHintDisplayBox");
+      const hintText = document.getElementById("authHintDisplayText");
+      const errorBox = document.getElementById("authErrorBox");
+
+      errorBox.classList.add("hidden");
+      const cleanUser = normalizeUsername(usernameInput.value);
+
+      if (!cleanUser || cleanUser.length < 3) {
+        hintBox.classList.remove("hidden");
+        hintText.innerHTML = `Please enter your <strong>Username</strong> above first, then click <strong>Hint</strong> to see your password hint.`;
+        usernameInput.focus();
+        return;
+      }
+
+      hintBox.classList.remove("hidden");
+      hintText.textContent = `Looking up password hint for @${cleanUser}...`;
+
+      // Check built-in demo community accounts first
+      if (DEMO_COMMUNITY_USERS[cleanUser] && DEMO_COMMUNITY_USERS[cleanUser].passwordHint) {
+        hintText.innerHTML = `Password Hint for <strong>@${escapeHtml(cleanUser)}</strong>: <span class="text-white font-semibold">"${escapeHtml(DEMO_COMMUNITY_USERS[cleanUser].passwordHint)}"</span>`;
+        return;
+      }
+
+      if (!db) {
+        hintText.textContent = "Cloud database is not initialized.";
+        return;
+      }
+
+      try {
+        const accountRef = getNamedAccountDocRef(cleanUser);
+        const snap = await getDoc(accountRef);
+        if (!snap.exists()) {
+          hintText.innerHTML = `No account found with username <strong>@${escapeHtml(cleanUser)}</strong>.`;
+          return;
+        }
+        const data = snap.data();
+        if (data.passwordHint && String(data.passwordHint).trim().length > 0) {
+          hintText.innerHTML = `Password Hint for <strong>@${escapeHtml(cleanUser)}</strong>: <span class="text-white font-semibold">"${escapeHtml(data.passwordHint)}"</span>`;
+        } else {
+          hintText.innerHTML = `Account <strong>@${escapeHtml(cleanUser)}</strong> was created before password hints were required and does not have a hint saved.`;
+        }
+      } catch (err) {
+        hintText.textContent = "Could not fetch password hint right now. Please try again.";
+      }
+    }
+
     async function handleAuthFormSubmit() {
       const usernameInput = document.getElementById("authUsernameInput");
       const passwordInput = document.getElementById("authPasswordInput");
+      const hintInput = document.getElementById("authPasswordHintInput");
       const errorBox = document.getElementById("authErrorBox");
+      const hintDisplayBox = document.getElementById("authHintDisplayBox");
       const submitBtn = document.getElementById("btnSubmitAuthForm");
 
       errorBox.classList.add("hidden");
+      if (hintDisplayBox) hintDisplayBox.classList.add("hidden");
 
       const cleanUser = normalizeUsername(usernameInput.value);
       const rawPass = passwordInput.value;
+      const rawHint = hintInput ? hintInput.value.trim() : "";
 
       if (cleanUser.length < 3) {
         errorBox.textContent = "Username must be at least 3 letters or numbers.";
@@ -1714,6 +2113,20 @@
         errorBox.textContent = "Password / PIN must be at least 4 characters.";
         errorBox.classList.remove("hidden");
         return;
+      }
+      if (authModalMode === "register") {
+        if (!rawHint || rawHint.length < 2) {
+          errorBox.textContent = "Please provide a Password Hint (at least 2 characters) so you can recover your password if you forget it.";
+          errorBox.classList.remove("hidden");
+          if (hintInput) hintInput.focus();
+          return;
+        }
+        if (rawHint.toLowerCase() === rawPass.trim().toLowerCase()) {
+          errorBox.textContent = "Your password hint cannot be identical to your actual password.";
+          errorBox.classList.remove("hidden");
+          if (hintInput) hintInput.focus();
+          return;
+        }
       }
       if (!db) {
         errorBox.textContent = "Cloud database is not initialized.";
@@ -1740,14 +2153,18 @@
           appState.tierFilter = null;
           appState.accountUsername = cleanUser;
           appState.accountPasswordHash = passHash;
+          appState.accountPasswordHint = rawHint;
+          appState.following = [];
+          appState.followers = [];
 
           await saveStateToStorage();
           await connectNamedAccount(cleanUser, passHash, false);
           updateAuthHeaderUI();
           renderAllViews();
           passwordInput.value = "";
+          if (hintInput) hintInput.value = "";
           document.getElementById("authModalOverlay").classList.add("hidden");
-          showToast(`Account @${cleanUser} created! Demo rankings erased — ready for your real list!`, "emerald");
+          showToast(`Account @${cleanUser} created with password hint! Demo rankings erased — ready for your real list!`, "emerald");
         } else {
           if (!existingSnap.exists()) {
             errorBox.textContent = `No account found for "@${cleanUser}". Switch to "Create Account" to register it!`;
@@ -1757,7 +2174,7 @@
 
           const data = existingSnap.data();
           if (data.passwordHash !== passHash) {
-            errorBox.textContent = "Incorrect password / PIN for this username.";
+            errorBox.textContent = "Incorrect password / PIN. Click the 'Hint' button above if you need a reminder!";
             errorBox.classList.remove("hidden");
             return;
           }
@@ -1788,6 +2205,9 @@
 
       appState.accountUsername = null;
       appState.accountPasswordHash = null;
+      appState.accountPasswordHint = "";
+      appState.following = [];
+      appState.followers = [];
       appState.tierFilter = null;
       saveAccountSessionToLocal();
 
@@ -1795,6 +2215,325 @@
       seedDefaultStarterData(false);
       updateAuthHeaderUI();
       showToast("Signed out. Returned to unsaved Demo Mode.", "indigo");
+    }
+
+    /*************************************************************************
+     * 3B. FOLLOWING, FOLLOWERS & ACTIVITY FEED ENGINE
+     *************************************************************************/
+    function isFollowingUser(targetUsername) {
+      const clean = normalizeUsername(targetUsername);
+      return Array.isArray(appState.following) && appState.following.includes(clean);
+    }
+
+    /**
+     * Fetches a user's profile data (from Firestore or built-in Demo Community profiles)
+     */
+    async function fetchUserProfileData(rawUsername) {
+      const cleanUser = normalizeUsername(rawUsername);
+      if (!cleanUser) return null;
+
+      if (appState.accountUsername && appState.accountUsername === cleanUser) {
+        return {
+          username: cleanUser,
+          items: appState.items,
+          battleHistory: appState.battleHistory,
+          following: appState.following || [],
+          followers: appState.followers || [],
+          updatedAt: Date.now()
+        };
+      }
+
+      if (db) {
+        try {
+          const accountRef = getNamedAccountDocRef(cleanUser);
+          const snap = await getDoc(accountRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
+            return {
+              username: cleanUser,
+              items: Array.isArray(parsedItems) ? parsedItems : [],
+              following: Array.isArray(data.following) ? data.following : [],
+              followers: Array.isArray(data.followers) ? data.followers : [],
+              passwordHash: data.passwordHash,
+              updatedAt: data.updatedAt || Date.now()
+            };
+          }
+        } catch (err) {
+          console.warn("Error fetching user profile from Firestore:", err);
+        }
+      }
+
+      // Check Demo Community fallback profiles
+      if (DEMO_COMMUNITY_USERS[cleanUser]) {
+        const demoProfile = DEMO_COMMUNITY_USERS[cleanUser];
+        return {
+          username: demoProfile.username,
+          items: demoProfile.items.map(it => ({ ...it })),
+          following: [...(demoProfile.following || [])],
+          followers: [...(demoProfile.followers || [])],
+          isDemoCommunity: true,
+          updatedAt: Date.now()
+        };
+      }
+
+      return null;
+    }
+
+    /**
+     * Follow or Unfollow another user and update both Following and Followers lists
+     */
+    async function toggleFollowUser(rawTargetUsername) {
+      const targetUser = normalizeUsername(rawTargetUsername);
+      if (!targetUser || targetUser.length < 3) {
+        showToast("Please enter a valid username to follow.", "amber");
+        return;
+      }
+
+      if (appState.accountUsername && targetUser === appState.accountUsername) {
+        showToast("You cannot follow your own username!", "amber");
+        return;
+      }
+
+      const myActorName = appState.accountUsername || "demo_visitor";
+      const currentlyFollowing = isFollowingUser(targetUser);
+
+      if (!currentlyFollowing) {
+        // Verify the target user exists first
+        const targetProfile = await fetchUserProfileData(targetUser);
+        if (!targetProfile) {
+          showToast(`No user found with username "@${targetUser}".`, "rose");
+          return;
+        }
+
+        appState.following = [...new Set([...(appState.following || []), targetUser])];
+
+        // Update target user's followers list in memory/demo & in Firestore
+        if (DEMO_COMMUNITY_USERS[targetUser]) {
+          DEMO_COMMUNITY_USERS[targetUser].followers = [
+            ...new Set([...(DEMO_COMMUNITY_USERS[targetUser].followers || []), myActorName])
+          ];
+        }
+        if (appState.searchedUserResult && appState.searchedUserResult.username === targetUser) {
+          appState.searchedUserResult.followers = [
+            ...new Set([...(appState.searchedUserResult.followers || []), myActorName])
+          ];
+        }
+
+        if (db && appState.accountUsername && !targetProfile.isDemoCommunity) {
+          try {
+            const targetRef = getNamedAccountDocRef(targetUser);
+            const updatedFollowers = [...new Set([...(targetProfile.followers || []), appState.accountUsername])];
+            await setDoc(targetRef, {
+              followers: updatedFollowers,
+              passwordHash: targetProfile.passwordHash
+            }, { merge: true });
+          } catch (e) {
+            console.warn("Could not update target user's followers array:", e);
+          }
+        }
+
+        showToast(`Now following @${targetUser}! Their ratings will appear in your Activity Feed.`, "emerald");
+      } else {
+        appState.following = (appState.following || []).filter(u => u !== targetUser);
+
+        if (DEMO_COMMUNITY_USERS[targetUser]) {
+          DEMO_COMMUNITY_USERS[targetUser].followers = (DEMO_COMMUNITY_USERS[targetUser].followers || []).filter(
+            u => u !== myActorName
+          );
+        }
+        if (appState.searchedUserResult && appState.searchedUserResult.username === targetUser) {
+          appState.searchedUserResult.followers = (appState.searchedUserResult.followers || []).filter(
+            u => u !== myActorName
+          );
+        }
+
+        if (db && appState.accountUsername) {
+          try {
+            const targetProfile = await fetchUserProfileData(targetUser);
+            if (targetProfile && !targetProfile.isDemoCommunity) {
+              const targetRef = getNamedAccountDocRef(targetUser);
+              const updatedFollowers = (targetProfile.followers || []).filter(u => u !== appState.accountUsername);
+              await setDoc(targetRef, {
+                followers: updatedFollowers,
+                passwordHash: targetProfile.passwordHash
+              }, { merge: true });
+            }
+          } catch (e) {
+            console.warn("Could not remove follower from target user:", e);
+          }
+        }
+
+        showToast(`Unfollowed @${targetUser}.`, "indigo");
+      }
+
+      await saveStateToStorage();
+      updateAuthHeaderUI();
+
+      // Refresh Social Modal if open
+      const socialOverlay = document.getElementById("socialModalOverlay");
+      if (socialOverlay && !socialOverlay.classList.contains("hidden")) {
+        renderSocialModalContent();
+      }
+
+      // Refresh Activity Feed or User Search if active
+      if (appState.activeTab === "activity") {
+        await loadFollowingActivityFeed();
+      } else {
+        renderMainCollectionArea();
+      }
+    }
+
+    function openSocialModal(targetProfile = null, initialTab = "following") {
+      socialModalTargetUser = targetProfile;
+      socialModalActiveTab = initialTab;
+      document.getElementById("socialModalOverlay").classList.remove("hidden");
+      renderSocialModalContent();
+    }
+
+    function renderSocialModalContent() {
+      const titleEl = document.getElementById("socialModalTitle");
+      const subtitleEl = document.getElementById("socialModalSubtitle");
+      const tabFollowing = document.getElementById("tabSocialFollowing");
+      const tabFollowers = document.getElementById("tabSocialFollowers");
+      const followingCountSpan = document.getElementById("socialModalFollowingCount");
+      const followersCountSpan = document.getElementById("socialModalFollowersCount");
+      const listContainer = document.getElementById("socialModalListContainer");
+
+      const isSelf = !socialModalTargetUser || (appState.accountUsername && socialModalTargetUser.username === appState.accountUsername);
+      const displayUsername = isSelf
+        ? (appState.accountUsername ? `@${appState.accountUsername}` : "Your Demo Session")
+        : `@${socialModalTargetUser.username}`;
+
+      const followingList = isSelf
+        ? (appState.following || [])
+        : (socialModalTargetUser.following || []);
+      const followersList = isSelf
+        ? (appState.followers || [])
+        : (socialModalTargetUser.followers || []);
+
+      titleEl.textContent = `${displayUsername}'s Connections`;
+      subtitleEl.textContent = `${followingList.length} Following • ${followersList.length} Follower${followersList.length === 1 ? "" : "s"}`;
+      followingCountSpan.textContent = String(followingList.length);
+      followersCountSpan.textContent = String(followersList.length);
+
+      if (socialModalActiveTab === "following") {
+        tabFollowing.className = "py-2 rounded-lg text-xs font-bold transition bg-sky-600 text-white shadow";
+        tabFollowers.className = "py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+      } else {
+        tabFollowers.className = "py-2 rounded-lg text-xs font-bold transition bg-sky-600 text-white shadow";
+        tabFollowing.className = "py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+      }
+
+      const activeArray = socialModalActiveTab === "following" ? followingList : followersList;
+      listContainer.innerHTML = "";
+
+      if (activeArray.length === 0) {
+        listContainer.innerHTML = `
+          <div class="p-6 rounded-2xl bg-slate-950/60 border border-slate-800 text-center space-y-2">
+            <i class="fa-solid fa-user-plus text-slate-500 text-xl"></i>
+            <p class="text-xs text-slate-400">
+              ${socialModalActiveTab === "following"
+                ? `${escapeHtml(displayUsername)} isn't following anyone yet.`
+                : `${escapeHtml(displayUsername)} doesn't have any followers yet.`}
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      activeArray.forEach(uname => {
+        const cleanU = normalizeUsername(uname);
+        const iFollowThem = isFollowingUser(cleanU);
+        const isMe = appState.accountUsername && cleanU === appState.accountUsername;
+
+        const row = document.createElement("div");
+        row.className = "p-3 rounded-2xl bg-slate-950/90 border border-slate-800 flex items-center justify-between gap-3";
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 flex items-center justify-center text-xs font-bold shrink-0">
+              <i class="fa-solid fa-user-astronaut"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="font-display font-bold text-sm text-white truncate">@${escapeHtml(cleanU)}</div>
+              <div class="text-[10px] text-slate-400">${isMe ? "You" : (iFollowThem ? "Following" : "User Profile")}</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              data-action="view-user"
+              class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition"
+            >
+              View List
+            </button>
+            ${!isMe
+              ? `<button
+                   type="button"
+                   data-action="toggle-follow"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                     iFollowThem
+                       ? "bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 border border-slate-700"
+                       : "bg-sky-600 hover:bg-sky-500 text-white"
+                   }"
+                 >
+                   ${iFollowThem ? "Unfollow" : "+ Follow"}
+                 </button>`
+              : ""
+            }
+          </div>
+        `;
+
+        row.querySelector('[data-action="view-user"]').addEventListener("click", () => {
+          document.getElementById("socialModalOverlay").classList.add("hidden");
+          appState.activeTab = "user-search";
+          updateNavTabStyles();
+          lookupUserListByUsername(cleanU);
+        });
+
+        const btnFollow = row.querySelector('[data-action="toggle-follow"]');
+        if (btnFollow) {
+          btnFollow.addEventListener("click", () => {
+            toggleFollowUser(cleanU);
+          });
+        }
+
+        listContainer.appendChild(row);
+      });
+    }
+
+    /**
+     * Loads all recent anime ratings/reviews from everyone in `appState.following`
+     */
+    async function loadFollowingActivityFeed() {
+      appState.activityFeedLoading = true;
+      renderMainCollectionArea();
+
+      const followingUsers = Array.isArray(appState.following) ? appState.following : [];
+      const feedEntries = [];
+
+      const profiles = await Promise.all(
+        followingUsers.map(uname => fetchUserProfileData(uname))
+      );
+
+      profiles.forEach(profile => {
+        if (!profile || !Array.isArray(profile.items)) return;
+        profile.items.forEach(item => {
+          feedEntries.push({
+            username: profile.username,
+            followersCount: Array.isArray(profile.followers) ? profile.followers.length : 0,
+            anime: item,
+            timestamp: item.ratedAt || profile.updatedAt || Date.now()
+          });
+        });
+      });
+
+      // Sort newest first
+      feedEntries.sort((a, b) => b.timestamp - a.timestamp);
+      appState.activityFeedItems = feedEntries;
+      appState.activityFeedLoading = false;
+      renderMainCollectionArea();
     }
 
     /*************************************************************************
@@ -2950,6 +3689,12 @@
         return;
       }
 
+      if (appState.activeTab === "activity") {
+        if (filterWrapper) filterWrapper.classList.add("hidden");
+        renderActivityFeedTab(container);
+        return;
+      }
+
       if (filterWrapper) filterWrapper.classList.remove("hidden");
 
       if (appState.activeTab === "history") {
@@ -3069,12 +3814,16 @@
                   ? `<span class="text-pink-300"><i class="fa-solid fa-scale-balanced mr-1"></i>${item.comparisonsCount} H2H battle${item.comparisonsCount === 1 ? "" : "s"}</span>`
                   : `<span class="text-slate-500">Solo in tier</span>`
                 }
+                ${item.ratedAt
+                  ? `<span class="text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formatRelativeTime(item.ratedAt))}</span>`
+                  : ""
+                }
               </div>
 
               ${item.comment
-                ? `<div class="mt-1.5 px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800/90 text-xs text-slate-200 italic flex items-start gap-2">
+                ? `<div class="mt-2 px-3.5 py-2.5 rounded-xl bg-slate-950/85 border border-slate-800/90 text-xs text-slate-200 italic flex items-start gap-2 max-w-full overflow-hidden">
                      <i class="fa-solid fa-quote-left text-indigo-400/70 text-[10px] mt-1 shrink-0"></i>
-                     <span class="break-words">${escapeHtml(item.comment)}</span>
+                     <div class="flex-1 min-w-0 review-comment-wrap">${escapeHtml(item.comment)}</div>
                    </div>`
                 : ""
               }
@@ -3198,10 +3947,11 @@
                 <div class="font-bold text-sm sm:text-base text-white truncate">${escapeHtml(item.title)}</div>
                 <div class="text-xs text-slate-400">
                   Slot ${item.rankSlot + 1} in Tier ${def.display} • ${item.comparisonsCount || 0} comparisons
+                  ${item.ratedAt ? ` • ${escapeHtml(formatRelativeTime(item.ratedAt))}` : ""}
                 </div>
                 ${item.comment
-                  ? `<div class="mt-1 text-xs text-slate-300 italic bg-slate-950/70 border border-slate-800 px-2.5 py-1 rounded-lg">
-                       "${escapeHtml(item.comment)}"
+                  ? `<div class="mt-1.5 text-xs text-slate-300 italic bg-slate-950/70 border border-slate-800 px-3 py-2 rounded-xl max-w-full overflow-hidden">
+                       <div class="review-comment-wrap">"${escapeHtml(item.comment)}"</div>
                      </div>`
                   : ""
                 }
@@ -3270,7 +4020,7 @@
     }
 
     /**
-     * VIEW 3: HEAD-TO-HEAD BATTLE LOG HISTORY
+     * VIEW 3: HEAD-TO-HEAD BATTLE LOG HISTORY VIEW
      */
     function renderBattleHistoryTab(container) {
       if (appState.battleHistory.length === 0) {
@@ -3279,7 +4029,7 @@
             <i class="fa-solid fa-clock-rotate-left text-3xl text-slate-500"></i>
             <h3 class="font-display font-bold text-lg text-white">No Head-to-Head Battles Recorded Yet</h3>
             <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-              Whenever you rate two or more animes with the same base integer score (e.g., two 4/10s or two 8/10s), your comparison decisions will appear here.
+              Whenever you rate two or more animes with the same 0–9+ base score, your comparison decisions will appear here.
             </p>
           </div>
         `;
@@ -3296,13 +4046,14 @@
             : entry.outcome === "DEFENDER"
             ? entry.defenderTitle
             : "Tied";
+        const def = getTierDef(entry.baseTier);
 
         const row = document.createElement("div");
         row.className = "rounded-2xl bg-slate-900/75 border border-slate-800 p-3.5 flex flex-wrap items-center justify-between gap-3";
         row.innerHTML = `
           <div class="flex items-center gap-3">
             <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Tier ${entry.baseTier}/10
+              Tier ${def.display}/10
             </span>
             <div class="text-xs sm:text-sm text-slate-200">
               <strong class="${entry.outcome === "CANDIDATE" ? "text-emerald-300" : "text-white"}">${escapeHtml(entry.challengerTitle)}</strong>
@@ -3310,17 +4061,367 @@
               <strong class="${entry.outcome === "DEFENDER" ? "text-emerald-300" : "text-white"}">${escapeHtml(entry.defenderTitle)}</strong>
             </div>
           </div>
-          <div class="text-xs text-slate-400">
-            ${entry.outcome === "TIE"
-              ? `<span class="text-amber-300 font-semibold">Marked Equal</span>`
-              : `Winner: <strong class="text-emerald-300">${escapeHtml(winnerTitle)}</strong>`
-            }
+          <div class="text-xs text-slate-400 flex items-center gap-2">
+            <span>
+              ${entry.outcome === "TIE"
+                ? `<span class="text-amber-300 font-semibold">Marked Equal</span>`
+                : `Winner: <strong class="text-emerald-300">${escapeHtml(winnerTitle)}</strong>`
+              }
+            </span>
+            ${entry.timestamp ? `<span class="text-slate-500">• ${escapeHtml(formatRelativeTime(entry.timestamp))}</span>` : ""}
           </div>
         `;
         list.appendChild(row);
       });
 
       container.appendChild(list);
+    }
+
+    /**
+     * VIEW 3B: FOLLOWING ACTIVITY FEED PAGE (WITH RELATIVE TIMESTAMPS)
+     */
+    function renderActivityFeedTab(container) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "space-y-6";
+
+      const followingList = Array.isArray(appState.following) ? appState.following : [];
+      const followersList = Array.isArray(appState.followers) ? appState.followers : [];
+
+      // Top Header Card with Following/Followers stats & Suggested Users
+      const topCard = document.createElement("div");
+      topCard.className = "rounded-3xl bg-slate-900/80 border border-slate-800/90 p-5 sm:p-6 shadow-xl space-y-5";
+      topCard.innerHTML = `
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center text-xl shrink-0">
+              <i class="fa-solid fa-rss"></i>
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-lg sm:text-xl text-white">
+                Following Activity Feed
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-400">
+                Live stream of recent anime ratings, tier calibrations, and reviews from users you follow.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              id="btnFeedViewFollowing"
+              class="px-3.5 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-sky-300 transition flex items-center gap-1.5"
+            >
+              <i class="fa-solid fa-user-check"></i>
+              <span><strong>${followingList.length}</strong> Following</span>
+            </button>
+            <button
+              type="button"
+              id="btnFeedViewFollowers"
+              class="px-3.5 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-purple-300 transition flex items-center gap-1.5"
+            >
+              <i class="fa-solid fa-users"></i>
+              <span><strong>${followersList.length}</strong> Follower${followersList.length === 1 ? "" : "s"}</span>
+            </button>
+            <button
+              type="button"
+              id="btnRefreshActivityFeed"
+              class="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-xs font-semibold text-emerald-300 transition flex items-center gap-1.5"
+            >
+              <i class="fa-solid fa-rotate"></i>
+              <span>Refresh Feed</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Follow Bar & Suggested Community Accounts -->
+        <div class="pt-4 border-t border-slate-800/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold text-slate-400 mr-1">
+              <i class="fa-solid fa-sparkles text-amber-400 mr-1"></i>Community Users:
+            </span>
+            ${Object.keys(DEMO_COMMUNITY_USERS).map(u => {
+              const following = isFollowingUser(u);
+              return `
+                <button
+                  type="button"
+                  data-quick-follow="${escapeHtml(u)}"
+                  class="px-2.5 py-1 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 ${
+                    following
+                      ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300"
+                      : "bg-slate-950 hover:bg-slate-800 border-slate-700 text-slate-300"
+                  }"
+                >
+                  <span>@${escapeHtml(u)}</span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded ${following ? "bg-emerald-500/20 text-emerald-200" : "bg-indigo-500/20 text-indigo-300"}">
+                    ${following ? "✓ Following" : "+ Follow"}
+                  </span>
+                </button>
+              `;
+            }).join("")}
+          </div>
+
+          <form id="feedFollowUserForm" class="flex gap-2 w-full lg:w-72" onsubmit="return false;">
+            <input
+              id="feedFollowInput"
+              type="text"
+              placeholder="Follow @username..."
+              class="flex-1 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none text-xs text-white placeholder-slate-500"
+            />
+            <button
+              type="submit"
+              class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shrink-0"
+            >
+              + Follow
+            </button>
+          </form>
+        </div>
+      `;
+
+      wrapper.appendChild(topCard);
+
+      // Bind topCard buttons
+      topCard.querySelector("#btnFeedViewFollowing").addEventListener("click", () => openSocialModal(null, "following"));
+      topCard.querySelector("#btnFeedViewFollowers").addEventListener("click", () => openSocialModal(null, "followers"));
+      topCard.querySelector("#btnRefreshActivityFeed").addEventListener("click", () => loadFollowingActivityFeed());
+
+      topCard.querySelectorAll("[data-quick-follow]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          toggleFollowUser(btn.getAttribute("data-quick-follow"));
+        });
+      });
+
+      topCard.querySelector("#feedFollowUserForm").addEventListener("submit", () => {
+        const val = topCard.querySelector("#feedFollowInput").value;
+        if (val) {
+          toggleFollowUser(val);
+          topCard.querySelector("#feedFollowInput").value = "";
+        }
+      });
+
+      // Loading State
+      if (appState.activityFeedLoading) {
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "rounded-3xl bg-slate-900/50 border border-slate-800 p-12 text-center space-y-3";
+        loadingDiv.innerHTML = `
+          <i class="fa-solid fa-circle-notch fa-spin text-2xl text-emerald-400"></i>
+          <p class="text-sm text-slate-300">Loading recent rankings &amp; reviews from your following list...</p>
+        `;
+        wrapper.appendChild(loadingDiv);
+        container.appendChild(wrapper);
+        return;
+      }
+
+      // Empty Following State
+      if (followingList.length === 0) {
+        const emptyFollow = document.createElement("div");
+        emptyFollow.className = "rounded-3xl bg-slate-900/50 border border-slate-800 p-10 text-center space-y-3";
+        emptyFollow.innerHTML = `
+          <div class="w-12 h-12 rounded-2xl bg-sky-500/15 border border-sky-500/30 text-sky-300 flex items-center justify-center mx-auto text-xl">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white">You Aren't Following Anyone Yet</h4>
+          <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+            Click any of the <strong>+ Follow</strong> buttons above (like <code class="text-emerald-300">@otaku_king</code> or <code class="text-emerald-300">@frieren_fan</code>) or enter a friend's username to see their recent anime ratings and reviews here!
+          </p>
+        `;
+        wrapper.appendChild(emptyFollow);
+        container.appendChild(wrapper);
+        return;
+      }
+
+      // Filter bar for Activity Feed (Filter by followed user or Reviews Only)
+      const filterBar = document.createElement("div");
+      filterBar.className = "flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-slate-900/60 border border-slate-800/80";
+      filterBar.innerHTML = `
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-xs text-slate-400 mr-1">Filter by user:</span>
+          <button
+            type="button"
+            data-feed-user="ALL"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+              appState.activityFilterUser === "ALL" ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300 hover:text-white"
+            }"
+          >
+            All (${followingList.length})
+          </button>
+          ${followingList.map(u => `
+            <button
+              type="button"
+              data-feed-user="${escapeHtml(u)}"
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                appState.activityFilterUser === u ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300 hover:text-white"
+              }"
+            >
+              @${escapeHtml(u)}
+            </button>
+          `).join("")}
+        </div>
+
+        <label class="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            id="chkFeedReviewsOnly"
+            ${appState.activityReviewsOnly ? "checked" : ""}
+            class="rounded bg-slate-950 border-slate-700 text-indigo-500 focus:ring-0"
+          />
+          <span>Only show ratings with written reviews</span>
+        </label>
+      `;
+
+      filterBar.querySelectorAll("[data-feed-user]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          appState.activityFilterUser = btn.getAttribute("data-feed-user");
+          renderMainCollectionArea();
+        });
+      });
+
+      filterBar.querySelector("#chkFeedReviewsOnly").addEventListener("change", (e) => {
+        appState.activityReviewsOnly = e.target.checked;
+        renderMainCollectionArea();
+      });
+
+      wrapper.appendChild(filterBar);
+
+      // Filter feed items
+      const visibleFeed = (appState.activityFeedItems || []).filter(entry => {
+        if (appState.activityFilterUser !== "ALL" && entry.username !== appState.activityFilterUser) {
+          return false;
+        }
+        if (appState.activityReviewsOnly && (!entry.anime.comment || !entry.anime.comment.trim())) {
+          return false;
+        }
+        return true;
+      });
+
+      if (visibleFeed.length === 0) {
+        const emptyFeed = document.createElement("div");
+        emptyFeed.className = "rounded-3xl bg-slate-900/50 border border-slate-800 p-10 text-center text-sm text-slate-400";
+        emptyFeed.textContent = "No recent activity matches your current filter.";
+        wrapper.appendChild(emptyFeed);
+        container.appendChild(wrapper);
+        return;
+      }
+
+      const feedList = document.createElement("div");
+      feedList.className = "space-y-3.5";
+
+      visibleFeed.forEach(entry => {
+        const item = entry.anime;
+        const def = getTierDef(item.baseTier);
+        const isTenCrown = item.finalScore === 10;
+        const relTime = formatRelativeTime(entry.timestamp);
+
+        const card = document.createElement("div");
+        card.className = "rounded-2xl bg-slate-900/85 border border-slate-800/90 hover:border-slate-700 p-4 sm:p-5 transition space-y-3.5 shadow-lg";
+
+        card.innerHTML = `
+          <!-- Activity Feed Card Header: User & Relative Timestamp -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+            <div class="flex items-center gap-2.5">
+              <button
+                type="button"
+                data-action="visit-profile"
+                class="flex items-center gap-2 group text-left"
+              >
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-500/40 text-indigo-300 flex items-center justify-center text-xs font-bold">
+                  <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <div>
+                  <span class="font-display font-bold text-sm text-white group-hover:text-indigo-300 transition">
+                    @${escapeHtml(entry.username)}
+                  </span>
+                  <span class="text-xs text-slate-400 ml-1.5">
+                    ${item.comment ? "posted a review &amp; ranked" : "ranked"} an anime
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-950 text-emerald-300 border border-slate-800">
+                <i class="fa-regular fa-clock text-emerald-400"></i>
+                <span>${escapeHtml(relTime)}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Anime Info & Score Row -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3.5 min-w-0 flex-1 w-full">
+              <img
+                src="${escapeHtml(item.image)}"
+                onerror="this.onerror=null;this.src='${getFallbackPosterUrl(item.title)}';"
+                alt="${escapeHtml(item.title)}"
+                class="w-14 h-20 object-cover rounded-xl border border-slate-700 shrink-0 bg-slate-800"
+              />
+              <div class="min-w-0 flex-1 space-y-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h4 class="font-display font-bold text-base sm:text-lg text-white truncate">
+                    ${escapeHtml(item.title)}
+                  </h4>
+                  <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border ${def.badge}">
+                    Base Tier ${def.display}/10 • ${escapeHtml(def.label)}
+                  </span>
+                  ${isTenCrown
+                    ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
+                         <i class="fa-solid fa-crown text-[10px]"></i> #1 Crown (10.0)
+                       </span>`
+                    : ""
+                  }
+                </div>
+
+                <div class="text-xs text-slate-400">
+                  ${escapeHtml(String(item.type || "TV"))} (${escapeHtml(String(item.year || "—"))}) • ★ ${escapeHtml(String(item.mal_score || "N/A"))} MAL
+                </div>
+
+                ${item.comment
+                  ? `<div class="mt-2 px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-xs sm:text-sm text-slate-200 italic flex items-start gap-2.5 max-w-full overflow-hidden">
+                       <i class="fa-solid fa-quote-left text-emerald-400/70 text-xs mt-1 shrink-0"></i>
+                       <div class="flex-1 min-w-0 review-comment-wrap">${escapeHtml(item.comment)}</div>
+                     </div>`
+                  : `<p class="text-xs text-slate-500 italic">No written review note added.</p>`
+                }
+              </div>
+            </div>
+
+            <!-- Right Score & Quick Rate Button -->
+            <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60 shrink-0">
+              <div class="px-3.5 py-2 rounded-2xl bg-slate-950 border ${isTenCrown ? "border-fuchsia-500/50" : "border-slate-800"} text-right min-w-[92px]">
+                <div class="font-display font-bold text-xl ${isTenCrown ? "text-fuchsia-300" : "text-emerald-400"} leading-none">
+                  ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">
+                  @${escapeHtml(entry.username)}'s Score
+                </div>
+              </div>
+
+              <button
+                type="button"
+                data-action="rate-this-anime"
+                class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold transition"
+              >
+                + Rate on My List
+              </button>
+            </div>
+          </div>
+        `;
+
+        card.querySelector('[data-action="visit-profile"]').addEventListener("click", () => {
+          appState.activeTab = "user-search";
+          updateNavTabStyles();
+          lookupUserListByUsername(entry.username);
+        });
+
+        card.querySelector('[data-action="rate-this-anime"]').addEventListener("click", () => {
+          openBaseRatingModal(item);
+        });
+
+        feedList.appendChild(card);
+      });
+
+      wrapper.appendChild(feedList);
+      container.appendChild(wrapper);
     }
 
     /**
@@ -3339,10 +4440,10 @@
           </div>
           <div>
             <h3 class="font-display font-bold text-xl sm:text-2xl text-white">
-              Search a Username to View Their Anime Rankings
+              Search a Username to View Their Anime Rankings &amp; Follow Them
             </h3>
             <p class="text-xs sm:text-sm text-slate-400 mt-1">
-              Enter any registered username (e.g. <code class="text-purple-300 font-mono">@otaku_king</code>) to see their calibrated 0–10 leaderboard, #1 10.0/10 crown anime, and review comments.
+              Enter any registered username (or click a community profile below like <code class="text-purple-300 font-mono">@otaku_king</code>) to see their calibrated 0–10 leaderboard, followers, and reviews.
             </p>
           </div>
 
@@ -3353,7 +4454,7 @@
                 id="userLookupInput"
                 type="text"
                 value="${escapeHtml(appState.lastSearchedUsername || "")}"
-                placeholder="Enter username (e.g. otaku_king)..."
+                placeholder="Enter username (e.g. otaku_king, frieren_fan)..."
                 class="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 focus:border-purple-500 focus:outline-none text-sm text-white placeholder-slate-500"
               />
             </div>
@@ -3366,10 +4467,30 @@
               <span>View User List</span>
             </button>
           </form>
+
+          <!-- Quick Community Profile Pills -->
+          <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <span class="text-xs text-slate-400">Try viewing:</span>
+            ${Object.keys(DEMO_COMMUNITY_USERS).map(uname => `
+              <button
+                type="button"
+                data-sample-user="${escapeHtml(uname)}"
+                class="px-3 py-1 rounded-xl bg-slate-950 hover:bg-purple-950/60 text-purple-300 border border-slate-800 hover:border-purple-500/40 text-xs font-semibold transition"
+              >
+                @${escapeHtml(uname)}
+              </button>
+            `).join("")}
+          </div>
         </div>
       `;
 
       wrapper.appendChild(searchCard);
+
+      searchCard.querySelectorAll("[data-sample-user]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          lookupUserListByUsername(btn.getAttribute("data-sample-user"));
+        });
+      });
 
       // Results Area
       const resultBox = document.createElement("div");
@@ -3400,39 +4521,90 @@
             ? (userItems.reduce((acc, i) => acc + i.finalScore, 0) / userItems.length).toFixed(2)
             : "—";
           const topAnime = userItems[0] ? `${userItems[0].title} (${formatScore(userItems[0].finalScore)}/10)` : "None rated yet";
+          const resFollowers = Array.isArray(res.followers) ? res.followers : [];
+          const resFollowing = Array.isArray(res.following) ? res.following : [];
+          const followingThisUser = isFollowingUser(res.username);
+          const isSelfProfile = appState.accountUsername && appState.accountUsername === res.username;
 
           const profileHeader = document.createElement("div");
           profileHeader.className = "rounded-3xl bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-500/30 p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4 mb-4";
           profileHeader.innerHTML = `
             <div class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 text-purple-300 flex items-center justify-center text-xl font-bold">
+              <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 text-purple-300 flex items-center justify-center text-xl font-bold shrink-0">
                 <i class="fa-solid fa-user-astronaut"></i>
               </div>
               <div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                   <h4 class="font-display font-bold text-xl text-white">@${escapeHtml(res.username)}</h4>
                   <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     Public List
                   </span>
+                  ${!isSelfProfile
+                    ? `<button
+                         type="button"
+                         id="btnFollowSearchedUser"
+                         class="px-3 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                           followingThisUser
+                             ? "bg-emerald-600/25 hover:bg-rose-950 text-emerald-200 hover:text-rose-200 border border-emerald-500/40"
+                             : "bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/25"
+                         }"
+                       >
+                         <i class="fa-solid ${followingThisUser ? "fa-user-check" : "fa-user-plus"}"></i>
+                         <span>${followingThisUser ? "Following" : "+ Follow"}</span>
+                       </button>`
+                    : ""
+                  }
                 </div>
-                <p class="text-xs text-slate-400 mt-0.5">
+                <p class="text-xs text-slate-400 mt-1">
                   #1 Favourite: <strong class="text-amber-300">${escapeHtml(topAnime)}</strong>
                 </p>
               </div>
             </div>
 
-            <div class="flex items-center gap-4 text-center">
-              <div class="px-4 py-2 rounded-2xl bg-slate-950/80 border border-slate-800">
+            <div class="flex flex-wrap items-center gap-2.5 text-center">
+              <button
+                type="button"
+                id="btnSearchedUserFollowers"
+                class="px-3.5 py-2 rounded-2xl bg-slate-950/80 hover:bg-slate-900 border border-slate-800 transition cursor-pointer"
+                title="Click to see who follows @${escapeHtml(res.username)}"
+              >
+                <div class="font-display font-bold text-lg text-purple-300">${resFollowers.length}</div>
+                <div class="text-[10px] text-slate-400 uppercase">Followers</div>
+              </button>
+              <button
+                type="button"
+                id="btnSearchedUserFollowing"
+                class="px-3.5 py-2 rounded-2xl bg-slate-950/80 hover:bg-slate-900 border border-slate-800 transition cursor-pointer"
+                title="Click to see who @${escapeHtml(res.username)} is following"
+              >
+                <div class="font-display font-bold text-lg text-sky-300">${resFollowing.length}</div>
+                <div class="text-[10px] text-slate-400 uppercase">Following</div>
+              </button>
+              <div class="px-3.5 py-2 rounded-2xl bg-slate-950/80 border border-slate-800">
                 <div class="font-display font-bold text-lg text-white">${userItems.length}</div>
                 <div class="text-[10px] text-slate-400 uppercase">Rated</div>
               </div>
-              <div class="px-4 py-2 rounded-2xl bg-slate-950/80 border border-slate-800">
+              <div class="px-3.5 py-2 rounded-2xl bg-slate-950/80 border border-slate-800">
                 <div class="font-display font-bold text-lg text-emerald-400">${avg}</div>
                 <div class="text-[10px] text-slate-400 uppercase">Avg Score</div>
               </div>
             </div>
           `;
           resultBox.appendChild(profileHeader);
+
+          const btnFollowSearched = profileHeader.querySelector("#btnFollowSearchedUser");
+          if (btnFollowSearched) {
+            btnFollowSearched.addEventListener("click", () => {
+              toggleFollowUser(res.username);
+            });
+          }
+
+          profileHeader.querySelector("#btnSearchedUserFollowers").addEventListener("click", () => {
+            openSocialModal(res, "followers");
+          });
+          profileHeader.querySelector("#btnSearchedUserFollowing").addEventListener("click", () => {
+            openSocialModal(res, "following");
+          });
 
           if (userItems.length === 0) {
             const emptyUser = document.createElement("div");
@@ -3449,7 +4621,7 @@
               const row = document.createElement("div");
               row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
               row.innerHTML = `
-                <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1 w-full">
                   <div class="w-9 h-9 rounded-xl ${idx === 0 ? "bg-amber-400 text-slate-950 font-extrabold" : "bg-slate-800 text-slate-300 font-bold"} flex items-center justify-center font-display text-sm shrink-0">
                     #${idx + 1}
                   </div>
@@ -3465,10 +4637,15 @@
                       <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border ${def.badge}">
                         Tier ${def.display}/10 • ${escapeHtml(def.label)}
                       </span>
+                      ${item.ratedAt
+                        ? `<span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formatRelativeTime(item.ratedAt))}</span>`
+                        : ""
+                      }
                     </div>
                     ${item.comment
-                      ? `<div class="mt-1 px-3 py-1.5 rounded-xl bg-slate-950/90 border border-slate-800 text-xs text-slate-200 italic">
-                           <i class="fa-solid fa-quote-left text-purple-400/70 text-[10px] mr-1"></i>${escapeHtml(item.comment)}
+                      ? `<div class="mt-1.5 px-3.5 py-2 rounded-xl bg-slate-950/90 border border-slate-800 text-xs text-slate-200 italic flex items-start gap-2 max-w-full overflow-hidden">
+                           <i class="fa-solid fa-quote-left text-purple-400/70 text-[10px] mt-1 shrink-0"></i>
+                           <div class="flex-1 min-w-0 review-comment-wrap">${escapeHtml(item.comment)}</div>
                          </div>`
                       : ""
                     }
@@ -3515,48 +4692,15 @@
       appState.searchedUserResult = null;
       renderMainCollectionArea();
 
-      // If searching the currently logged-in user, we can show their live state immediately
-      if (appState.accountUsername && appState.accountUsername === cleanUser) {
-        appState.searchedUserLoading = false;
+      const profile = await fetchUserProfileData(cleanUser);
+      appState.searchedUserLoading = false;
+
+      if (!profile) {
         appState.searchedUserResult = {
-          username: cleanUser,
-          items: appState.items,
-          battleHistory: appState.battleHistory
+          error: `No user account found with username "@${cleanUser}".`
         };
-        renderMainCollectionArea();
-        return;
-      }
-
-      if (!db) {
-        appState.searchedUserLoading = false;
-        appState.searchedUserResult = { error: "Cloud database is not connected." };
-        renderMainCollectionArea();
-        return;
-      }
-
-      try {
-        const accountRef = getNamedAccountDocRef(cleanUser);
-        const snap = await getDoc(accountRef);
-        appState.searchedUserLoading = false;
-
-        if (!snap.exists()) {
-          appState.searchedUserResult = {
-            error: `No user account found with username "@${cleanUser}".`
-          };
-        } else {
-          const data = snap.data();
-          const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
-          // Ensure scores are calibrated cleanly
-          appState.searchedUserResult = {
-            username: cleanUser,
-            items: Array.isArray(parsedItems) ? parsedItems : []
-          };
-        }
-      } catch (err) {
-        appState.searchedUserLoading = false;
-        appState.searchedUserResult = {
-          error: `Could not load "@${cleanUser}"'s list right now.`
-        };
+      } else {
+        appState.searchedUserResult = profile;
       }
 
       renderMainCollectionArea();
@@ -3667,13 +4811,19 @@
       const sao = findById(11757);      // Sword Art Online -> Tier 4 (4.0/10 ready for user to test rating another 4/10!)
 
       appState.items = [
-        { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 10.0, comparisonsCount: 2, comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!", ratedAt: Date.now() - 60000 },
-        { ...steins, baseTier: 9, rankSlot: 1, finalScore: 9.5,  comparisonsCount: 2, comment: "Masterclass time-travel thriller once the second half kicks into gear.", ratedAt: Date.now() - 50000 },
-        { ...aot,    baseTier: 9, rankSlot: 0, finalScore: 9.0,  comparisonsCount: 1, comment: "Legendary twists and soundtrack.", ratedAt: Date.now() - 40000 },
-        { ...jjk,    baseTier: 8, rankSlot: 1, finalScore: 8.5,  comparisonsCount: 1, comment: "Top-tier fight choreography in the Shibuya arc.", ratedAt: Date.now() - 30000 },
-        { ...demon,  baseTier: 8, rankSlot: 0, finalScore: 8.0,  comparisonsCount: 1, comment: "", ratedAt: Date.now() - 20000 },
-        { ...sao,    baseTier: 4, rankSlot: 0, finalScore: 4.0,  comparisonsCount: 0, comment: "Great premise in episode 1, but dropped off quickly for me.", ratedAt: Date.now() - 10000 }
+        { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 10.0, comparisonsCount: 2, comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!", ratedAt: Date.now() - 2 * 3600 * 1000 },
+        { ...steins, baseTier: 9, rankSlot: 1, finalScore: 9.5,  comparisonsCount: 2, comment: "Masterclass time-travel thriller once the second half kicks into gear.", ratedAt: Date.now() - 5 * 3600 * 1000 },
+        { ...aot,    baseTier: 9, rankSlot: 0, finalScore: 9.0,  comparisonsCount: 1, comment: "Legendary twists and soundtrack.", ratedAt: Date.now() - 24 * 3600 * 1000 },
+        { ...jjk,    baseTier: 8, rankSlot: 1, finalScore: 8.5,  comparisonsCount: 1, comment: "Top-tier fight choreography in the Shibuya arc.", ratedAt: Date.now() - 48 * 3600 * 1000 },
+        { ...demon,  baseTier: 8, rankSlot: 0, finalScore: 8.0,  comparisonsCount: 1, comment: "", ratedAt: Date.now() - 72 * 3600 * 1000 },
+        { ...sao,    baseTier: 4, rankSlot: 0, finalScore: 4.0,  comparisonsCount: 0, comment: "Great premise in episode 1, but dropped off quickly for me.", ratedAt: Date.now() - 96 * 3600 * 1000 }
       ];
+
+      if (!appState.accountUsername) {
+        // Seed demo following list so Demo Mode visitors can also preview the Following Activity Feed immediately
+        appState.following = ["otaku_king", "frieren_fan"];
+        appState.followers = ["otaku_king"];
+      }
 
       appState.battleHistory = [
         {
@@ -3684,16 +4834,6 @@
           challengerImage: jjk.image,
           defenderTitle: demon.title,
           defenderImage: demon.image,
-          outcome: "CANDIDATE"
-        },
-        {
-          id: 2,
-          timestamp: Date.now() - 45000,
-          baseTier: 9,
-          challengerTitle: fma.title,
-          challengerImage: fma.image,
-          defenderTitle: steins.title,
-          defenderImage: steins.image,
           outcome: "CANDIDATE"
         }
       ];
@@ -3781,21 +4921,37 @@
       const btnSubmitAuthText = document.getElementById("btnSubmitAuthText");
       const authFormHelperText = document.getElementById("authFormHelperText");
       const authErrorBox = document.getElementById("authErrorBox");
+      const authHintInputWrapper = document.getElementById("authHintInputWrapper");
+      const authPasswordHintInput = document.getElementById("authPasswordHintInput");
+      const btnShowPasswordHint = document.getElementById("btnShowPasswordHint");
+      const authHintDisplayBox = document.getElementById("authHintDisplayBox");
 
       function setAuthModalMode(mode) {
         authModalMode = mode;
         authErrorBox.classList.add("hidden");
+        if (authHintDisplayBox) authHintDisplayBox.classList.add("hidden");
+
         if (mode === "login") {
           tabAuthLogin.className = "py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow";
           tabAuthRegister.className = "py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
           btnSubmitAuthText.textContent = "Log In & Load My Rankings";
           authFormHelperText.textContent = "Logging in erases the temporary Demo page and loads your saved anime list from the cloud.";
+          if (authHintInputWrapper) authHintInputWrapper.classList.add("hidden");
+          if (authPasswordHintInput) authPasswordHintInput.required = false;
+          if (btnShowPasswordHint) btnShowPasswordHint.classList.remove("hidden");
         } else {
           tabAuthRegister.className = "py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow";
           tabAuthLogin.className = "py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
           btnSubmitAuthText.textContent = "Create Account & Start Fresh List";
           authFormHelperText.textContent = "Creating an account erases the temporary Demo rankings so you start with a fresh, empty personal list!";
+          if (authHintInputWrapper) authHintInputWrapper.classList.remove("hidden");
+          if (authPasswordHintInput) authPasswordHintInput.required = true;
+          if (btnShowPasswordHint) btnShowPasswordHint.classList.add("hidden");
         }
+      }
+
+      if (btnShowPasswordHint) {
+        btnShowPasswordHint.addEventListener("click", handleShowPasswordHint);
       }
 
       document.getElementById("btnOpenAuthModal").addEventListener("click", () => {
@@ -3833,6 +4989,39 @@
       document.getElementById("btnForceCloudSync").addEventListener("click", async () => {
         await saveStateToStorage();
         showToast("Synced your rankings to the cloud!", "emerald");
+      });
+
+      // Social (Followers / Following) Modal Events
+      const socialModalOverlay = document.getElementById("socialModalOverlay");
+      document.getElementById("btnHeaderOpenSocial").addEventListener("click", () => openSocialModal(null, "following"));
+      document.getElementById("btnModalViewFollowing").addEventListener("click", () => {
+        authModalOverlay.classList.add("hidden");
+        openSocialModal(null, "following");
+      });
+      document.getElementById("btnModalViewFollowers").addEventListener("click", () => {
+        authModalOverlay.classList.add("hidden");
+        openSocialModal(null, "followers");
+      });
+      document.getElementById("btnCloseSocialModal").addEventListener("click", () => {
+        socialModalOverlay.classList.add("hidden");
+      });
+      socialModalOverlay.addEventListener("click", (e) => {
+        if (e.target === socialModalOverlay) socialModalOverlay.classList.add("hidden");
+      });
+      document.getElementById("tabSocialFollowing").addEventListener("click", () => {
+        socialModalActiveTab = "following";
+        renderSocialModalContent();
+      });
+      document.getElementById("tabSocialFollowers").addEventListener("click", () => {
+        socialModalActiveTab = "followers";
+        renderSocialModalContent();
+      });
+      document.getElementById("quickFollowForm").addEventListener("submit", () => {
+        const input = document.getElementById("quickFollowUsernameInput");
+        if (input && input.value.trim()) {
+          toggleFollowUser(input.value.trim());
+          input.value = "";
+        }
       });
 
       // Shuffle Quick Picks
@@ -3926,28 +5115,52 @@
       const tabLeaderboard = document.getElementById("tabLeaderboard");
       const tabTierBuckets = document.getElementById("tabTierBuckets");
       const tabHistory = document.getElementById("tabHistory");
+      const tabActivityFeed = document.getElementById("tabActivityFeed");
       const tabUserSearch = document.getElementById("tabUserSearch");
 
-      function setActiveTab(tabName) {
-        appState.activeTab = tabName;
+      function updateNavTabStyles() {
+        const tabName = appState.activeTab;
         const activeClass = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow";
         const inactiveClass = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
 
         tabLeaderboard.className = tabName === "leaderboard" ? activeClass : inactiveClass;
         tabTierBuckets.className = tabName === "tiers" ? activeClass : inactiveClass;
         tabHistory.className = tabName === "history" ? activeClass : inactiveClass;
+        if (tabActivityFeed) {
+          tabActivityFeed.className = tabName === "activity" ? activeClass : inactiveClass;
+        }
         if (tabUserSearch) {
           tabUserSearch.className = tabName === "user-search" ? activeClass : inactiveClass;
         }
+      }
+      window.updateNavTabStyles = updateNavTabStyles;
 
-        renderMainCollectionArea();
+      function setActiveTab(tabName) {
+        appState.activeTab = tabName;
+        updateNavTabStyles();
+
+        if (tabName === "activity") {
+          loadFollowingActivityFeed();
+        } else {
+          renderMainCollectionArea();
+        }
       }
 
       tabLeaderboard.addEventListener("click", () => setActiveTab("leaderboard"));
       tabTierBuckets.addEventListener("click", () => setActiveTab("tiers"));
       tabHistory.addEventListener("click", () => setActiveTab("history"));
+      if (tabActivityFeed) {
+        tabActivityFeed.addEventListener("click", () => setActiveTab("activity"));
+      }
       if (tabUserSearch) {
         tabUserSearch.addEventListener("click", () => setActiveTab("user-search"));
+      }
+
+      const btnHeaderActivityFeed = document.getElementById("btnHeaderActivityFeed");
+      if (btnHeaderActivityFeed) {
+        btnHeaderActivityFeed.addEventListener("click", () => {
+          setActiveTab("activity");
+        });
       }
 
       const btnHeaderFindUser = document.getElementById("btnHeaderFindUser");
