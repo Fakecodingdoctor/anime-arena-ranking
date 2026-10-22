@@ -229,6 +229,16 @@
           <i class="fa-solid fa-trash-can"></i>
           <span class="hidden sm:inline">Clear</span>
         </button>
+
+        <button
+          id="btnOpenBugModal"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all active:scale-95"
+          title="Report a bug or issue with automatic diagnostics"
+        >
+          <i class="fa-solid fa-bug text-amber-400"></i>
+          <span>Report Bug</span>
+        </button>
       </div>
     </div>
   </header>
@@ -1087,6 +1097,126 @@
     </div>
   </div>
 
+  <!-- ===================================================================== -->
+  <!-- MODAL 6: REPORT A BUG & AUTOMATIC DIAGNOSTICS MODAL                   -->
+  <!-- ===================================================================== -->
+  <div
+    id="bugModalOverlay"
+    class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+  >
+    <div class="bg-slate-900 border border-slate-700/90 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-pop my-8">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
+            <i class="fa-solid fa-bug"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-base sm:text-lg text-white">
+              Report a Bug or Issue
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              Sent directly to our private tracker • No account required
+            </p>
+          </div>
+        </div>
+        <button
+          id="btnCloseBugModal"
+          type="button"
+          class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Bug Report Form -->
+      <form id="bugReportForm" class="p-6 space-y-4" onsubmit="return false;">
+        <!-- Issue Category -->
+        <div>
+          <label for="bugCategorySelect" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+            Where did the issue happen?
+          </label>
+          <select
+            id="bugCategorySelect"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-white"
+          >
+            <option value="Anime Search / Autocomplete">Anime Search / Autocomplete</option>
+            <option value="Rating / Head-to-Head Battle">Rating / Head-to-Head Battle</option>
+            <option value="Account Login / Cloud Saving">Account Login / Cloud Saving</option>
+            <option value="Following / Activity Feed">Following / Activity Feed</option>
+            <option value="Visual / Mobile Layout Bug">Visual / Mobile Layout Bug</option>
+            <option value="Other / General Feedback">Other / General Feedback</option>
+          </select>
+        </div>
+
+        <!-- Bug Description -->
+        <div>
+          <label for="bugDescriptionInput" class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+            <span>What went wrong? <span class="text-rose-400">*</span></span>
+            <span class="text-[10px] font-normal normal-case text-slate-500">Be as specific as you like</span>
+          </label>
+          <textarea
+            id="bugDescriptionInput"
+            rows="4"
+            required
+            maxlength="2000"
+            placeholder="Describe what happened, which anime you searched or rated, and what you expected to see..."
+            class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-white placeholder-slate-500 resize-y"
+          ></textarea>
+        </div>
+
+        <!-- Optional Contact / Username -->
+        <div>
+          <label for="bugContactInput" class="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
+            <span>Contact Info or Extra Notes <span class="text-slate-500 font-normal">(Optional)</span></span>
+          </label>
+          <input
+            id="bugContactInput"
+            type="text"
+            maxlength="120"
+            placeholder="Optional Discord, email, or steps to reproduce..."
+            class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-white placeholder-slate-500"
+          />
+        </div>
+
+        <!-- Auto-Attached Diagnostics Preview Box -->
+        <div class="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-microchip"></i>
+              <span>Auto-Attached Diagnostics (Included Automatically)</span>
+            </span>
+            <span class="text-[10px] text-slate-500">No typing needed</span>
+          </div>
+          <div id="bugDiagnosticsPreview" class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-slate-400 font-mono pt-1 border-t border-slate-800/80">
+            <!-- Populated automatically when modal opens -->
+          </div>
+        </div>
+
+        <div id="bugStatusBox" class="hidden p-3 rounded-xl text-xs"></div>
+
+        <!-- Submit Button -->
+        <div class="flex items-center justify-end gap-2.5 pt-1">
+          <button
+            id="btnCancelBugModal"
+            type="button"
+            class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+          >
+            Cancel
+          </button>
+          <button
+            id="btnSubmitBugReport"
+            type="submit"
+            class="px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-pink-600 hover:from-amber-400 hover:to-pink-500 text-white shadow-lg shadow-amber-500/20 transition flex items-center gap-2"
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+            <span id="btnSubmitBugText">Submit Bug Report</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
@@ -1552,6 +1682,14 @@
       measurementId: "G-GLDSDG3FD4"
     };
     const CUSTOM_FIREBASE_CONFIG = firebaseConfig;
+
+    /*************************************************************************
+     * PRIVATE GOOGLE SHEETS BUG TRACKER CONFIGURATION
+     * Paste your Google Apps Script Web App URL below (see instructions) so
+     * every bug report + diagnostic snapshot is appended directly into your
+     * private Google Sheet! (Also auto-saves a backup in Firebase Firestore).
+     *************************************************************************/
+    const GOOGLE_SHEETS_BUG_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx6NW-pnY3SIKvGnkNsMCRxfd7kn5weluEsHBJtFvWansgd6lfn_8bvLW_3jt0HDv7mhw/exec";
 
     let app = null;
     let analytics = null;
@@ -4904,6 +5042,145 @@
     }
 
     /*************************************************************************
+     * 11B. BUG REPORT MODAL, AUTO-DIAGNOSTICS & GOOGLE SHEETS SUBMISSION
+     *************************************************************************/
+    function collectBugDiagnostics() {
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
+      const screenRes = `${window.innerWidth}x${window.innerHeight}`;
+      const apiBadgeEl = document.getElementById("apiStatusBadge");
+      const apiStatus = apiBadgeEl ? apiBadgeEl.textContent.trim() : "Unknown";
+
+      return {
+        timestampIso: new Date().toISOString(),
+        localTime: new Date().toLocaleString(),
+        accountMode: appState.accountUsername ? `@${appState.accountUsername} (Logged In)` : "Demo Mode (Unsaved)",
+        activeTab: appState.activeTab || "leaderboard",
+        tierFilter: appState.tierFilter !== null ? `Tier ${appState.tierFilter}` : "None",
+        ratedAnimesCount: Array.isArray(appState.items) ? appState.items.length : 0,
+        battlesCount: Array.isArray(appState.battleHistory) ? appState.battleHistory.length : 0,
+        followingCount: Array.isArray(appState.following) ? appState.following.length : 0,
+        deviceType: `${isMobile ? "Mobile" : "Desktop"} (${screenRes})`,
+        apiStatus: apiStatus,
+        userAgent: navigator.userAgent || "Unknown",
+        pageUrl: window.location.href
+      };
+    }
+
+    function openBugReportModal() {
+      const overlay = document.getElementById("bugModalOverlay");
+      const diagPreview = document.getElementById("bugDiagnosticsPreview");
+      const statusBox = document.getElementById("bugStatusBox");
+
+      if (statusBox) statusBox.classList.add("hidden");
+
+      const diag = collectBugDiagnostics();
+      if (diagPreview) {
+        diagPreview.innerHTML = `
+          <div><span class="text-slate-500">User:</span> <span class="text-slate-200">${escapeHtml(diag.accountMode)}</span></div>
+          <div><span class="text-slate-500">Tab:</span> <span class="text-slate-200">${escapeHtml(diag.activeTab)}</span></div>
+          <div><span class="text-slate-500">Device:</span> <span class="text-slate-200">${escapeHtml(diag.deviceType)}</span></div>
+          <div><span class="text-slate-500">Rated:</span> <span class="text-slate-200">${diag.ratedAnimesCount} animes (${diag.battlesCount} H2H)</span></div>
+          <div class="col-span-2 truncate"><span class="text-slate-500">API:</span> <span class="text-emerald-300">${escapeHtml(diag.apiStatus)}</span></div>
+        `;
+      }
+
+      overlay.classList.remove("hidden");
+      setTimeout(() => {
+        const descInput = document.getElementById("bugDescriptionInput");
+        if (descInput) descInput.focus();
+      }, 60);
+    }
+
+    function closeBugReportModal() {
+      document.getElementById("bugModalOverlay").classList.add("hidden");
+    }
+
+    async function handleBugReportSubmit() {
+      const categoryEl = document.getElementById("bugCategorySelect");
+      const descEl = document.getElementById("bugDescriptionInput");
+      const contactEl = document.getElementById("bugContactInput");
+      const submitBtn = document.getElementById("btnSubmitBugReport");
+      const submitText = document.getElementById("btnSubmitBugText");
+      const statusBox = document.getElementById("bugStatusBox");
+
+      const category = categoryEl ? categoryEl.value : "Other";
+      const description = descEl ? descEl.value.trim() : "";
+      const contact = contactEl ? contactEl.value.trim() : "";
+
+      if (!description || description.length < 5) {
+        if (statusBox) {
+          statusBox.className = "p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-xs text-rose-200";
+          statusBox.textContent = "Please write a brief description of the bug (at least 5 characters).";
+          statusBox.classList.remove("hidden");
+        }
+        return;
+      }
+
+      const diagnostics = collectBugDiagnostics();
+      const reportId = "bug_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+
+      const fullReportPayload = {
+        reportId,
+        category,
+        description,
+        contact: contact || "None provided",
+        ...diagnostics
+      };
+
+      submitBtn.disabled = true;
+      if (submitText) submitText.textContent = "Sending Report...";
+      if (statusBox) statusBox.classList.add("hidden");
+
+      let sentSuccessfully = false;
+
+      // 1. Send directly to your private Google Sheet (if GOOGLE_SHEETS_BUG_WEBHOOK_URL is set)
+      if (GOOGLE_SHEETS_BUG_WEBHOOK_URL && GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim().startsWith("https://")) {
+        try {
+          await fetch(GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim(), {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(fullReportPayload)
+          });
+          sentSuccessfully = true;
+        } catch (sheetErr) {
+          console.warn("Google Sheets webhook warning:", sheetErr);
+        }
+      }
+
+      // 2. Also save a backup copy to Firebase Firestore under `bug_reports`
+      if (db) {
+        try {
+          const bugDocRef = doc(db, "artifacts", appId, "public", "data", "bug_reports", reportId);
+          await setDoc(bugDocRef, fullReportPayload);
+          sentSuccessfully = true;
+        } catch (fireErr) {
+          console.warn("Firestore bug backup note:", fireErr);
+        }
+      }
+
+      // 3. Always keep a local copy in localStorage just in case
+      try {
+        const existingLocalBugs = JSON.parse(localStorage.getItem("aar_submitted_bugs") || "[]");
+        existingLocalBugs.unshift(fullReportPayload);
+        localStorage.setItem("aar_submitted_bugs", JSON.stringify(existingLocalBugs.slice(0, 30)));
+        sentSuccessfully = true;
+      } catch (e) {}
+
+      submitBtn.disabled = false;
+      if (submitText) submitText.textContent = "Submit Bug Report";
+
+      if (sentSuccessfully) {
+        if (descEl) descEl.value = "";
+        if (contactEl) contactEl.value = "";
+        closeBugReportModal();
+        showToast("Thank you! Your bug report & diagnostics were sent.", "emerald");
+      }
+    }
+
+    /*************************************************************************
      * 12. EVENT LISTENERS & INITIALIZATION
      *************************************************************************/
     window.trigger410ScenarioDemo = trigger410ScenarioDemo;
@@ -5197,6 +5474,22 @@
       document.getElementById("btnCancelArena").addEventListener("click", cancelArenaModal);
       document.getElementById("btnCloseResultModal").addEventListener("click", () => {
         document.getElementById("arenaModalOverlay").classList.add("hidden");
+      });
+
+      // Bug Report Modal Events
+      const bugModalOverlay = document.getElementById("bugModalOverlay");
+      const btnOpenBugModal = document.getElementById("btnOpenBugModal");
+      if (btnOpenBugModal) {
+        btnOpenBugModal.addEventListener("click", openBugReportModal);
+      }
+      document.getElementById("btnCloseBugModal").addEventListener("click", closeBugReportModal);
+      document.getElementById("btnCancelBugModal").addEventListener("click", closeBugReportModal);
+      bugModalOverlay.addEventListener("click", (e) => {
+        if (e.target === bugModalOverlay) closeBugReportModal();
+      });
+      document.getElementById("bugReportForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        handleBugReportSubmit();
       });
 
       // Keyboard shortcuts for Head-to-Head Arena (1 / ArrowLeft, 2 / ArrowRight, = for Tie, Esc to close)
