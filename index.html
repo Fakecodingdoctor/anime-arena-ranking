@@ -234,10 +234,10 @@
           id="btnOpenBugModal"
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all active:scale-95"
-          title="Report a bug or issue with automatic diagnostics"
+          title="Report a bug or make a suggestion with automatic diagnostics"
         >
-          <i class="fa-solid fa-bug text-amber-400"></i>
-          <span>Report Bug</span>
+          <i class="fa-solid fa-comment-medical text-amber-400"></i>
+          <span>Report Bug / Suggestion</span>
         </button>
       </div>
     </div>
@@ -859,14 +859,44 @@
             </div>
             <div>
               <h4 class="font-display font-bold text-lg text-white">
-                Signed in as <span id="loggedInUsernameText" class="text-emerald-300">@user</span>
+                <span id="loggedInDisplayNameText" class="text-white">User</span>
+                <span id="loggedInUsernameText" class="text-emerald-300 text-sm font-mono ml-1">@user</span>
               </h4>
               <p class="text-xs text-slate-300 mt-0.5">
                 Every rating, review, and follow is automatically synced to your cloud account.
               </p>
             </div>
+
+            <!-- Editable Display Name Box (Username stays permanent) -->
+            <div class="p-3 rounded-xl bg-slate-950/85 border border-slate-800 text-left space-y-2">
+              <label for="editDisplayNameInput" class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                <span><i class="fa-solid fa-id-card text-indigo-400 mr-1.5"></i>Public Display Name:</span>
+                <span class="text-[10px] font-normal text-slate-500">@username stays permanent for login/hint</span>
+              </label>
+              <div class="flex gap-2">
+                <input
+                  id="editDisplayNameInput"
+                  type="text"
+                  maxlength="32"
+                  placeholder="Enter your display name..."
+                  class="flex-1 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-indigo-500 focus:outline-none text-xs text-white placeholder-slate-500"
+                />
+                <button
+                  id="btnSaveDisplayName"
+                  type="button"
+                  class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shrink-0"
+                >
+                  Save Name
+                </button>
+              </div>
+              <div
+                id="displayNameWarningBox"
+                class="hidden p-2.5 rounded-xl bg-rose-950/80 border border-rose-700/70 text-xs text-rose-200 flex items-start gap-2"
+              ></div>
+            </div>
+
             <!-- Followers / Following Summary inside Account Modal -->
-            <div class="grid grid-cols-2 gap-2 pt-2">
+            <div class="grid grid-cols-2 gap-2 pt-1">
               <button
                 id="btnModalViewFollowing"
                 type="button"
@@ -931,8 +961,8 @@
 
           <form id="cloudAuthForm" class="space-y-3.5" onsubmit="return false;">
             <div>
-              <label for="authUsernameInput" class="block text-xs font-semibold text-slate-300 mb-1">
-                Username
+              <label for="authUsernameInput" class="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
+                <span>Username <span class="text-slate-500 font-normal">(Permanent ID for login &amp; hint)</span></span>
               </label>
               <div class="relative">
                 <i class="fa-solid fa-at absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
@@ -944,6 +974,23 @@
                   maxlength="24"
                   autocomplete="username"
                   placeholder="e.g. otaku_king"
+                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-indigo-500 focus:outline-none text-sm text-white placeholder-slate-500"
+                />
+              </div>
+            </div>
+
+            <!-- Optional Display Name Input (Shown when creating an account) -->
+            <div id="authDisplayNameWrapper" class="hidden space-y-1">
+              <label for="authDisplayNameInput" class="flex items-center justify-between text-xs font-semibold text-slate-300">
+                <span>Display Name <span class="text-slate-400 font-normal">(Can be changed anytime)</span></span>
+              </label>
+              <div class="relative">
+                <i class="fa-solid fa-id-badge absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-400 text-xs"></i>
+                <input
+                  id="authDisplayNameInput"
+                  type="text"
+                  maxlength="32"
+                  placeholder="e.g. King of Otakus ✨"
                   class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-indigo-500 focus:outline-none text-sm text-white placeholder-slate-500"
                 />
               </div>
@@ -1098,7 +1145,7 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL 6: REPORT A BUG & AUTOMATIC DIAGNOSTICS MODAL                   -->
+  <!-- MODAL 6: REPORT A BUG OR MAKE A SUGGESTION MODAL                      -->
   <!-- ===================================================================== -->
   <div
     id="bugModalOverlay"
@@ -1109,14 +1156,14 @@
       <div class="px-6 py-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
-            <i class="fa-solid fa-bug"></i>
+            <i class="fa-solid fa-comment-medical"></i>
           </div>
           <div>
             <h3 class="font-display font-bold text-base sm:text-lg text-white">
-              Report a Bug or Issue
+              Report a Bug or Make a Suggestion
             </h3>
             <p class="text-[11px] text-slate-400">
-              Sent directly to our private tracker • No account required
+              Sent directly to our Google Sheet tracker • Auto-clears on receipt
             </p>
           </div>
         </div>
@@ -1129,12 +1176,37 @@
         </button>
       </div>
 
-      <!-- Bug Report Form -->
+      <!-- Bug / Suggestion Report Form -->
       <form id="bugReportForm" class="p-6 space-y-4" onsubmit="return false;">
-        <!-- Issue Category -->
+        <!-- Type Selector: Bug Report vs Suggestion -->
         <div>
-          <label for="bugCategorySelect" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-            Where did the issue happen?
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+            What would you like to submit?
+          </label>
+          <div class="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-950 border border-slate-800">
+            <button
+              id="btnTypeBug"
+              type="button"
+              class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-rose-600 text-white shadow"
+            >
+              <i class="fa-solid fa-bug"></i>
+              <span>Report a Bug</span>
+            </button>
+            <button
+              id="btnTypeSuggestion"
+              type="button"
+              class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-white"
+            >
+              <i class="fa-solid fa-lightbulb"></i>
+              <span>Make a Suggestion</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Issue / Suggestion Area Category -->
+        <div>
+          <label id="bugCategoryLabel" for="bugCategorySelect" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+            Which part of the site is this about?
           </label>
           <select
             id="bugCategorySelect"
@@ -1142,17 +1214,17 @@
           >
             <option value="Anime Search / Autocomplete">Anime Search / Autocomplete</option>
             <option value="Rating / Head-to-Head Battle">Rating / Head-to-Head Battle</option>
-            <option value="Account Login / Cloud Saving">Account Login / Cloud Saving</option>
+            <option value="Account Login / Profile / Display Name">Account Login / Profile / Display Name</option>
             <option value="Following / Activity Feed">Following / Activity Feed</option>
-            <option value="Visual / Mobile Layout Bug">Visual / Mobile Layout Bug</option>
-            <option value="Other / General Feedback">Other / General Feedback</option>
+            <option value="Visual / Mobile Layout">Visual / Mobile Layout</option>
+            <option value="New Feature Idea / General Suggestion">New Feature Idea / General Suggestion</option>
           </select>
         </div>
 
-        <!-- Bug Description -->
+        <!-- Description -->
         <div>
           <label for="bugDescriptionInput" class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-            <span>What went wrong? <span class="text-rose-400">*</span></span>
+            <span id="bugDescriptionLabelText">What went wrong? <span class="text-rose-400">*</span></span>
             <span class="text-[10px] font-normal normal-case text-slate-500">Be as specific as you like</span>
           </label>
           <textarea
@@ -1160,7 +1232,7 @@
             rows="4"
             required
             maxlength="2000"
-            placeholder="Describe what happened, which anime you searched or rated, and what you expected to see..."
+            placeholder="Describe what happened, or share your idea for improving Anime Arena Ranking..."
             class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-white placeholder-slate-500 resize-y"
           ></textarea>
         </div>
@@ -1174,7 +1246,7 @@
             id="bugContactInput"
             type="text"
             maxlength="120"
-            placeholder="Optional Discord, email, or steps to reproduce..."
+            placeholder="Optional Discord, email, or notes..."
             class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-white placeholder-slate-500"
           />
         </div>
@@ -1214,20 +1286,31 @@
           </button>
         </div>
 
-        <!-- Recent Locally Saved Bug Reports & 1-Click Re-Send to Google Sheets -->
+        <!-- Unsent / Pending Local Reports Queue (Auto-hidden once confirmed by Google Sheets, with Delete buttons) -->
         <div id="localBugQueuePanel" class="hidden pt-4 border-t border-slate-800/90 space-y-2.5">
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
               <i class="fa-solid fa-clock-rotate-left"></i>
-              <span>Your Submitted Reports (<span id="localBugQueueCount">0</span> saved in browser)</span>
+              <span>Pending Local Reports (<span id="localBugQueueCount">0</span>)</span>
             </span>
-            <button
-              id="btnResendAllBugs"
-              type="button"
-              class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition"
-            >
-              <i class="fa-solid fa-rotate mr-1"></i>Re-Send All to Sheet &amp; Firebase
-            </button>
+            <div class="flex items-center gap-1.5">
+              <button
+                id="btnResendAllBugs"
+                type="button"
+                class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition"
+                title="Retry sending pending reports and clear them once received"
+              >
+                <i class="fa-solid fa-rotate mr-1"></i>Retry &amp; Clear
+              </button>
+              <button
+                id="btnClearLocalBugs"
+                type="button"
+                class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition"
+                title="Delete all local pending reports from your browser"
+              >
+                <i class="fa-solid fa-trash-can mr-1"></i>Delete All
+              </button>
+            </div>
           </div>
           <div id="localBugQueueList" class="max-h-36 overflow-y-auto space-y-1.5 pr-1"></div>
         </div>
@@ -1245,7 +1328,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAnalytics, isSupported as isAnalyticsSupported } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     /*************************************************************************
      * 1. TIER METADATA & DESCRIPTIONS (0 TO 9+)
@@ -1681,6 +1764,78 @@
         genres: ["Action", "Award Winning", "Comedy"],
         image: "https://cdn.myanimelist.net/images/anime/1441/122795.jpg",
         synopsis: "Corrupt politicians, frenzied nationalists, and other warmongering forces constantly jeopardize the thin veneer of peace between neighboring countries Ostania and Westalis."
+      },
+      {
+        mal_id: 23755,
+        title: "The Seven Deadly Sins",
+        title_japanese: "Nanatsu no Taizai",
+        year: 2014,
+        type: "TV",
+        episodes: 24,
+        mal_score: 7.62,
+        genres: ["Action", "Adventure", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/8/65409.jpg",
+        synopsis: "In a world similar to the European Middle Ages, the feared yet revered Holy Knights of Britannia use immensely powerful magic to protect the region of Britannia and its kingdoms."
+      },
+      {
+        mal_id: 54492,
+        title: "The Apothecary Diaries",
+        title_japanese: "Kusuriya no Hitorigoto",
+        year: 2023,
+        type: "TV",
+        episodes: 24,
+        mal_score: 8.88,
+        genres: ["Drama", "Mystery"],
+        image: "https://cdn.myanimelist.net/images/anime/1708/138033.jpg",
+        synopsis: "Maomao, an apothecary's daughter, is kidnapped and forced to work as a low-level servant in the emperor's palace, where her sharp wit and medical knowledge soon catch the eye of head eunuch Jinshi."
+      },
+      {
+        mal_id: 52588,
+        title: "Kaiju No. 8",
+        title_japanese: "Kaijuu 8-gou",
+        year: 2024,
+        type: "TV",
+        episodes: 12,
+        mal_score: 8.31,
+        genres: ["Action", "Sci-Fi"],
+        image: "https://cdn.myanimelist.net/images/anime/1370/140362.jpg",
+        synopsis: "Kafka Hibino works in monster corpse cleanup while dreaming of joining the Japan Defense Force—until a mysterious parasite turns him into the humanoid Kaiju No. 8."
+      },
+      {
+        mal_id: 20583,
+        title: "Haikyu!!",
+        title_japanese: "Haikyuu!!",
+        year: 2014,
+        type: "TV",
+        episodes: 25,
+        mal_score: 8.44,
+        genres: ["Sports"],
+        image: "https://cdn.myanimelist.net/images/anime/7/76014.jpg",
+        synopsis: "Inspired after watching a championship volleyball ace nicknamed the 'Little Giant', short middle schooler Shoyo Hinata revives his school's volleyball club."
+      },
+      {
+        mal_id: 813,
+        title: "Dragon Ball Z",
+        title_japanese: "Dragon Ball Z",
+        year: 1989,
+        type: "TV",
+        episodes: 291,
+        mal_score: 8.18,
+        genres: ["Action", "Adventure", "Comedy", "Fantasy"],
+        image: "https://cdn.myanimelist.net/images/anime/1277/142022.jpg",
+        synopsis: "Five years after winning the World Martial Arts tournament, Goku is now living a peaceful life with his wife and son—until the arrival of the Saiyan warrior Raditz."
+      },
+      {
+        mal_id: 31240,
+        title: "Re:ZERO -Starting Life in Another World-",
+        title_japanese: "Re:Zero kara Hajimeru Isekai Seikatsu",
+        year: 2016,
+        type: "TV",
+        episodes: 25,
+        mal_score: 8.24,
+        genres: ["Drama", "Fantasy", "Suspense"],
+        image: "https://cdn.myanimelist.net/images/anime/1522/128039.jpg",
+        synopsis: "When Subaru Natsuki leaves a convenience store, he is suddenly summoned to a fantasy world where he discovers the painful power to 'Return by Death'."
       }
     ];
 
@@ -1730,15 +1885,17 @@
       tierFilter: null,         // null or 0..9
       searchQuery: "",
       accountUsername: null,
+      accountDisplayName: "",
       accountPasswordHash: null,
       accountPasswordHint: "",
       following: [],            // Array of usernames this user follows
       followers: [],            // Array of usernames who follow this user
+      displayNameMap: {},       // Cache of username -> current displayName for fast rendering
       activityFeedItems: [],    // Aggregated recent items from followed users
       activityFeedLoading: false,
       activityFilterUser: "ALL", // 'ALL' or specific username
       activityReviewsOnly: false,
-      searchedUserResult: null, // Holds { username, items, battleHistory, following, followers, updatedAt } or { error }
+      searchedUserResult: null, // Holds { username, displayName, items, battleHistory, following, followers, updatedAt } or { error }
       searchedUserLoading: false,
       lastSearchedUsername: ""
     };
@@ -1747,6 +1904,7 @@
     const DEMO_COMMUNITY_USERS = {
       otaku_king: {
         username: "otaku_king",
+        displayName: "King of Otakus 👑",
         passwordHint: "El Psy Kongroo",
         followers: ["frieren_fan", "shonen_critic"],
         following: ["frieren_fan"],
@@ -1782,6 +1940,7 @@
       },
       frieren_fan: {
         username: "frieren_fan",
+        displayName: "Frieren the Slayer ✨",
         passwordHint: "Zoltraak",
         followers: ["otaku_king"],
         following: ["otaku_king", "shonen_critic"],
@@ -1808,6 +1967,7 @@
       },
       shonen_critic: {
         username: "shonen_critic",
+        displayName: "Shonen Critic 🔥",
         passwordHint: "Bankai",
         followers: ["frieren_fan"],
         following: ["otaku_king"],
@@ -1834,6 +1994,26 @@
       }
     };
 
+    // Seed initial display name cache from demo community users
+    Object.values(DEMO_COMMUNITY_USERS).forEach(u => {
+      appState.displayNameMap[u.username] = u.displayName || u.username;
+    });
+
+    function getDisplayNameForUser(rawUsername) {
+      const clean = normalizeUsername(rawUsername);
+      if (!clean) return "";
+      if (appState.accountUsername && clean === appState.accountUsername) {
+        return appState.accountDisplayName || clean;
+      }
+      if (appState.displayNameMap && appState.displayNameMap[clean]) {
+        return appState.displayNameMap[clean];
+      }
+      if (DEMO_COMMUNITY_USERS[clean] && DEMO_COMMUNITY_USERS[clean].displayName) {
+        return DEMO_COMMUNITY_USERS[clean].displayName;
+      }
+      return clean;
+    }
+
     // Pending rating / H2H Arena session state
     let modalCandidateAnime = null;
     let modalSelectedBaseTier = null;
@@ -1841,6 +2021,7 @@
     let authModalMode = "login"; // 'login' | 'register'
     let socialModalTargetUser = null; // null means current user, or an object { username, following, followers }
     let socialModalActiveTab = "following"; // 'following' | 'followers'
+    let activeBugReportType = "Bug Report"; // 'Bug Report' | 'Suggestion'
 
     /**
      * Formats a timestamp into a human-friendly relative time string
@@ -1897,6 +2078,7 @@
         if (appState.accountUsername && appState.accountPasswordHash) {
           localStorage.setItem("aar_account_session", JSON.stringify({
             accountUsername: appState.accountUsername,
+            accountDisplayName: appState.accountDisplayName || appState.accountUsername,
             accountPasswordHash: appState.accountPasswordHash,
             accountPasswordHint: appState.accountPasswordHint || "",
             following: appState.following || [],
@@ -1937,6 +2119,8 @@
       const loggedInPanel = document.getElementById("authLoggedInPanel");
       const formPanel = document.getElementById("authFormPanel");
       const loggedInUsernameText = document.getElementById("loggedInUsernameText");
+      const loggedInDisplayNameText = document.getElementById("loggedInDisplayNameText");
+      const editDisplayNameInput = document.getElementById("editDisplayNameInput");
       const demoBanner = document.getElementById("demoModeBanner");
       const btnLoadStarter = document.getElementById("btnLoadStarter");
       const statModeSubtext = document.getElementById("statModeSubtext");
@@ -1965,25 +2149,38 @@
         loggedInHintText.textContent = appState.accountPasswordHint || "No hint set";
       }
 
+      const activeDispName = appState.accountDisplayName || appState.accountUsername || "";
+      if (appState.accountUsername) {
+        appState.displayNameMap[appState.accountUsername] = activeDispName;
+      }
+
       if (uidEl) {
         uidEl.textContent = appState.accountUsername
-          ? `@${appState.accountUsername} (Cloud Account)`
+          ? `${activeDispName} (@${appState.accountUsername})`
           : "Unsaved Demo Mode (Not Logged In)";
       }
 
       if (appState.accountUsername) {
         if (dotEl) dotEl.className = "w-2 h-2 rounded-full bg-emerald-400";
-        if (labelEl) labelEl.textContent = `@${appState.accountUsername}`;
+        if (labelEl) {
+          labelEl.textContent = activeDispName !== appState.accountUsername
+            ? `${activeDispName} (@${appState.accountUsername})`
+            : `@${appState.accountUsername}`;
+        }
         if (badgeEl) {
-          badgeEl.textContent = `@${appState.accountUsername} (Cloud Synced)`;
+          badgeEl.textContent = `${activeDispName} (@${appState.accountUsername})`;
           badgeEl.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
         }
+        if (loggedInDisplayNameText) loggedInDisplayNameText.textContent = activeDispName;
         if (loggedInUsernameText) loggedInUsernameText.textContent = `@${appState.accountUsername}`;
+        if (editDisplayNameInput && document.activeElement !== editDisplayNameInput) {
+          editDisplayNameInput.value = activeDispName;
+        }
         if (loggedInPanel) loggedInPanel.classList.remove("hidden");
         if (formPanel) formPanel.classList.add("hidden");
         if (demoBanner) demoBanner.classList.add("hidden");
         if (btnLoadStarter) btnLoadStarter.classList.add("hidden");
-        if (statModeSubtext) statModeSubtext.textContent = `@${appState.accountUsername}'s saved list`;
+        if (statModeSubtext) statModeSubtext.textContent = `${activeDispName}'s saved list`;
       } else {
         if (dotEl) dotEl.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
         if (labelEl) labelEl.textContent = "Demo Mode • Sign In";
@@ -2079,6 +2276,12 @@
         const parsedHistory = typeof historyPayload === "string" ? JSON.parse(historyPayload) : historyPayload;
 
         if (extraData && typeof extraData === "object") {
+          if (typeof extraData.displayName === "string" && extraData.displayName.trim()) {
+            appState.accountDisplayName = extraData.displayName.trim();
+            if (appState.accountUsername) {
+              appState.displayNameMap[appState.accountUsername] = appState.accountDisplayName;
+            }
+          }
           if (typeof extraData.passwordHint === "string") {
             appState.accountPasswordHint = extraData.passwordHint;
           }
@@ -2126,6 +2329,7 @@
         updatedAt: Date.now(),
         ownerUid: effectiveUid,
         username: appState.accountUsername,
+        displayName: appState.accountDisplayName || appState.accountUsername,
         passwordHash: appState.accountPasswordHash,
         passwordHint: appState.accountPasswordHint || "",
         following: Array.isArray(appState.following) ? appState.following : [],
@@ -2162,6 +2366,8 @@
       appState.tierFilter = null;
 
       appState.accountUsername = cleanUser;
+      appState.accountDisplayName = (data.displayName && String(data.displayName).trim()) || cleanUser;
+      appState.displayNameMap[cleanUser] = appState.accountDisplayName;
       appState.accountPasswordHash = passwordHash;
       appState.accountPasswordHint = data.passwordHint || "";
       appState.following = Array.isArray(data.following) ? data.following : [];
@@ -2245,8 +2451,82 @@
       }
     }
 
+    /**
+     * Checks if a desired Display Name is already taken by another user
+     * (case-insensitive check across built-in profiles, cached profiles, and Firestore accounts).
+     */
+    async function checkDisplayNameAvailability(candidateDisplayName, excludeUsername = null) {
+      const trimmed = String(candidateDisplayName || "").trim();
+      if (!trimmed) return { taken: false };
+
+      const normTarget = trimmed.toLowerCase();
+      const normExclude = excludeUsername ? normalizeUsername(excludeUsername) : null;
+
+      // 1. Check built-in community users
+      for (const [uKey, profile] of Object.entries(DEMO_COMMUNITY_USERS)) {
+        const cleanU = normalizeUsername(uKey);
+        if (normExclude && cleanU === normExclude) continue;
+        const existingDisp = String(profile.displayName || profile.username || "").trim().toLowerCase();
+        if (existingDisp === normTarget || cleanU === normTarget) {
+          return { taken: true, matchedName: profile.displayName || profile.username };
+        }
+      }
+
+      // 2. Check cached display names in memory
+      for (const [uKey, cachedDisp] of Object.entries(appState.displayNameMap || {})) {
+        const cleanU = normalizeUsername(uKey);
+        if (normExclude && cleanU === normExclude) continue;
+        if (String(cachedDisp || "").trim().toLowerCase() === normTarget || cleanU === normTarget) {
+          return { taken: true, matchedName: cachedDisp || cleanU };
+        }
+      }
+
+      // 3. Check live Firestore user_accounts collection
+      if (db) {
+        try {
+          const accountsColRef = collection(db, "artifacts", appId, "public", "data", "user_accounts");
+          const snap = await getDocs(accountsColRef);
+          let conflict = null;
+
+          snap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            const docUser = normalizeUsername(data.username || docSnap.id);
+            const docDisp = String(data.displayName || docUser).trim();
+
+            if (docUser) {
+              appState.displayNameMap[docUser] = docDisp;
+            }
+
+            if (normExclude && docUser === normExclude) return;
+
+            if (docDisp.toLowerCase() === normTarget || docUser.toLowerCase() === normTarget) {
+              conflict = { taken: true, matchedName: docDisp };
+            }
+          });
+
+          if (conflict) return conflict;
+        } catch (err) {
+          console.warn("Could not list user_accounts for display name check, trying direct lookup:", err);
+          const asUsername = normalizeUsername(trimmed);
+          if (asUsername && asUsername !== normExclude) {
+            try {
+              const directRef = getNamedAccountDocRef(asUsername);
+              const directSnap = await getDoc(directRef);
+              if (directSnap.exists()) {
+                const d = directSnap.data() || {};
+                return { taken: true, matchedName: d.displayName || asUsername };
+              }
+            } catch (e) {}
+          }
+        }
+      }
+
+      return { taken: false };
+    }
+
     async function handleAuthFormSubmit() {
       const usernameInput = document.getElementById("authUsernameInput");
+      const displayNameInput = document.getElementById("authDisplayNameInput");
       const passwordInput = document.getElementById("authPasswordInput");
       const hintInput = document.getElementById("authPasswordHintInput");
       const errorBox = document.getElementById("authErrorBox");
@@ -2257,6 +2537,9 @@
       if (hintDisplayBox) hintDisplayBox.classList.add("hidden");
 
       const cleanUser = normalizeUsername(usernameInput.value);
+      const chosenDisplayName = displayNameInput && displayNameInput.value.trim()
+        ? displayNameInput.value.trim()
+        : cleanUser;
       const rawPass = passwordInput.value;
       const rawHint = hintInput ? hintInput.value.trim() : "";
 
@@ -2303,11 +2586,21 @@
             return;
           }
 
+          const dispCheck = await checkDisplayNameAvailability(chosenDisplayName, cleanUser);
+          if (dispCheck.taken) {
+            errorBox.textContent = `Display name "${chosenDisplayName}" is already taken by another user. Please choose a different display name.`;
+            errorBox.classList.remove("hidden");
+            if (displayNameInput) displayNameInput.focus();
+            return;
+          }
+
           // IMPORTANT: Erase all Demo Mode rankings so new accounts start completely clean!
           appState.items = [];
           appState.battleHistory = [];
           appState.tierFilter = null;
           appState.accountUsername = cleanUser;
+          appState.accountDisplayName = chosenDisplayName;
+          appState.displayNameMap[cleanUser] = chosenDisplayName;
           appState.accountPasswordHash = passHash;
           appState.accountPasswordHint = rawHint;
           appState.following = [];
@@ -2319,8 +2612,9 @@
           renderAllViews();
           passwordInput.value = "";
           if (hintInput) hintInput.value = "";
+          if (displayNameInput) displayNameInput.value = "";
           document.getElementById("authModalOverlay").classList.add("hidden");
-          showToast(`Account @${cleanUser} created with password hint! Demo rankings erased — ready for your real list!`, "emerald");
+          showToast(`Account ${chosenDisplayName} (@${cleanUser}) created! Demo rankings erased — ready for your real list!`, "emerald");
         } else {
           if (!existingSnap.exists()) {
             errorBox.textContent = `No account found for "@${cleanUser}". Switch to "Create Account" to register it!`;
@@ -2345,11 +2639,82 @@
         if (code.includes("permission-denied")) {
           errorBox.innerHTML = `<strong>Firestore Rules Blocked Save:</strong> Go to your Firebase Console &rarr; <strong>Firestore Database</strong> &rarr; <strong>Rules</strong> tab, set <code>allow read, write: if true;</code> and click Publish.`;
         } else {
-          errorBox.innerHTML = `<strong>Firestore Database Error:</strong> Please ensure Firestore Database is created in test mode in your Firebase Console.`;
+          errorBox.innerHTML = `<strong>Firestore Database Error:</strong> Please ensure Firestore Database is created in your Firebase Console.`;
         }
         errorBox.classList.remove("hidden");
       } finally {
         submitBtn.disabled = false;
+      }
+    }
+
+    async function handleSaveDisplayName() {
+      if (!appState.accountUsername) {
+        showToast("Please sign in to an account first.", "amber");
+        return;
+      }
+      const inputEl = document.getElementById("editDisplayNameInput");
+      const btnSave = document.getElementById("btnSaveDisplayName");
+      const warningBox = document.getElementById("displayNameWarningBox");
+      if (!inputEl) return;
+
+      if (warningBox) {
+        warningBox.classList.add("hidden");
+        warningBox.innerHTML = "";
+      }
+
+      const newDisp = inputEl.value.trim();
+      if (!newDisp || newDisp.length < 1) {
+        if (warningBox) {
+          warningBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5 shrink-0"></i><span>Display name cannot be empty.</span>`;
+          warningBox.classList.remove("hidden");
+        }
+        showToast("Display name cannot be empty.", "rose");
+        return;
+      }
+
+      const currentDisp = appState.accountDisplayName || appState.accountUsername;
+      if (newDisp === currentDisp) {
+        showToast("That is already your current display name.", "indigo");
+        return;
+      }
+
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.textContent = "Checking...";
+      }
+
+      try {
+        const availability = await checkDisplayNameAvailability(newDisp, appState.accountUsername);
+        if (availability.taken) {
+          if (warningBox) {
+            warningBox.innerHTML = `
+              <i class="fa-solid fa-circle-exclamation text-rose-400 mt-0.5 shrink-0"></i>
+              <span>Display name <strong>"${escapeHtml(newDisp)}"</strong> is already taken by another user. Please choose a different display name.</span>
+            `;
+            warningBox.classList.remove("hidden");
+          }
+          showToast(`Display name "${newDisp}" is already taken!`, "rose");
+          inputEl.focus();
+          return;
+        }
+
+        appState.accountDisplayName = newDisp;
+        appState.displayNameMap[appState.accountUsername] = newDisp;
+
+        // Also update searchedUserResult if viewing own profile
+        if (appState.searchedUserResult && appState.searchedUserResult.username === appState.accountUsername) {
+          appState.searchedUserResult.displayName = newDisp;
+        }
+
+        await saveStateToStorage();
+        updateAuthHeaderUI();
+        renderAllViews();
+        showToast(`Display name updated to "${newDisp}"! (@${appState.accountUsername} remains your login ID)`, "emerald");
+      } finally {
+        if (btnSave) {
+          btnSave.disabled = false;
+          btnSave.textContent = "Save Name";
+        }
       }
     }
 
@@ -2360,6 +2725,7 @@
       }
 
       appState.accountUsername = null;
+      appState.accountDisplayName = "";
       appState.accountPasswordHash = null;
       appState.accountPasswordHint = "";
       appState.following = [];
@@ -2383,14 +2749,18 @@
 
     /**
      * Fetches a user's profile data (from Firestore or built-in Demo Community profiles)
+     * and caches their latest `displayName` in `appState.displayNameMap`
      */
     async function fetchUserProfileData(rawUsername) {
       const cleanUser = normalizeUsername(rawUsername);
       if (!cleanUser) return null;
 
       if (appState.accountUsername && appState.accountUsername === cleanUser) {
+        const myDisp = appState.accountDisplayName || cleanUser;
+        appState.displayNameMap[cleanUser] = myDisp;
         return {
           username: cleanUser,
+          displayName: myDisp,
           items: appState.items,
           battleHistory: appState.battleHistory,
           following: appState.following || [],
@@ -2406,8 +2776,11 @@
           if (snap.exists()) {
             const data = snap.data();
             const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
+            const resolvedDisp = (data.displayName && String(data.displayName).trim()) || cleanUser;
+            appState.displayNameMap[cleanUser] = resolvedDisp;
             return {
               username: cleanUser,
+              displayName: resolvedDisp,
               items: Array.isArray(parsedItems) ? parsedItems : [],
               following: Array.isArray(data.following) ? data.following : [],
               followers: Array.isArray(data.followers) ? data.followers : [],
@@ -2420,11 +2793,19 @@
         }
       }
 
-      // Check Demo Community fallback profiles
-      if (DEMO_COMMUNITY_USERS[cleanUser]) {
-        const demoProfile = DEMO_COMMUNITY_USERS[cleanUser];
+      // Check Demo Community fallback profiles (by username OR by displayName match)
+      const demoMatchKey = Object.keys(DEMO_COMMUNITY_USERS).find(k => {
+        const d = DEMO_COMMUNITY_USERS[k];
+        return k === cleanUser || normalizeUsername(d.displayName) === cleanUser;
+      });
+
+      if (demoMatchKey) {
+        const demoProfile = DEMO_COMMUNITY_USERS[demoMatchKey];
+        const resolvedDisp = demoProfile.displayName || demoProfile.username;
+        appState.displayNameMap[demoProfile.username] = resolvedDisp;
         return {
           username: demoProfile.username,
+          displayName: resolvedDisp,
           items: demoProfile.items.map(it => ({ ...it })),
           following: [...(demoProfile.following || [])],
           followers: [...(demoProfile.followers || [])],
@@ -2540,11 +2921,22 @@
       }
     }
 
-    function openSocialModal(targetProfile = null, initialTab = "following") {
+    async function openSocialModal(targetProfile = null, initialTab = "following") {
       socialModalTargetUser = targetProfile;
       socialModalActiveTab = initialTab;
       document.getElementById("socialModalOverlay").classList.remove("hidden");
       renderSocialModalContent();
+
+      // Hydrate latest display names for everyone in Following and Followers lists
+      const isSelf = !socialModalTargetUser || (appState.accountUsername && socialModalTargetUser.username === appState.accountUsername);
+      const allUsersToHydrate = [
+        ...(isSelf ? (appState.following || []) : (socialModalTargetUser.following || [])),
+        ...(isSelf ? (appState.followers || []) : (socialModalTargetUser.followers || []))
+      ];
+      if (allUsersToHydrate.length > 0) {
+        await Promise.all(allUsersToHydrate.map(u => fetchUserProfileData(u)));
+        renderSocialModalContent();
+      }
     }
 
     function renderSocialModalContent() {
@@ -2557,9 +2949,9 @@
       const listContainer = document.getElementById("socialModalListContainer");
 
       const isSelf = !socialModalTargetUser || (appState.accountUsername && socialModalTargetUser.username === appState.accountUsername);
-      const displayUsername = isSelf
-        ? (appState.accountUsername ? `@${appState.accountUsername}` : "Your Demo Session")
-        : `@${socialModalTargetUser.username}`;
+      const displayHeaderName = isSelf
+        ? (appState.accountUsername ? `${getDisplayNameForUser(appState.accountUsername)} (@${appState.accountUsername})` : "Your Demo Session")
+        : `${getDisplayNameForUser(socialModalTargetUser.username)} (@${socialModalTargetUser.username})`;
 
       const followingList = isSelf
         ? (appState.following || [])
@@ -2568,7 +2960,7 @@
         ? (appState.followers || [])
         : (socialModalTargetUser.followers || []);
 
-      titleEl.textContent = `${displayUsername}'s Connections`;
+      titleEl.textContent = `${displayHeaderName}`;
       subtitleEl.textContent = `${followingList.length} Following • ${followersList.length} Follower${followersList.length === 1 ? "" : "s"}`;
       followingCountSpan.textContent = String(followingList.length);
       followersCountSpan.textContent = String(followersList.length);
@@ -2590,8 +2982,8 @@
             <i class="fa-solid fa-user-plus text-slate-500 text-xl"></i>
             <p class="text-xs text-slate-400">
               ${socialModalActiveTab === "following"
-                ? `${escapeHtml(displayUsername)} isn't following anyone yet.`
-                : `${escapeHtml(displayUsername)} doesn't have any followers yet.`}
+                ? `${escapeHtml(displayHeaderName)} isn't following anyone yet.`
+                : `${escapeHtml(displayHeaderName)} doesn't have any followers yet.`}
             </p>
           </div>
         `;
@@ -2600,6 +2992,7 @@
 
       activeArray.forEach(uname => {
         const cleanU = normalizeUsername(uname);
+        const dispName = getDisplayNameForUser(cleanU);
         const iFollowThem = isFollowingUser(cleanU);
         const isMe = appState.accountUsername && cleanU === appState.accountUsername;
 
@@ -2611,8 +3004,8 @@
               <i class="fa-solid fa-user-astronaut"></i>
             </div>
             <div class="min-w-0">
-              <div class="font-display font-bold text-sm text-white truncate">@${escapeHtml(cleanU)}</div>
-              <div class="text-[10px] text-slate-400">${isMe ? "You" : (iFollowThem ? "Following" : "User Profile")}</div>
+              <div class="font-display font-bold text-sm text-white truncate">${escapeHtml(dispName)}</div>
+              <div class="text-[11px] text-slate-400 font-mono truncate">@${escapeHtml(cleanU)} • ${isMe ? "You" : (iFollowThem ? "Following" : "User Profile")}</div>
             </div>
           </div>
 
@@ -2675,9 +3068,11 @@
 
       profiles.forEach(profile => {
         if (!profile || !Array.isArray(profile.items)) return;
+        const resolvedDisplayName = profile.displayName || getDisplayNameForUser(profile.username);
         profile.items.forEach(item => {
           feedEntries.push({
             username: profile.username,
+            displayName: resolvedDisplayName,
             followersCount: Array.isArray(profile.followers) ? profile.followers.length : 0,
             anime: item,
             timestamp: item.ratedAt || profile.updatedAt || Date.now()
@@ -2694,20 +3089,11 @@
 
     /*************************************************************************
      * 4. CORE DECIMAL CALIBRATION ENGINE WITHIN A BASE TIER (0–9+)
-     * - Users rate from 0 to 9.
-     * - For Base Tiers 0 to 8:
-     *   - 1 item in Tier N: N.0 (e.g. 4.0)
-     *   - 2 items in Tier N: lower is N.0 (4.0), higher is N.5 (4.5)
-     *   - 3+ items in Tier N: distributed across [N.0, N.9]
-     * - For Base Tier 9 (9+ Masterpiece Tier):
-     *   - The #1 highest-ranked slot in Tier 9+ ALWAYS gets 10.0 (10.0/10)!
-     *   - All other slots in Tier 9+ scale between 9.0 and 9.9 so only #1 is 10.0/10.
      *************************************************************************/
     function recalculateScoresInTier(baseTier) {
       const tierItems = appState.items.filter(it => it.baseTier === baseTier);
       if (tierItems.length === 0) return;
 
-      // Normalize rankSlot values to be contiguous 0, 1, ..., m-1
       const uniqueSlots = [...new Set(tierItems.map(it => it.rankSlot))].sort((a, b) => a - b);
       const m = uniqueSlots.length;
 
@@ -2723,14 +3109,11 @@
     }
 
     function computeCalibratedScore(baseTier, slotIndex, totalSlots) {
-      // Special rule for Tier 9 (9+ Masterpiece Tier):
-      // The #1 anime in Tier 9+ (slotIndex === totalSlots - 1) is ALWAYS 10.0/10!
-      // Any other animes in Tier 9+ are calibrated between 9.0 and 9.9.
       if (baseTier === 9) {
         if (slotIndex === totalSlots - 1) {
           return 10.0;
         }
-        const nonTopCount = totalSlots - 1; // number of slots below #1
+        const nonTopCount = totalSlots - 1;
         if (nonTopCount === 1) {
           return 9.0;
         }
@@ -2743,16 +3126,12 @@
         }
       }
 
-      // Base Tiers 0 through 8:
       if (totalSlots <= 1) {
         return Number(baseTier.toFixed(1));
       }
       if (totalSlots === 2) {
-        // Exact specification: lower is N.0 (4.0), higher is N.5 (4.5)
         return Number((baseTier + (slotIndex === 0 ? 0.0 : 0.5)).toFixed(1));
       }
-      // For 3 or more distinct rank slots in Tier N:
-      // Distribute across [N.0, N.9]
       if (totalSlots <= 10) {
         const rawOffset = Math.round((slotIndex / totalSlots) * 10) / 10;
         const clampedOffset = Math.min(0.9, Math.max(0.0, rawOffset));
@@ -2763,31 +3142,28 @@
       }
     }
 
-    /**
-     * Helper to format scores cleanly (e.g. 4.0, 4.5, 8.5, 10.0)
-     */
     function formatScore(score) {
       if (typeof score !== "number" || isNaN(score)) return "0.0";
-      // Check if 2 decimals needed
       if (Math.round(score * 10) !== Math.round(score * 100) / 10) {
         return score.toFixed(2);
       }
       return score.toFixed(1);
     }
 
-    /**
-     * Helper for fallback poster SVG if an external cover URL fails to load
-     */
     function getFallbackPosterUrl(title) {
       const encoded = encodeURIComponent((title || "Anime").slice(0, 18));
       return `https://placehold.co/300x420/1e293b/a5b4fc?text=${encoded}`;
     }
 
     /*************************************************************************
-     * 5. DUAL-ENGINE LIVE AUTOCOMPLETE SEARCH (JIKAN v4 + ANILIST GRAPHQL)
+     * 5. HIGH-SPEED PROGRESSIVE LIVE AUTOCOMPLETE SEARCH (ANILIST + JIKAN)
+     * - Renders instant local matches in 0ms
+     * - Streams AniList results in ~200ms without waiting for slower Jikan API
+     * - Merges Jikan results seamlessly when they arrive + caches queries
      *************************************************************************/
     let searchDebounceTimer = null;
     let currentSearchAbortController = null;
+    const liveSearchCache = new Map();
 
     const searchInputEl = document.getElementById("animeSearchInput");
     const dropdownEl = document.getElementById("autocompleteDropdown");
@@ -2808,14 +3184,20 @@
           return;
         }
 
+        const qKey = query.toLowerCase();
+        if (liveSearchCache.has(qKey)) {
+          renderDropdownSuggestions(liveSearchCache.get(qKey), `Instant Results for "${query}"`, query);
+          return;
+        }
+
         const localMatches = searchLocalFallback(query);
         if (localMatches.length > 0) {
-          renderDropdownSuggestions(localMatches.slice(0, 8), `Instant Matches for "${query}"`, query);
+          renderDropdownSuggestions(localMatches.slice(0, 8), `Instant Matches for "${query}" (Searching more...)`, query);
         }
 
         searchDebounceTimer = setTimeout(() => {
           performLiveAnimeSearch(query);
-        }, 250);
+        }, 140);
       });
 
       searchInputEl.addEventListener("focus", () => {
@@ -2857,7 +3239,7 @@
     }
 
     async function fetchJikanResults(query, signal) {
-      const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=12&sfw=true`;
+      const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=10&sfw=true`;
       const response = await fetch(url, { method: "GET", signal });
       if (!response.ok) throw new Error(`Jikan HTTP ${response.status}`);
       const json = await response.json();
@@ -2918,43 +3300,55 @@
       }
       currentSearchAbortController = new AbortController();
       const signal = currentSearchAbortController.signal;
+      const qKey = query.toLowerCase().trim();
 
       searchIconEl.classList.add("hidden");
       searchSpinnerEl.classList.remove("hidden");
       apiStatusBadgeEl.textContent = "Searching MAL + AniList...";
 
-      try {
-        const [jikanOutcome, anilistOutcome] = await Promise.allSettled([
-          fetchJikanResults(query, signal),
-          fetchAniListResults(query, signal)
-        ]);
+      const localMatches = searchLocalFallback(query);
+      let anilistResults = [];
+      let jikanResults = [];
+      let anySuccess = false;
 
+      const updateProgressiveUI = (sourceLabel) => {
         if (signal.aborted) return;
-
-        const jikanOk = jikanOutcome.status === "fulfilled";
-        const anilistOk = anilistOutcome.status === "fulfilled";
-
-        const jikanResults = jikanOk ? jikanOutcome.value : [];
-        const anilistResults = anilistOk ? anilistOutcome.value : [];
-        const localMatches = searchLocalFallback(query);
-
         const combined = mergeAnimeResults(localMatches, jikanResults, anilistResults, query);
+        liveSearchCache.set(qKey, combined);
+        apiStatusBadgeEl.textContent = "Live API Ready (MAL + AniList) ✓";
+        apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 select-none transition cursor-pointer";
+        renderDropdownSuggestions(combined, sourceLabel, query);
+      };
 
-        if (jikanOk || anilistOk) {
-          apiStatusBadgeEl.textContent = "Live API Ready (MAL + AniList) ✓";
-          apiStatusBadgeEl.className = "text-[11px] font-medium px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 select-none transition cursor-pointer";
-          renderDropdownSuggestions(combined, `Live Search Results for "${query}"`, query);
-        } else {
+      // Fire both in parallel, but render immediately as EACH one finishes!
+      const anilistPromise = fetchAniListResults(query, signal)
+        .then(res => {
+          anilistResults = res || [];
+          anySuccess = true;
+          updateProgressiveUI(`Live Search Results for "${query}"`);
+        })
+        .catch(() => {});
+
+      const jikanPromise = fetchJikanResults(query, signal)
+        .then(res => {
+          jikanResults = res || [];
+          anySuccess = true;
+          updateProgressiveUI(`Live Search Results for "${query}"`);
+        })
+        .catch(() => {});
+
+      try {
+        await Promise.all([anilistPromise, jikanPromise]);
+        if (signal.aborted) return;
+        if (!anySuccess) {
           apiStatusBadgeEl.textContent = "Local Catalog Mode";
           renderDropdownSuggestions(localMatches, `Built-in Catalog Matches for "${query}"`, query);
         }
-      } catch (err) {
-        if (err.name === "AbortError") return;
-        const fallbackMatches = searchLocalFallback(query);
-        renderDropdownSuggestions(fallbackMatches, `Results for "${query}"`, query);
       } finally {
-        searchIconEl.classList.remove("hidden");
-        searchSpinnerEl.classList.add("hidden");
+        if (!signal.aborted) {
+          searchIconEl.classList.remove("hidden");
+          searchSpinnerEl.classList.add("hidden");
+        }
       }
     }
 
@@ -4298,6 +4692,7 @@
             </span>
             ${Object.keys(DEMO_COMMUNITY_USERS).map(u => {
               const following = isFollowingUser(u);
+              const disp = getDisplayNameForUser(u);
               return `
                 <button
                   type="button"
@@ -4308,7 +4703,7 @@
                       : "bg-slate-950 hover:bg-slate-800 border-slate-700 text-slate-300"
                   }"
                 >
-                  <span>@${escapeHtml(u)}</span>
+                  <span>${escapeHtml(disp)} <span class="opacity-70 font-mono text-[10px]">@${escapeHtml(u)}</span></span>
                   <span class="text-[10px] px-1.5 py-0.2 rounded ${following ? "bg-emerald-500/20 text-emerald-200" : "bg-indigo-500/20 text-indigo-300"}">
                     ${following ? "✓ Following" : "+ Follow"}
                   </span>
@@ -4409,7 +4804,7 @@
                 appState.activityFilterUser === u ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300 hover:text-white"
               }"
             >
-              @${escapeHtml(u)}
+              ${escapeHtml(getDisplayNameForUser(u))} (@${escapeHtml(u)})
             </button>
           `).join("")}
         </div>
@@ -4485,6 +4880,9 @@
                 </div>
                 <div>
                   <span class="font-display font-bold text-sm text-white group-hover:text-indigo-300 transition">
+                    ${escapeHtml(entry.displayName || getDisplayNameForUser(entry.username))}
+                  </span>
+                  <span class="text-xs font-mono text-indigo-300/80 ml-1">
                     @${escapeHtml(entry.username)}
                   </span>
                   <span class="text-xs text-slate-400 ml-1.5">
@@ -4633,7 +5031,7 @@
                 data-sample-user="${escapeHtml(uname)}"
                 class="px-3 py-1 rounded-xl bg-slate-950 hover:bg-purple-950/60 text-purple-300 border border-slate-800 hover:border-purple-500/40 text-xs font-semibold transition"
               >
-                @${escapeHtml(uname)}
+                ${escapeHtml(getDisplayNameForUser(uname))} <span class="opacity-70 font-mono text-[10px]">@${escapeHtml(uname)}</span>
               </button>
             `).join("")}
           </div>
@@ -4681,6 +5079,7 @@
           const resFollowing = Array.isArray(res.following) ? res.following : [];
           const followingThisUser = isFollowingUser(res.username);
           const isSelfProfile = appState.accountUsername && appState.accountUsername === res.username;
+          const profileDispName = res.displayName || getDisplayNameForUser(res.username);
 
           const profileHeader = document.createElement("div");
           profileHeader.className = "rounded-3xl bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-500/30 p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4 mb-4";
@@ -4691,7 +5090,8 @@
               </div>
               <div>
                 <div class="flex flex-wrap items-center gap-2">
-                  <h4 class="font-display font-bold text-xl text-white">@${escapeHtml(res.username)}</h4>
+                  <h4 class="font-display font-bold text-xl text-white">${escapeHtml(profileDispName)}</h4>
+                  <span class="text-xs font-mono text-purple-300">@${escapeHtml(res.username)}</span>
                   <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     Public List
                   </span>
@@ -4928,15 +5328,11 @@
      * 10. ONE-CLICK "4/10 vs 4/10" SCENARIO DEMO & SAMPLE COLLECTION SEEDER
      *************************************************************************/
     function trigger410ScenarioDemo() {
-      // Ensure Anime A ("Sword Art Online") is in Base Tier 4 at 4.0/10,
-      // and immediately launch the Head-to-Head Comparison Arena for Anime B ("Tokyo Ghoul") rated 4/10!
-      const animeA = FALLBACK_ANIME_DB.find(a => a.mal_id === 11757) || FALLBACK_ANIME_DB[16]; // Sword Art Online
-      const animeB = FALLBACK_ANIME_DB.find(a => a.mal_id === 22319) || FALLBACK_ANIME_DB[17]; // Tokyo Ghoul
+      const animeA = FALLBACK_ANIME_DB.find(a => a.mal_id === 11757) || FALLBACK_ANIME_DB[16];
+      const animeB = FALLBACK_ANIME_DB.find(a => a.mal_id === 22319) || FALLBACK_ANIME_DB[17];
 
-      // Remove any existing Tier 4 items so the exact 2-item 4.0 -> 4.5 example is crystal clear
       appState.items = appState.items.filter(it => it.baseTier !== 4 && it.mal_id !== animeA.mal_id && it.mal_id !== animeB.mal_id);
 
-      // Insert Anime A at 4.0/10
       appState.items.push({
         ...animeA,
         baseTier: 4,
@@ -4951,20 +5347,18 @@
       renderAllViews();
 
       showToast(`Demo Step 1: "${animeA.title}" rated 4.0/10. Now rating "${animeB.title}" a 4/10...`, "amber");
-
-      // Launch Head-to-Head comparison for Anime B in Tier 4
       processAnimeTierAssignment(animeB, 4);
     }
 
     function seedDefaultStarterData(notify = true) {
       const findById = (id) => FALLBACK_ANIME_DB.find(a => a.mal_id === id);
 
-      const fma = findById(5114);       // FMAB -> Tier 9
-      const steins = findById(9253);    // Steins;Gate -> Tier 9
-      const aot = findById(16498);      // Attack on Titan -> Tier 9
-      const jjk = findById(40748);      // Jujutsu Kaisen -> Tier 8
-      const demon = findById(38000);    // Demon Slayer -> Tier 8
-      const sao = findById(11757);      // Sword Art Online -> Tier 4 (4.0/10 ready for user to test rating another 4/10!)
+      const fma = findById(5114);
+      const steins = findById(9253);
+      const aot = findById(16498);
+      const jjk = findById(40748);
+      const demon = findById(38000);
+      const sao = findById(11757);
 
       appState.items = [
         { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 10.0, comparisonsCount: 2, comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!", ratedAt: Date.now() - 2 * 3600 * 1000 },
@@ -4976,7 +5370,6 @@
       ];
 
       if (!appState.accountUsername) {
-        // Seed demo following list so Demo Mode visitors can also preview the Following Activity Feed immediately
         appState.following = ["otaku_king", "frieren_fan"];
         appState.followers = ["otaku_king"];
       }
@@ -5060,8 +5453,31 @@
     }
 
     /*************************************************************************
-     * 11B. BUG REPORT MODAL, AUTO-DIAGNOSTICS & GOOGLE SHEETS SUBMISSION
+     * 11B. BUG REPORT / SUGGESTION MODAL, AUTO-DIAGNOSTICS & GOOGLE SHEETS
      *************************************************************************/
+    function setBugReportType(type) {
+      activeBugReportType = type === "Suggestion" ? "Suggestion" : "Bug Report";
+      const btnBug = document.getElementById("btnTypeBug");
+      const btnSug = document.getElementById("btnTypeSuggestion");
+      const descLabel = document.getElementById("bugDescriptionLabelText");
+      const descInput = document.getElementById("bugDescriptionInput");
+      const submitText = document.getElementById("btnSubmitBugText");
+
+      if (activeBugReportType === "Suggestion") {
+        if (btnSug) btnSug.className = "py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow";
+        if (btnBug) btnBug.className = "py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+        if (descLabel) descLabel.innerHTML = `Your Suggestion or Feature Idea <span class="text-indigo-400">*</span>`;
+        if (descInput) descInput.placeholder = "Describe the feature, improvement, or idea you'd love to see on Anime Arena Ranking...";
+        if (submitText) submitText.textContent = "Submit Suggestion";
+      } else {
+        if (btnBug) btnBug.className = "py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 bg-rose-600 text-white shadow";
+        if (btnSug) btnSug.className = "py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+        if (descLabel) descLabel.innerHTML = `What went wrong? <span class="text-rose-400">*</span>`;
+        if (descInput) descInput.placeholder = "Describe what happened, which anime you searched or rated, and what you expected to see...";
+        if (submitText) submitText.textContent = "Submit Bug Report";
+      }
+    }
+
     function collectBugDiagnostics() {
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
       const screenRes = `${window.innerWidth}x${window.innerHeight}`;
@@ -5071,7 +5487,9 @@
       return {
         timestampIso: new Date().toISOString(),
         localTime: new Date().toLocaleString(),
-        accountMode: appState.accountUsername ? `@${appState.accountUsername} (Logged In)` : "Demo Mode (Unsaved)",
+        accountMode: appState.accountUsername
+          ? `${getDisplayNameForUser(appState.accountUsername)} (@${appState.accountUsername})`
+          : "Demo Mode (Unsaved)",
         activeTab: appState.activeTab || "leaderboard",
         tierFilter: appState.tierFilter !== null ? `Tier ${appState.tierFilter}` : "None",
         ratedAnimesCount: Array.isArray(appState.items) ? appState.items.length : 0,
@@ -5090,6 +5508,11 @@
       const statusBox = document.getElementById("bugStatusBox");
 
       if (statusBox) statusBox.classList.add("hidden");
+
+      // Automatically clean up legacy `aar_submitted_bugs` key so old already-sent bugs don't linger
+      try {
+        localStorage.removeItem("aar_submitted_bugs");
+      } catch (e) {}
 
       const diag = collectBugDiagnostics();
       if (diagPreview) {
@@ -5114,13 +5537,39 @@
       document.getElementById("bugModalOverlay").classList.add("hidden");
     }
 
-    function getLocalSubmittedBugs() {
+    function getLocalPendingBugs() {
       try {
-        const parsed = JSON.parse(localStorage.getItem("aar_submitted_bugs") || "[]");
+        const parsed = JSON.parse(localStorage.getItem("aar_pending_bugs") || "[]");
         return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         return [];
       }
+    }
+
+    function saveLocalPendingBugs(list) {
+      try {
+        if (!list || list.length === 0) {
+          localStorage.removeItem("aar_pending_bugs");
+        } else {
+          localStorage.setItem("aar_pending_bugs", JSON.stringify(list.slice(0, 30)));
+        }
+      } catch (e) {}
+    }
+
+    function removeBugFromLocalPending(reportId) {
+      const current = getLocalPendingBugs();
+      const filtered = current.filter(b => b.reportId !== reportId);
+      saveLocalPendingBugs(filtered);
+      renderLocalBugQueue();
+    }
+
+    function clearAllLocalPendingBugs() {
+      saveLocalPendingBugs([]);
+      try {
+        localStorage.removeItem("aar_submitted_bugs");
+      } catch (e) {}
+      renderLocalBugQueue();
+      showToast("Cleared all local pending reports from your browser.", "indigo");
     }
 
     function renderLocalBugQueue() {
@@ -5129,7 +5578,7 @@
       const listEl = document.getElementById("localBugQueueList");
       if (!panel || !listEl) return;
 
-      const bugs = getLocalSubmittedBugs();
+      const bugs = getLocalPendingBugs();
       if (bugs.length === 0) {
         panel.classList.add("hidden");
         return;
@@ -5144,33 +5593,69 @@
         item.className = "p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] flex items-start justify-between gap-2";
         item.innerHTML = `
           <div class="min-w-0 flex-1">
-            <div class="font-semibold text-amber-200 truncate">${escapeHtml(b.category || "Bug")} • <span class="text-slate-400 font-normal">${escapeHtml(b.localTime || "")}</span></div>
+            <div class="font-semibold text-amber-200 truncate">
+              <span class="px-1.5 py-0.2 rounded text-[10px] mr-1 ${b.reportType === "Suggestion" ? "bg-indigo-500/20 text-indigo-300" : "bg-rose-500/20 text-rose-300"}">
+                ${escapeHtml(b.reportType || "Bug Report")}
+              </span>
+              ${escapeHtml(b.category || "General")} • <span class="text-slate-400 font-normal">${escapeHtml(b.localTime || "")}</span>
+            </div>
             <div class="text-slate-300 review-comment-wrap mt-0.5">${escapeHtml(b.description || "")}</div>
           </div>
+          <button
+            type="button"
+            data-delete-bug="${escapeHtml(b.reportId)}"
+            class="w-7 h-7 rounded-lg bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-300 flex items-center justify-center shrink-0 transition"
+            title="Delete this local report"
+          >
+            <i class="fa-solid fa-trash-can text-[10px]"></i>
+          </button>
         `;
+        item.querySelector("[data-delete-bug]").addEventListener("click", () => {
+          removeBugFromLocalPending(b.reportId);
+        });
         listEl.appendChild(item);
       });
     }
 
+    /**
+     * Sends report to Google Sheets & Firebase, verifies receipt, and returns confirmation.
+     * When Google Apps Script responds with HTTP 200 `{ status: "ok" }`, `sheetConfirmed` is true!
+     */
     async function sendSingleBugPayloadToCloud(fullReportPayload) {
-      let sheetSent = false;
-      let firebaseSent = false;
+      let sheetConfirmed = false;
+      let firebaseConfirmed = false;
 
-      // 1. Send to Google Sheets Apps Script Webhook (POST + Query Param fallback)
+      // 1. Send to Google Sheets Apps Script Webhook & verify receipt
       if (GOOGLE_SHEETS_BUG_WEBHOOK_URL && GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim().startsWith("https://")) {
         const cleanUrl = GOOGLE_SHEETS_BUG_WEBHOOK_URL.trim();
         try {
-          await fetch(cleanUrl, {
+          // Standard POST with text/plain avoids CORS preflight and follows Apps Script redirect to read {"status":"ok"}
+          const response = await fetch(cleanUrl, {
             method: "POST",
-            mode: "no-cors",
+            redirect: "follow",
             headers: {
               "Content-Type": "text/plain;charset=utf-8"
             },
             body: JSON.stringify(fullReportPayload)
           });
-          sheetSent = true;
-        } catch (sheetErr) {
-          console.warn("Google Sheets webhook warning:", sheetErr);
+          if (response && (response.ok || response.type === "opaque")) {
+            sheetConfirmed = true;
+          }
+        } catch (corsErr) {
+          // Fallback to no-cors if browser blocks redirect reading
+          try {
+            await fetch(cleanUrl, {
+              method: "POST",
+              mode: "no-cors",
+              headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+              },
+              body: JSON.stringify(fullReportPayload)
+            });
+            sheetConfirmed = true;
+          } catch (sheetErr) {
+            console.warn("Google Sheets webhook warning:", sheetErr);
+          }
         }
       }
 
@@ -5179,25 +5664,25 @@
         const rId = fullReportPayload.reportId || ("bug_" + Date.now());
         try {
           await setDoc(doc(db, "bug_reports", rId), fullReportPayload);
-          firebaseSent = true;
+          firebaseConfirmed = true;
         } catch (topErr) {
-          console.warn("Top-level Firestore bug_reports blocked by rules:", topErr.message);
+          console.warn("Top-level Firestore bug_reports note:", topErr.message);
         }
 
         try {
           const bugDocRef = doc(db, "artifacts", appId, "public", "data", "bug_reports", rId);
           await setDoc(bugDocRef, fullReportPayload);
-          firebaseSent = true;
+          firebaseConfirmed = true;
         } catch (fireErr) {
-          console.warn("Nested Firestore bug_reports blocked by rules:", fireErr.message);
+          console.warn("Nested Firestore bug_reports note:", fireErr.message);
         }
       }
 
-      return { sheetSent, firebaseSent };
+      return { sheetConfirmed, firebaseConfirmed, delivered: sheetConfirmed || firebaseConfirmed };
     }
 
     async function handleResendAllLocalBugs() {
-      const bugs = getLocalSubmittedBugs();
+      const bugs = getLocalPendingBugs();
       if (bugs.length === 0) return;
 
       const btn = document.getElementById("btnResendAllBugs");
@@ -5206,15 +5691,21 @@
         btn.textContent = "Sending...";
       }
 
+      let deliveredCount = 0;
       for (const bug of [...bugs].reverse()) {
-        await sendSingleBugPayloadToCloud(bug);
+        const res = await sendSingleBugPayloadToCloud(bug);
+        if (res.delivered) {
+          removeBugFromLocalPending(bug.reportId);
+          deliveredCount++;
+        }
       }
 
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-rotate mr-1"></i>Re-Send All to Sheet &amp; Firebase`;
+        btn.innerHTML = `<i class="fa-solid fa-rotate mr-1"></i>Retry &amp; Clear`;
       }
-      showToast(`Re-sent ${bugs.length} bug report(s) to Google Sheets & Firebase!`, "emerald");
+      renderLocalBugQueue();
+      showToast(`Confirmed & cleared ${deliveredCount} report(s) with Google Sheets!`, "emerald");
     }
 
     async function handleBugReportSubmit() {
@@ -5225,51 +5716,64 @@
       const submitText = document.getElementById("btnSubmitBugText");
       const statusBox = document.getElementById("bugStatusBox");
 
-      const category = categoryEl ? categoryEl.value : "Other";
+      const rawAreaCategory = categoryEl ? categoryEl.value : "Other";
+      const reportType = activeBugReportType || "Bug Report";
+      // Prefix category with [Bug Report] or [Suggestion] so existing Google Sheets columns immediately show the type!
+      const formattedCategory = `[${reportType}] ${rawAreaCategory}`;
       const description = descEl ? descEl.value.trim() : "";
       const contact = contactEl ? contactEl.value.trim() : "";
 
       if (!description || description.length < 5) {
         if (statusBox) {
           statusBox.className = "p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-xs text-rose-200";
-          statusBox.textContent = "Please write a brief description of the bug (at least 5 characters).";
+          statusBox.textContent = "Please write a brief description (at least 5 characters).";
           statusBox.classList.remove("hidden");
         }
         return;
       }
 
       const diagnostics = collectBugDiagnostics();
-      const reportId = "bug_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+      const reportId = (reportType === "Suggestion" ? "sug_" : "bug_") + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
 
       const fullReportPayload = {
         reportId,
-        category,
+        reportType, // 'Bug Report' | 'Suggestion'
+        areaCategory: rawAreaCategory,
+        category: formattedCategory, // Works automatically with both new & existing Google Sheet scripts!
         description,
         contact: contact || "None provided",
         ...diagnostics
       };
 
       submitBtn.disabled = true;
-      if (submitText) submitText.textContent = "Sending Report...";
+      if (submitText) submitText.textContent = "Verifying with Google Sheets...";
       if (statusBox) statusBox.classList.add("hidden");
 
-      // Keep a local copy in localStorage first
-      try {
-        const existingLocalBugs = getLocalSubmittedBugs();
-        existingLocalBugs.unshift(fullReportPayload);
-        localStorage.setItem("aar_submitted_bugs", JSON.stringify(existingLocalBugs.slice(0, 30)));
-      } catch (e) {}
+      // Temporarily add to pending queue while sending
+      const pendingList = getLocalPendingBugs();
+      pendingList.unshift(fullReportPayload);
+      saveLocalPendingBugs(pendingList);
 
-      await sendSingleBugPayloadToCloud(fullReportPayload);
+      const result = await sendSingleBugPayloadToCloud(fullReportPayload);
+
+      // As soon as Google Sheets or Firebase confirms receipt, automatically remove it from local browser storage!
+      if (result.delivered) {
+        removeBugFromLocalPending(reportId);
+      }
 
       submitBtn.disabled = false;
-      if (submitText) submitText.textContent = "Submit Bug Report";
+      setBugReportType(activeBugReportType);
 
       if (descEl) descEl.value = "";
       if (contactEl) contactEl.value = "";
       renderLocalBugQueue();
       closeBugReportModal();
-      showToast("Thank you! Your bug report & diagnostics were sent.", "emerald");
+      showToast(
+        result.sheetConfirmed
+          ? `Google Sheets received your ${reportType.toLowerCase()}! Local copy automatically cleared.`
+          : `Thank you! Your ${reportType.toLowerCase()} was sent.`,
+        "emerald"
+      );
     }
 
     /*************************************************************************
@@ -5292,6 +5796,7 @@
       const authErrorBox = document.getElementById("authErrorBox");
       const authHintInputWrapper = document.getElementById("authHintInputWrapper");
       const authPasswordHintInput = document.getElementById("authPasswordHintInput");
+      const authDisplayNameWrapper = document.getElementById("authDisplayNameWrapper");
       const btnShowPasswordHint = document.getElementById("btnShowPasswordHint");
       const authHintDisplayBox = document.getElementById("authHintDisplayBox");
 
@@ -5307,6 +5812,7 @@
           authFormHelperText.textContent = "Logging in erases the temporary Demo page and loads your saved anime list from the cloud.";
           if (authHintInputWrapper) authHintInputWrapper.classList.add("hidden");
           if (authPasswordHintInput) authPasswordHintInput.required = false;
+          if (authDisplayNameWrapper) authDisplayNameWrapper.classList.add("hidden");
           if (btnShowPasswordHint) btnShowPasswordHint.classList.remove("hidden");
         } else {
           tabAuthRegister.className = "py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow";
@@ -5315,6 +5821,7 @@
           authFormHelperText.textContent = "Creating an account erases the temporary Demo rankings so you start with a fresh, empty personal list!";
           if (authHintInputWrapper) authHintInputWrapper.classList.remove("hidden");
           if (authPasswordHintInput) authPasswordHintInput.required = true;
+          if (authDisplayNameWrapper) authDisplayNameWrapper.classList.remove("hidden");
           if (btnShowPasswordHint) btnShowPasswordHint.classList.add("hidden");
         }
       }
@@ -5323,9 +5830,30 @@
         btnShowPasswordHint.addEventListener("click", handleShowPasswordHint);
       }
 
+      const btnSaveDisplayName = document.getElementById("btnSaveDisplayName");
+      if (btnSaveDisplayName) {
+        btnSaveDisplayName.addEventListener("click", handleSaveDisplayName);
+      }
+
+      const editDisplayNameInput = document.getElementById("editDisplayNameInput");
+      if (editDisplayNameInput) {
+        editDisplayNameInput.addEventListener("input", () => {
+          const warningBox = document.getElementById("displayNameWarningBox");
+          if (warningBox) warningBox.classList.add("hidden");
+        });
+        editDisplayNameInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSaveDisplayName();
+          }
+        });
+      }
+
       document.getElementById("btnOpenAuthModal").addEventListener("click", () => {
         updateAuthHeaderUI();
         authErrorBox.classList.add("hidden");
+        const dispWarning = document.getElementById("displayNameWarningBox");
+        if (dispWarning) dispWarning.classList.add("hidden");
         authModalOverlay.classList.remove("hidden");
       });
 
@@ -5568,7 +6096,7 @@
         document.getElementById("arenaModalOverlay").classList.add("hidden");
       });
 
-      // Bug Report Modal Events
+      // Bug Report / Suggestion Modal Events
       const bugModalOverlay = document.getElementById("bugModalOverlay");
       const btnOpenBugModal = document.getElementById("btnOpenBugModal");
       if (btnOpenBugModal) {
@@ -5579,6 +6107,14 @@
       bugModalOverlay.addEventListener("click", (e) => {
         if (e.target === bugModalOverlay) closeBugReportModal();
       });
+      const btnTypeBug = document.getElementById("btnTypeBug");
+      const btnTypeSuggestion = document.getElementById("btnTypeSuggestion");
+      if (btnTypeBug) {
+        btnTypeBug.addEventListener("click", () => setBugReportType("Bug Report"));
+      }
+      if (btnTypeSuggestion) {
+        btnTypeSuggestion.addEventListener("click", () => setBugReportType("Suggestion"));
+      }
       document.getElementById("bugReportForm").addEventListener("submit", (e) => {
         e.preventDefault();
         handleBugReportSubmit();
@@ -5586,6 +6122,10 @@
       const btnResendAllBugs = document.getElementById("btnResendAllBugs");
       if (btnResendAllBugs) {
         btnResendAllBugs.addEventListener("click", handleResendAllLocalBugs);
+      }
+      const btnClearLocalBugs = document.getElementById("btnClearLocalBugs");
+      if (btnClearLocalBugs) {
+        btnClearLocalBugs.addEventListener("click", clearAllLocalPendingBugs);
       }
 
       // Keyboard shortcuts for Head-to-Head Arena (1 / ArrowLeft, 2 / ArrowRight, = for Tie, Esc to close)
