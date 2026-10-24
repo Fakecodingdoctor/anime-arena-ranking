@@ -449,6 +449,15 @@
             <span>0–9+ Tier Buckets</span>
           </button>
           <button
+            id="tabPlanToWatch"
+            type="button"
+            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <i class="fa-solid fa-bookmark text-amber-400"></i>
+            <span>Planning to Watch</span>
+            <span id="badgePlanCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-950 text-amber-300 border border-amber-700/40">0</span>
+          </button>
+          <button
             id="tabHistory"
             type="button"
             class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
@@ -582,8 +591,18 @@
           <p id="tierCalloutDesc" class="text-xs text-slate-300 leading-relaxed"></p>
         </div>
 
-        <!-- Confirm Button -->
-        <div class="flex items-center justify-end gap-3 pt-1">
+        <!-- Confirm Button & Planning to Watch Shortcut -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+          <button
+            id="btnModalAddToPlan"
+            type="button"
+            class="px-4 py-3 rounded-xl font-semibold text-xs sm:text-sm bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition flex items-center justify-center gap-2"
+            title="Save this anime to your Planning to Watch list instead of rating it right now"
+          >
+            <i class="fa-solid fa-bookmark"></i>
+            <span id="btnModalAddToPlanText">+ Add to Planning to Watch</span>
+          </button>
+
           <button
             id="btnConfirmBaseScore"
             type="button"
@@ -1900,13 +1919,15 @@
     /**
      * State structure:
      * - items: Array of rated anime objects
+     * - planToWatch: Array of animes the user is planning to watch
      * - battleHistory: Array of past H2H comparisons
      * - accountUsername: null (unsaved Demo Mode) or string (logged-in username)
      */
     let appState = {
       items: [],
+      planToWatch: [],
       battleHistory: [],
-      activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'history' | 'activity' | 'user-search'
+      activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'plan' | 'history' | 'activity' | 'user-search'
       tierFilter: null,         // null or 0..9
       searchQuery: "",
       accountUsername: null,
@@ -1920,7 +1941,8 @@
       activityFeedLoading: false,
       activityFilterUser: "ALL", // 'ALL' or specific username
       activityReviewsOnly: false,
-      searchedUserResult: null, // Holds { username, displayName, items, battleHistory, following, followers, updatedAt } or { error }
+      searchedUserResult: null, // Holds { username, displayName, items, planToWatch, battleHistory, following, followers, updatedAt } or { error }
+      searchedUserSubTab: "ranked", // 'ranked' | 'plan'
       searchedUserLoading: false,
       lastSearchedUsername: ""
     };
@@ -1933,6 +1955,18 @@
         passwordHint: "El Psy Kongroo",
         followers: ["frieren_fan", "shonen_critic", "sakura_chan"],
         following: ["frieren_fan", "gojo_sensei"],
+        planToWatch: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 61290),
+            likedBy: ["frieren_fan", "shonen_critic"],
+            addedAt: Date.now() - 25 * 60 * 1000 // 25 mins ago
+          },
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 59062),
+            likedBy: ["gojo_sensei"],
+            addedAt: Date.now() - 7 * 3600 * 1000 // 7 hours ago
+          }
+        ],
         items: [
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 52991),
@@ -1972,6 +2006,13 @@
         passwordHint: "Zoltraak",
         followers: ["otaku_king", "sakura_chan"],
         following: ["otaku_king", "shonen_critic"],
+        planToWatch: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 54492),
+            likedBy: ["otaku_king", "sakura_chan"],
+            addedAt: Date.now() - 90 * 60 * 1000 // 1 hour ago
+          }
+        ],
         items: [
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 47917),
@@ -2001,6 +2042,13 @@
         passwordHint: "Bankai",
         followers: ["frieren_fan", "gojo_sensei"],
         following: ["otaku_king", "gojo_sensei"],
+        planToWatch: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 52588),
+            likedBy: ["otaku_king"],
+            addedAt: Date.now() - 14 * 3600 * 1000 // 14 hours ago
+          }
+        ],
         items: [
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 11061),
@@ -2030,6 +2078,13 @@
         passwordHint: "Cardcaptor",
         followers: ["frieren_fan"],
         following: ["otaku_king", "frieren_fan"],
+        planToWatch: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 50265),
+            likedBy: ["frieren_fan"],
+            addedAt: Date.now() - 28 * 3600 * 1000 // 1 day ago
+          }
+        ],
         items: [
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 54492),
@@ -2059,6 +2114,13 @@
         passwordHint: "Hollow Purple",
         followers: ["otaku_king", "shonen_critic"],
         following: ["shonen_critic", "otaku_king"],
+        planToWatch: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 44511),
+            likedBy: ["otaku_king", "shonen_critic"],
+            addedAt: Date.now() - 8 * 3600 * 1000 // 8 hours ago
+          }
+        ],
         items: [
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 40748),
@@ -2174,6 +2236,7 @@
             following: appState.following || [],
             followers: appState.followers || [],
             items: appState.items,
+            planToWatch: appState.planToWatch || [],
             battleHistory: appState.battleHistory
           }));
         } else {
@@ -2300,6 +2363,17 @@
           it.likedBy = [];
         }
       });
+      if (!Array.isArray(appState.planToWatch)) {
+        appState.planToWatch = [];
+      }
+      appState.planToWatch.forEach(ptw => {
+        if (!Array.isArray(ptw.likedBy)) {
+          ptw.likedBy = [];
+        }
+        if (!ptw.addedAt) {
+          ptw.addedAt = Date.now();
+        }
+      });
       for (let t = 0; t <= 9; t++) {
         recalculateScoresInTier(t);
       }
@@ -2384,6 +2458,14 @@
           if (Array.isArray(extraData.followers)) {
             appState.followers = [...new Set(extraData.followers.map(u => normalizeUsername(u)).filter(Boolean))];
           }
+          if (extraData.planToWatch !== undefined) {
+            const parsedPtw = typeof extraData.planToWatch === "string"
+              ? JSON.parse(extraData.planToWatch)
+              : extraData.planToWatch;
+            if (Array.isArray(parsedPtw)) {
+              appState.planToWatch = parsedPtw;
+            }
+          }
         }
 
         if (Array.isArray(parsedItems)) {
@@ -2418,6 +2500,7 @@
 
       const payload = {
         items: JSON.stringify(appState.items),
+        planToWatch: JSON.stringify(appState.planToWatch || []),
         battleHistory: JSON.stringify(appState.battleHistory),
         updatedAt: Date.now(),
         ownerUid: effectiveUid,
@@ -2455,6 +2538,7 @@
 
       // Erase any Demo Mode items first before loading the user's account list
       appState.items = [];
+      appState.planToWatch = [];
       appState.battleHistory = [];
       appState.tierFilter = null;
 
@@ -2689,6 +2773,7 @@
 
           // IMPORTANT: Erase all Demo Mode rankings so new accounts start completely clean!
           appState.items = [];
+          appState.planToWatch = [];
           appState.battleHistory = [];
           appState.tierFilter = null;
           appState.accountUsername = cleanUser;
@@ -2823,6 +2908,7 @@
       appState.accountPasswordHint = "";
       appState.following = [];
       appState.followers = [];
+      appState.planToWatch = [];
       appState.tierFilter = null;
       saveAccountSessionToLocal();
 
@@ -2830,6 +2916,76 @@
       seedDefaultStarterData(false);
       updateAuthHeaderUI();
       showToast("Signed out. Returned to unsaved Demo Mode.", "indigo");
+    }
+
+    /*************************************************************************
+     * 3A. PLANNING TO WATCH LIST MANAGEMENT
+     *************************************************************************/
+    function extractCleanAnimeMetadata(rawAnime) {
+      if (!rawAnime) return null;
+      return {
+        mal_id: rawAnime.mal_id,
+        title: rawAnime.title || "Unknown Anime",
+        title_japanese: rawAnime.title_japanese || "",
+        year: rawAnime.year || "—",
+        type: rawAnime.type || "TV",
+        episodes: rawAnime.episodes || "?",
+        mal_score: rawAnime.mal_score || "N/A",
+        genres: Array.isArray(rawAnime.genres) ? [...rawAnime.genres] : [],
+        image: rawAnime.image || getFallbackPosterUrl(rawAnime.title),
+        synopsis: rawAnime.synopsis || "No synopsis available."
+      };
+    }
+
+    function isAnimeInPlanToWatch(malId) {
+      const numId = Number(malId);
+      return Array.isArray(appState.planToWatch) && appState.planToWatch.some(it => Number(it.mal_id) === numId);
+    }
+
+    function addToPlanToWatch(anime) {
+      if (!anime || !anime.title) return;
+      if (!Array.isArray(appState.planToWatch)) {
+        appState.planToWatch = [];
+      }
+
+      const cleanAnime = extractCleanAnimeMetadata(anime);
+
+      const alreadyRanked = appState.items.find(it => Number(it.mal_id) === Number(cleanAnime.mal_id));
+      if (alreadyRanked) {
+        showToast(`"${cleanAnime.title}" is already rated ${formatScore(alreadyRanked.finalScore)}/10 on your ranked list!`, "amber");
+        return;
+      }
+
+      const existingIdx = appState.planToWatch.findIndex(it => Number(it.mal_id) === Number(cleanAnime.mal_id));
+      if (existingIdx !== -1) {
+        showToast(`"${cleanAnime.title}" is already in your Planning to Watch list!`, "indigo");
+        return;
+      }
+
+      const newPlanEntry = {
+        ...cleanAnime,
+        addedAt: Date.now(),
+        likedBy: []
+      };
+
+      appState.planToWatch.unshift(newPlanEntry);
+      saveStateToStorage();
+      renderAllViews();
+      showToast(`Added "${cleanAnime.title}" to your Planning to Watch list!`, "amber");
+    }
+
+    function removeFromPlanToWatch(malId, silent = false) {
+      if (!Array.isArray(appState.planToWatch)) return false;
+      const idx = appState.planToWatch.findIndex(it => Number(it.mal_id) === Number(malId));
+      if (idx === -1) return false;
+      const removed = appState.planToWatch[idx];
+      appState.planToWatch.splice(idx, 1);
+      if (!silent) {
+        saveStateToStorage();
+        renderAllViews();
+        showToast(`Removed "${removed.title}" from Planning to Watch.`, "rose");
+      }
+      return true;
     }
 
     /*************************************************************************
@@ -2855,6 +3011,7 @@
           username: cleanUser,
           displayName: myDisp,
           items: appState.items,
+          planToWatch: appState.planToWatch || [],
           battleHistory: appState.battleHistory,
           following: appState.following || [],
           followers: appState.followers || [],
@@ -2869,12 +3026,14 @@
           if (snap.exists()) {
             const data = snap.data();
             const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
+            const parsedPtw = typeof data.planToWatch === "string" ? JSON.parse(data.planToWatch) : (data.planToWatch || []);
             const resolvedDisp = (data.displayName && String(data.displayName).trim()) || cleanUser;
             appState.displayNameMap[cleanUser] = resolvedDisp;
             return {
               username: cleanUser,
               displayName: resolvedDisp,
               items: Array.isArray(parsedItems) ? parsedItems : [],
+              planToWatch: Array.isArray(parsedPtw) ? parsedPtw : [],
               following: Array.isArray(data.following) ? data.following : [],
               followers: Array.isArray(data.followers) ? data.followers : [],
               passwordHash: data.passwordHash,
@@ -2899,7 +3058,8 @@
         return {
           username: demoProfile.username,
           displayName: resolvedDisp,
-          items: demoProfile.items.map(it => ({ ...it })),
+          items: (demoProfile.items || []).map(it => ({ ...it })),
+          planToWatch: (demoProfile.planToWatch || []).map(ptw => ({ ...ptw })),
           following: [...(demoProfile.following || [])],
           followers: [...(demoProfile.followers || [])],
           isDemoCommunity: true,
@@ -2929,22 +3089,24 @@
       const currentlyFollowing = isFollowingUser(targetUser);
 
       if (!currentlyFollowing) {
-        // Verify the target user exists first
         const targetProfile = await fetchUserProfileData(targetUser);
         if (!targetProfile) {
           showToast(`No user found with username "@${targetUser}".`, "rose");
           return;
         }
 
-        appState.following = [...new Set([...(appState.following || []), targetUser])];
+        const resolvedUsername = targetProfile.username || targetUser;
+        const resolvedDisplay = targetProfile.displayName || getDisplayNameForUser(resolvedUsername);
+        appState.displayNameMap[resolvedUsername] = resolvedDisplay;
 
-        // Update target user's followers list in memory/demo & in Firestore
-        if (DEMO_COMMUNITY_USERS[targetUser]) {
-          DEMO_COMMUNITY_USERS[targetUser].followers = [
-            ...new Set([...(DEMO_COMMUNITY_USERS[targetUser].followers || []), myActorName])
+        appState.following = [...new Set([...(appState.following || []), resolvedUsername])];
+
+        if (DEMO_COMMUNITY_USERS[resolvedUsername]) {
+          DEMO_COMMUNITY_USERS[resolvedUsername].followers = [
+            ...new Set([...(DEMO_COMMUNITY_USERS[resolvedUsername].followers || []), myActorName])
           ];
         }
-        if (appState.searchedUserResult && appState.searchedUserResult.username === targetUser) {
+        if (appState.searchedUserResult && appState.searchedUserResult.username === resolvedUsername) {
           appState.searchedUserResult.followers = [
             ...new Set([...(appState.searchedUserResult.followers || []), myActorName])
           ];
@@ -2952,7 +3114,7 @@
 
         if (db && appState.accountUsername && !targetProfile.isDemoCommunity) {
           try {
-            const targetRef = getNamedAccountDocRef(targetUser);
+            const targetRef = getNamedAccountDocRef(resolvedUsername);
             const updatedFollowers = [...new Set([...(targetProfile.followers || []), appState.accountUsername])];
             await setDoc(targetRef, {
               followers: updatedFollowers,
@@ -2963,7 +3125,7 @@
           }
         }
 
-        showToast(`Now following @${targetUser}! Their ratings will appear in your Activity Feed.`, "emerald");
+        showToast(`Now following ${resolvedDisplay} (@${resolvedUsername})!`, "emerald");
       } else {
         appState.following = (appState.following || []).filter(u => u !== targetUser);
 
@@ -2994,19 +3156,17 @@
           }
         }
 
-        showToast(`Unfollowed @${targetUser}.`, "indigo");
+        showToast(`Unfollowed ${getDisplayNameForUser(targetUser)} (@${targetUser}).`, "indigo");
       }
 
       await saveStateToStorage();
       updateAuthHeaderUI();
 
-      // Refresh Social Modal if open
       const socialOverlay = document.getElementById("socialModalOverlay");
       if (socialOverlay && !socialOverlay.classList.contains("hidden")) {
         renderSocialModalContent();
       }
 
-      // Refresh Activity Feed or User Search if active
       if (appState.activeTab === "activity") {
         await loadFollowingActivityFeed();
       } else {
@@ -3014,22 +3174,11 @@
       }
     }
 
-    async function openSocialModal(targetProfile = null, initialTab = "following") {
+    function openSocialModal(targetProfile = null, initialTab = "following") {
       socialModalTargetUser = targetProfile;
       socialModalActiveTab = initialTab;
       document.getElementById("socialModalOverlay").classList.remove("hidden");
       renderSocialModalContent();
-
-      // Hydrate latest display names for everyone in Following and Followers lists
-      const isSelf = !socialModalTargetUser || (appState.accountUsername && socialModalTargetUser.username === appState.accountUsername);
-      const allUsersToHydrate = [
-        ...(isSelf ? (appState.following || []) : (socialModalTargetUser.following || [])),
-        ...(isSelf ? (appState.followers || []) : (socialModalTargetUser.followers || []))
-      ];
-      if (allUsersToHydrate.length > 0) {
-        await Promise.all(allUsersToHydrate.map(u => fetchUserProfileData(u)));
-        renderSocialModalContent();
-      }
     }
 
     function renderSocialModalContent() {
@@ -3085,9 +3234,9 @@
 
       activeArray.forEach(uname => {
         const cleanU = normalizeUsername(uname);
-        const dispName = getDisplayNameForUser(cleanU);
         const iFollowThem = isFollowingUser(cleanU);
         const isMe = appState.accountUsername && cleanU === appState.accountUsername;
+        const userDisp = getDisplayNameForUser(cleanU);
 
         const row = document.createElement("div");
         row.className = "p-3 rounded-2xl bg-slate-950/90 border border-slate-800 flex items-center justify-between gap-3";
@@ -3097,7 +3246,7 @@
               <i class="fa-solid fa-user-astronaut"></i>
             </div>
             <div class="min-w-0">
-              <div class="font-display font-bold text-sm text-white truncate">${escapeHtml(dispName)}</div>
+              <div class="font-display font-bold text-sm text-white truncate">${escapeHtml(userDisp)}</div>
               <div class="text-[11px] text-slate-400 font-mono truncate">@${escapeHtml(cleanU)} • ${isMe ? "You" : (iFollowThem ? "Following" : "User Profile")}</div>
             </div>
           </div>
@@ -3130,7 +3279,9 @@
         row.querySelector('[data-action="view-user"]').addEventListener("click", () => {
           document.getElementById("socialModalOverlay").classList.add("hidden");
           appState.activeTab = "user-search";
-          updateNavTabStyles();
+          if (typeof window.updateNavTabStyles === "function") {
+            window.updateNavTabStyles();
+          }
           lookupUserListByUsername(cleanU);
         });
 
@@ -3146,7 +3297,8 @@
     }
 
     /**
-     * Loads all recent anime ratings/reviews from everyone in `appState.following`
+     * Loads all recent anime ratings/reviews AND "Planning to Watch" additions
+     * from everyone in `appState.following`
      */
     async function loadFollowingActivityFeed() {
       appState.activityFeedLoading = true;
@@ -3160,17 +3312,35 @@
       );
 
       profiles.forEach(profile => {
-        if (!profile || !Array.isArray(profile.items)) return;
+        if (!profile) return;
         const resolvedDisplayName = profile.displayName || getDisplayNameForUser(profile.username);
-        profile.items.forEach(item => {
-          feedEntries.push({
-            username: profile.username,
-            displayName: resolvedDisplayName,
-            followersCount: Array.isArray(profile.followers) ? profile.followers.length : 0,
-            anime: item,
-            timestamp: item.ratedAt || profile.updatedAt || Date.now()
+        const followersCount = Array.isArray(profile.followers) ? profile.followers.length : 0;
+
+        if (Array.isArray(profile.items)) {
+          profile.items.forEach(item => {
+            feedEntries.push({
+              activityType: "ranked",
+              username: profile.username,
+              displayName: resolvedDisplayName,
+              followersCount,
+              anime: item,
+              timestamp: item.ratedAt || profile.updatedAt || Date.now()
+            });
           });
-        });
+        }
+
+        if (Array.isArray(profile.planToWatch)) {
+          profile.planToWatch.forEach(ptwItem => {
+            feedEntries.push({
+              activityType: "plan",
+              username: profile.username,
+              displayName: resolvedDisplayName,
+              followersCount,
+              anime: ptwItem,
+              timestamp: ptwItem.addedAt || profile.updatedAt || Date.now()
+            });
+          });
+        }
       });
 
       // Sort newest first
@@ -3198,9 +3368,10 @@
     }
 
     /**
-     * Toggles a Heart (like) on a user's ranked anime post and syncs the updated count
+     * Toggles a Heart (like) on a user's ranked anime post OR Planning to Watch post
+     * and syncs the updated count
      */
-    async function toggleHeartOnPost(ownerUsername, malId) {
+    async function toggleHeartOnPost(ownerUsername, malId, postType = "ranked") {
       const cleanOwner = normalizeUsername(ownerUsername);
       const numericMalId = Number(malId);
       const actorId = getLikeActorId();
@@ -3224,7 +3395,12 @@
 
       // 1. Update in Activity Feed state if present
       (appState.activityFeedItems || []).forEach(entry => {
-        if (normalizeUsername(entry.username) === cleanOwner && Number(entry.anime.mal_id) === numericMalId) {
+        const entryType = entry.activityType || "ranked";
+        if (
+          normalizeUsername(entry.username) === cleanOwner &&
+          Number(entry.anime.mal_id) === numericMalId &&
+          entryType === postType
+        ) {
           if (!updatedLikedBy) {
             updatedLikedBy = applyToggleToLikedArray(entry.anime.likedBy);
           }
@@ -3234,7 +3410,10 @@
 
       // 2. Update in Demo Community Users if applicable
       if (DEMO_COMMUNITY_USERS[cleanOwner]) {
-        const demoItem = DEMO_COMMUNITY_USERS[cleanOwner].items.find(it => Number(it.mal_id) === numericMalId);
+        const targetCollection = postType === "plan"
+          ? (DEMO_COMMUNITY_USERS[cleanOwner].planToWatch || [])
+          : (DEMO_COMMUNITY_USERS[cleanOwner].items || []);
+        const demoItem = targetCollection.find(it => Number(it.mal_id) === numericMalId);
         if (demoItem) {
           if (!updatedLikedBy) {
             updatedLikedBy = applyToggleToLikedArray(demoItem.likedBy);
@@ -3245,7 +3424,10 @@
 
       // 3. Update in Searched User profile result if currently viewing that user
       if (appState.searchedUserResult && normalizeUsername(appState.searchedUserResult.username) === cleanOwner) {
-        const searchedItem = (appState.searchedUserResult.items || []).find(it => Number(it.mal_id) === numericMalId);
+        const targetCollection = postType === "plan"
+          ? (appState.searchedUserResult.planToWatch || [])
+          : (appState.searchedUserResult.items || []);
+        const searchedItem = targetCollection.find(it => Number(it.mal_id) === numericMalId);
         if (searchedItem) {
           if (!updatedLikedBy) {
             updatedLikedBy = applyToggleToLikedArray(searchedItem.likedBy);
@@ -3254,9 +3436,12 @@
         }
       }
 
-      // 4. Update in own items if liking own post
-      if (appState.accountUsername && cleanOwner === appState.accountUsername) {
-        const ownItem = appState.items.find(it => Number(it.mal_id) === numericMalId);
+      // 4. Update in own items / own planToWatch if liking own post
+      const isOwnSession = (appState.accountUsername && cleanOwner === appState.accountUsername) ||
+        (!appState.accountUsername && cleanOwner === "demo_visitor");
+      if (isOwnSession) {
+        const ownCollection = postType === "plan" ? (appState.planToWatch || []) : (appState.items || []);
+        const ownItem = ownCollection.find(it => Number(it.mal_id) === numericMalId);
         if (ownItem) {
           if (!updatedLikedBy) {
             updatedLikedBy = applyToggleToLikedArray(ownItem.likedBy);
@@ -3273,7 +3458,8 @@
       if (
         activeHeartPopoverContext &&
         normalizeUsername(activeHeartPopoverContext.ownerUsername) === cleanOwner &&
-        Number(activeHeartPopoverContext.malId) === numericMalId
+        Number(activeHeartPopoverContext.malId) === numericMalId &&
+        (activeHeartPopoverContext.postType || "ranked") === postType
       ) {
         activeHeartPopoverContext.likedBy = updatedLikedBy || [];
         renderHeartPopoverListContent();
@@ -3286,15 +3472,29 @@
           const snap = await getDoc(targetRef);
           if (snap.exists()) {
             const data = snap.data() || {};
-            const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
-            if (Array.isArray(parsedItems)) {
-              const targetItem = parsedItems.find(it => Number(it.mal_id) === numericMalId);
-              if (targetItem) {
-                targetItem.likedBy = updatedLikedBy || applyToggleToLikedArray(targetItem.likedBy);
-                await setDoc(targetRef, {
-                  items: JSON.stringify(parsedItems),
-                  passwordHash: data.passwordHash
-                }, { merge: true });
+            if (postType === "plan") {
+              const parsedPtw = typeof data.planToWatch === "string" ? JSON.parse(data.planToWatch) : (data.planToWatch || []);
+              if (Array.isArray(parsedPtw)) {
+                const targetItem = parsedPtw.find(it => Number(it.mal_id) === numericMalId);
+                if (targetItem) {
+                  targetItem.likedBy = updatedLikedBy || applyToggleToLikedArray(targetItem.likedBy);
+                  await setDoc(targetRef, {
+                    planToWatch: JSON.stringify(parsedPtw),
+                    passwordHash: data.passwordHash
+                  }, { merge: true });
+                }
+              }
+            } else {
+              const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
+              if (Array.isArray(parsedItems)) {
+                const targetItem = parsedItems.find(it => Number(it.mal_id) === numericMalId);
+                if (targetItem) {
+                  targetItem.likedBy = updatedLikedBy || applyToggleToLikedArray(targetItem.likedBy);
+                  await setDoc(targetRef, {
+                    items: JSON.stringify(parsedItems),
+                    passwordHash: data.passwordHash
+                  }, { merge: true });
+                }
               }
             }
           }
@@ -3463,8 +3663,7 @@
         listEl.appendChild(row);
       });
     }
-
-    async function openHeartLikersPopover(anchorEl, ownerUsername, item) {
+    async function openHeartLikersPopover(anchorEl, ownerUsername, item, postType = "ranked") {
       cancelHeartPopoverHide();
       const popoverEl = document.getElementById("heartLikersPopover");
       if (!popoverEl || !anchorEl || !item) return;
@@ -3473,6 +3672,7 @@
         anchorEl,
         ownerUsername: normalizeUsername(ownerUsername),
         malId: item.mal_id,
+        postType,
         likedBy: Array.isArray(item.likedBy) ? [...item.likedBy] : []
       };
 
@@ -3494,10 +3694,10 @@
       }
     }
 
-    function bindHeartHoverTrigger(heartBtnEl, ownerUsername, item) {
+    function bindHeartHoverTrigger(heartBtnEl, ownerUsername, item, postType = "ranked") {
       if (!heartBtnEl) return;
       heartBtnEl.addEventListener("mouseenter", () => {
-        openHeartLikersPopover(heartBtnEl, ownerUsername, item);
+        openHeartLikersPopover(heartBtnEl, ownerUsername, item, postType);
       });
       heartBtnEl.addEventListener("mouseleave", () => {
         scheduleHeartPopoverHide(220);
@@ -3895,21 +4095,46 @@
       dropdownEl.appendChild(headerDiv);
 
       animeList.forEach(anime => {
-        const existing = appState.items.find(it => it.mal_id === anime.mal_id);
-        const row = document.createElement("button");
-        row.type = "button";
-        row.className = "w-full px-4 py-3 text-left hover:bg-indigo-950/40 focus:bg-indigo-950/40 focus:outline-none transition flex items-center justify-between gap-3 group";
+        const existing = appState.items.find(it => Number(it.mal_id) === Number(anime.mal_id));
+        const inPlan = isAnimeInPlanToWatch(anime.mal_id);
+
+        const row = document.createElement("div");
+        row.className = "w-full px-4 py-3 text-left hover:bg-indigo-950/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 group cursor-pointer";
+
+        const planBtnHtml = !existing
+          ? `<button
+               type="button"
+               data-action="dropdown-plan"
+               class="px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition shrink-0 flex items-center gap-1.5 ${
+                 inPlan
+                   ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                   : "bg-slate-800/90 hover:bg-amber-500/20 text-slate-300 hover:text-amber-200 border-slate-700 hover:border-amber-500/40"
+               }"
+               title="${inPlan ? "Already in your Planning to Watch list" : "Add to your Planning to Watch list"}"
+             >
+               <i class="${inPlan ? "fa-solid" : "fa-regular"} fa-bookmark text-amber-400"></i>
+               <span>${inPlan ? "Planned ✓" : "+ Plan to Watch"}</span>
+             </button>`
+          : "";
 
         const existingBadgeHtml = existing
-          ? `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+          ? `<button
+               type="button"
+               data-action="dropdown-rate"
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0"
+             >
                Rated ${formatScore(existing.finalScore)}/10
-             </span>`
-          : `<span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600/20 group-hover:bg-indigo-600 text-indigo-300 group-hover:text-white border border-indigo-500/30 transition shrink-0">
+             </button>`
+          : `<button
+               type="button"
+               data-action="dropdown-rate"
+               class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600/20 group-hover:bg-indigo-600 text-indigo-300 group-hover:text-white border border-indigo-500/30 transition shrink-0"
+             >
                + Rate 0–9+
-             </span>`;
+             </button>`;
 
         row.innerHTML = `
-          <div class="flex items-center gap-3.5 min-w-0">
+          <div class="flex items-center gap-3.5 min-w-0 flex-1" data-action="dropdown-info">
             <img
               src="${escapeHtml(anime.image)}"
               onerror="this.onerror=null;this.src='${getFallbackPosterUrl(anime.title)}';"
@@ -3931,8 +4156,29 @@
               </div>
             </div>
           </div>
-          ${existingBadgeHtml}
+          <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+            ${planBtnHtml}
+            ${existingBadgeHtml}
+          </div>
         `;
+
+        const planBtn = row.querySelector('[data-action="dropdown-plan"]');
+        if (planBtn) {
+          planBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (!isAnimeInPlanToWatch(anime.mal_id)) {
+              addToPlanToWatch(anime);
+              renderDropdownSuggestions(animeList, headerLabel, rawQuery);
+            } else {
+              dropdownEl.classList.add("hidden");
+              appState.activeTab = "plan";
+              if (typeof window.updateNavTabStyles === "function") {
+                window.updateNavTabStyles();
+              }
+              renderMainCollectionArea();
+            }
+          });
+        }
 
         row.addEventListener("click", () => {
           dropdownEl.classList.add("hidden");
@@ -4027,35 +4273,40 @@
     const modalAnimeCommentEl = document.getElementById("modalAnimeComment");
 
     function openBaseRatingModal(anime, preselectTier = null) {
-      modalCandidateAnime = { ...anime };
-      const existingItem = appState.items.find(it => it.mal_id === anime.mal_id);
+      const cleanAnime = extractCleanAnimeMetadata(anime);
+      const existingItem = appState.items.find(it => Number(it.mal_id) === Number(cleanAnime.mal_id));
+
+      modalCandidateAnime = existingItem
+        ? { ...cleanAnime, comment: existingItem.comment || "" }
+        : { ...cleanAnime };
+
       modalSelectedBaseTier = preselectTier !== null
         ? Math.min(9, preselectTier)
         : (existingItem ? Math.min(9, existingItem.baseTier) : null);
 
-      // Populate comment field with existing comment if editing
+      // Populate comment field ONLY with the current user's own existing comment if editing
       if (modalAnimeCommentEl) {
         modalAnimeCommentEl.value = existingItem && existingItem.comment
           ? existingItem.comment
-          : (anime.comment || "");
+          : "";
       }
 
       // Populate anime details
       const coverEl = document.getElementById("modalAnimeCover");
-      coverEl.src = anime.image;
-      coverEl.onerror = () => { coverEl.src = getFallbackPosterUrl(anime.title); };
+      coverEl.src = cleanAnime.image;
+      coverEl.onerror = () => { coverEl.src = getFallbackPosterUrl(cleanAnime.title); };
 
-      document.getElementById("modalAnimeTitle").textContent = anime.title;
+      document.getElementById("modalAnimeTitle").textContent = cleanAnime.title;
       document.getElementById("modalAnimeSubtitle").textContent =
-        anime.title_japanese && anime.title_japanese !== anime.title ? anime.title_japanese : "";
-      document.getElementById("modalAnimeTypeYear").textContent = `${anime.type || "TV"} • ${anime.year || "—"}`;
-      document.getElementById("modalAnimeMalScore").textContent = `★ ${anime.mal_score || "N/A"} MAL`;
-      document.getElementById("modalAnimeEpisodes").textContent = `${anime.episodes || "?"} episodes`;
-      document.getElementById("modalAnimeSynopsis").textContent = anime.synopsis || "No synopsis available.";
+        cleanAnime.title_japanese && cleanAnime.title_japanese !== cleanAnime.title ? cleanAnime.title_japanese : "";
+      document.getElementById("modalAnimeTypeYear").textContent = `${cleanAnime.type || "TV"} • ${cleanAnime.year || "—"}`;
+      document.getElementById("modalAnimeMalScore").textContent = `★ ${cleanAnime.mal_score || "N/A"} MAL`;
+      document.getElementById("modalAnimeEpisodes").textContent = `${cleanAnime.episodes || "?"} episodes`;
+      document.getElementById("modalAnimeSynopsis").textContent = cleanAnime.synopsis || "No synopsis available.";
 
       const genresContainer = document.getElementById("modalAnimeGenres");
       genresContainer.innerHTML = "";
-      (anime.genres || []).forEach(g => {
+      (cleanAnime.genres || []).forEach(g => {
         const span = document.createElement("span");
         span.className = "text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700";
         span.textContent = g;
@@ -4064,6 +4315,21 @@
 
       renderBaseScoreButtons();
       updateBaseTierCallout(modalSelectedBaseTier);
+
+      // Update the "+ Add to Planning to Watch" button state inside the rating modal
+      const btnModalPlan = document.getElementById("btnModalAddToPlan");
+      const btnModalPlanText = document.getElementById("btnModalAddToPlanText");
+      if (btnModalPlan && btnModalPlanText) {
+        if (existingItem) {
+          btnModalPlan.classList.add("hidden");
+        } else {
+          btnModalPlan.classList.remove("hidden");
+          const alreadyPlanned = isAnimeInPlanToWatch(cleanAnime.mal_id);
+          btnModalPlanText.textContent = alreadyPlanned
+            ? "Already in Planning to Watch ✓"
+            : "+ Add to Planning to Watch";
+        }
+      }
 
       ratingModalOverlayEl.classList.remove("hidden");
     }
@@ -4211,6 +4477,7 @@
       const existingInTier = appState.items.filter(it => it.baseTier === clampedTier);
 
       if (existingInTier.length === 0) {
+        const wasPlanned = removeFromPlanToWatch(candidateAnime.mal_id, true);
         const newEntry = {
           ...candidateAnime,
           comment: preservedComment,
@@ -4227,7 +4494,9 @@
         renderAllViews();
         const def = getTierDef(clampedTier);
         showToast(
-          `Rated "${newEntry.title}" a ${formatScore(newEntry.finalScore)}/10 (First in Tier ${def.display})`,
+          wasPlanned
+            ? `Moved "${newEntry.title}" from Planning to Watch → Rated ${formatScore(newEntry.finalScore)}/10!`
+            : `Rated "${newEntry.title}" a ${formatScore(newEntry.finalScore)}/10 (First in Tier ${def.display})`,
           "emerald"
         );
         return;
@@ -4443,6 +4712,7 @@
       }
 
       // Recalculate all decimal scores in this base tier (e.g. 4.0 and 4.5!)
+      removeFromPlanToWatch(challenger.mal_id, true);
       recalculateScoresInTier(tier);
       saveStateToStorage();
       renderAllViews();
@@ -4524,6 +4794,7 @@
         // If user cancels mid-comparison, place candidate at base score N.0 (slot 0) so their rating isn't lost
         const tier = arenaSession.baseTier;
         const candidate = arenaSession.candidate;
+        removeFromPlanToWatch(candidate.mal_id, true);
         appState.items.push({
           ...candidate,
           baseTier: tier,
@@ -4552,10 +4823,15 @@
     function renderStatsAndMatrix() {
       const totalAnimes = appState.items.length;
       const totalBattles = appState.battleHistory.length;
+      const totalPlanned = Array.isArray(appState.planToWatch) ? appState.planToWatch.length : 0;
 
       document.getElementById("statTotalAnimes").textContent = String(totalAnimes);
       document.getElementById("statTotalComparisons").textContent = String(totalBattles);
       document.getElementById("badgeBattleCount").textContent = String(totalBattles);
+      const badgePlanCount = document.getElementById("badgePlanCount");
+      if (badgePlanCount) {
+        badgePlanCount.textContent = String(totalPlanned);
+      }
 
       if (totalAnimes > 0) {
         const sum = appState.items.reduce((acc, it) => acc + it.finalScore, 0);
@@ -4672,6 +4948,11 @@
 
       if (appState.activeTab === "history") {
         renderBattleHistoryTab(container);
+        return;
+      }
+
+      if (appState.activeTab === "plan") {
+        renderPlanToWatchTab(container);
         return;
       }
 
@@ -5064,6 +5345,164 @@
     }
 
     /**
+     * VIEW 3A: PLANNING TO WATCH TAB (WITH ONE-CLICK "RATE & COMMENT" MOVE BUTTON)
+     */
+    function renderPlanToWatchTab(container) {
+      const q = (appState.searchQuery || "").toLowerCase().trim();
+      const plannedList = (Array.isArray(appState.planToWatch) ? appState.planToWatch : [])
+        .filter(it => {
+          if (!q) return true;
+          return (
+            it.title.toLowerCase().includes(q) ||
+            (it.title_japanese && it.title_japanese.toLowerCase().includes(q))
+          );
+        });
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "space-y-4";
+
+      // Header Banner
+      const banner = document.createElement("div");
+      banner.className = "rounded-3xl bg-slate-900/80 border border-slate-800/90 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4";
+      banner.innerHTML = `
+        <div class="flex items-start sm:items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center text-lg shrink-0">
+            <i class="fa-solid fa-bookmark"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-white">
+              Planning to Watch (${Array.isArray(appState.planToWatch) ? appState.planToWatch.length : 0})
+            </h3>
+            <p class="text-xs text-slate-400">
+              Finished watching an anime on this list? Click <strong>Rate &amp; Comment</strong> next to it to rank it and automatically move it out of Planning to Watch!
+            </p>
+          </div>
+        </div>
+      `;
+      wrapper.appendChild(banner);
+
+      if (plannedList.length === 0) {
+        const emptyBox = document.createElement("div");
+        emptyBox.className = "rounded-3xl bg-slate-900/50 border border-slate-800/80 p-12 text-center space-y-3";
+        emptyBox.innerHTML = `
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 flex items-center justify-center mx-auto text-xl">
+            <i class="fa-regular fa-bookmark"></i>
+          </div>
+          <h4 class="font-display font-bold text-base sm:text-lg text-white">
+            Your Planning to Watch List is Empty
+          </h4>
+          <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+            Search for any anime in the bar above and click <strong>+ Plan to Watch</strong> in the dropdown to bookmark animes you want to watch next!
+          </p>
+        `;
+        wrapper.appendChild(emptyBox);
+        container.appendChild(wrapper);
+        return;
+      }
+
+      const listEl = document.createElement("div");
+      listEl.className = "space-y-3";
+
+      const ownerName = appState.accountUsername || "demo_visitor";
+
+      plannedList.forEach((item) => {
+        const isHearted = hasUserHeartedItem(item);
+        const heartCount = getItemHeartCount(item);
+
+        const card = document.createElement("div");
+        card.className = "group rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-slate-700 p-3.5 sm:p-4 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+
+        card.innerHTML = `
+          <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1 w-full">
+            <img
+              src="${escapeHtml(item.image)}"
+              onerror="this.onerror=null;this.src='${getFallbackPosterUrl(item.title)}';"
+              alt="${escapeHtml(item.title)}"
+              class="w-14 h-20 object-cover rounded-xl border border-slate-700 shrink-0 bg-slate-800"
+            />
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h4 class="font-display font-bold text-base sm:text-lg text-white truncate">
+                  ${escapeHtml(item.title)}
+                </h4>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  <i class="fa-solid fa-bookmark text-[10px]"></i> Planning to Watch
+                </span>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                <span>${escapeHtml(String(item.type || "TV"))} (${escapeHtml(String(item.year || "—"))})</span>
+                <span>• ${escapeHtml(String(item.episodes || "?"))} eps</span>
+                <span>• ★ ${escapeHtml(String(item.mal_score || "N/A"))} MAL</span>
+                ${item.addedAt
+                  ? `<span class="text-slate-500"><i class="fa-regular fa-clock mr-1"></i>Added ${escapeHtml(formatRelativeTime(item.addedAt))}</span>`
+                  : ""
+                }
+                <button
+                  type="button"
+                  data-action="plan-heart"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold border transition ${
+                    isHearted
+                      ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                      : "bg-slate-950/90 hover:bg-rose-950/40 text-rose-400/90 border-slate-800"
+                  }"
+                  title="Hover to see who liked this Planning to Watch item"
+                >
+                  <i class="${isHearted ? "fa-solid" : "fa-regular"} fa-heart"></i>
+                  <span>${heartCount}</span>
+                </button>
+              </div>
+
+              <div class="flex flex-wrap gap-1 pt-0.5">
+                ${(item.genres || []).slice(0, 4).map(g => `<span class="text-[10px] px-2 py-0.2 rounded bg-slate-800/90 text-slate-400">${escapeHtml(g)}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto border-t sm:border-t-0 border-slate-800/80 pt-2.5 sm:pt-0 shrink-0">
+            <button
+              type="button"
+              data-action="move-to-ranked"
+              class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/20 transition flex items-center gap-2"
+              title="Rate and comment on this anime now — automatically moves it from Planning to Watch into your Ranked list!"
+            >
+              <i class="fa-solid fa-star text-amber-300"></i>
+              <span>Rate &amp; Comment</span>
+            </button>
+
+            <button
+              type="button"
+              data-action="remove-plan"
+              class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-rose-950 text-slate-400 hover:text-rose-300 transition flex items-center justify-center"
+              title="Remove from Planning to Watch"
+            >
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          </div>
+        `;
+
+        const heartBtn = card.querySelector('[data-action="plan-heart"]');
+        heartBtn.addEventListener("click", () => {
+          toggleHeartOnPost(ownerName, item.mal_id, "plan");
+        });
+        bindHeartHoverTrigger(heartBtn, ownerName, item, "plan");
+
+        card.querySelector('[data-action="move-to-ranked"]').addEventListener("click", () => {
+          openBaseRatingModal(item);
+        });
+
+        card.querySelector('[data-action="remove-plan"]').addEventListener("click", () => {
+          removeFromPlanToWatch(item.mal_id);
+        });
+
+        listEl.appendChild(card);
+      });
+
+      wrapper.appendChild(listEl);
+      container.appendChild(wrapper);
+    }
+
+    /**
      * VIEW 3B: FOLLOWING ACTIVITY FEED PAGE (WITH RELATIVE TIMESTAMPS)
      */
     function renderActivityFeedTab(container) {
@@ -5295,14 +5734,61 @@
 
       visibleFeed.forEach(entry => {
         const item = entry.anime;
-        const def = getTierDef(item.baseTier);
-        const isTenCrown = item.finalScore === 10;
+        const isPlanActivity = entry.activityType === "plan";
+        const def = !isPlanActivity ? getTierDef(item.baseTier) : null;
+        const isTenCrown = !isPlanActivity && item.finalScore === 10;
         const relTime = formatRelativeTime(entry.timestamp);
         const isHearted = hasUserHeartedItem(item);
         const heartCount = getItemHeartCount(item);
+        const alreadyInMyPlan = isAnimeInPlanToWatch(item.mal_id);
+        const myExistingRanking = appState.items.find(it => Number(it.mal_id) === Number(item.mal_id));
 
         const card = document.createElement("div");
         card.className = "rounded-2xl bg-slate-900/85 border border-slate-800/90 hover:border-slate-700 p-4 sm:p-5 transition space-y-3.5 shadow-lg";
+
+        const planBtnHtml = myExistingRanking
+          ? ""
+          : `<button
+               type="button"
+               data-action="plan-this-anime"
+               class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 ${
+                 alreadyInMyPlan
+                   ? "bg-amber-500/20 hover:bg-rose-950/50 text-amber-300 hover:text-rose-200 border-amber-500/40"
+                   : "bg-slate-950 hover:bg-amber-500/20 text-amber-300 border-slate-800 hover:border-amber-500/40"
+               }"
+               title="${alreadyInMyPlan ? "In your Planning to Watch list (click to remove)" : "Add this anime to your Planning to Watch list"}"
+             >
+               <i class="${alreadyInMyPlan ? "fa-solid" : "fa-regular"} fa-bookmark text-amber-400"></i>
+               <span>${alreadyInMyPlan ? "In Plan to Watch ✓" : "+ Plan to Watch"}</span>
+             </button>`;
+
+        const rateBtnHtml = `
+          <button
+            type="button"
+            data-action="rate-this-anime"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${
+              myExistingRanking
+                ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40"
+                : "bg-indigo-600/25 hover:bg-indigo-600 text-indigo-200 hover:text-white border-indigo-500/40 shadow-sm"
+            }"
+            title="${
+              myExistingRanking
+                ? `You rated this ${formatScore(myExistingRanking.finalScore)}/10 — click to edit your rating or comment`
+                : alreadyInMyPlan
+                ? "Rank this anime now (will automatically move it out of your Planning to Watch list)"
+                : "Rank and review this anime on your own list"
+            }"
+          >
+            <i class="fa-solid ${myExistingRanking ? "fa-check-circle text-emerald-400" : "fa-star text-amber-300"}"></i>
+            <span>${
+              myExistingRanking
+                ? `My Score: ${formatScore(myExistingRanking.finalScore)}/10`
+                : alreadyInMyPlan
+                ? "Rank Now (Move from Plan)"
+                : "+ Rank Anime"
+            }</span>
+          </button>
+        `;
 
         card.innerHTML = `
           <!-- Activity Feed Card Header: User & Relative Timestamp -->
@@ -5324,7 +5810,10 @@
                     @${escapeHtml(entry.username)}
                   </span>
                   <span class="text-xs text-slate-400 ml-1.5">
-                    ${item.comment ? "posted a review &amp; ranked" : "ranked"} an anime
+                    ${isPlanActivity
+                      ? `<span class="text-amber-300 font-medium">added an anime to Planning to Watch</span>`
+                      : (item.comment ? "posted a review &amp; ranked" : "ranked") + " an anime"
+                    }
                   </span>
                 </div>
               </button>
@@ -5338,7 +5827,7 @@
             </div>
           </div>
 
-          <!-- Anime Info & Score Row -->
+          <!-- Anime Info & Score / Status Row -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex items-start gap-3.5 min-w-0 flex-1 w-full">
               <img
@@ -5352,9 +5841,14 @@
                   <h4 class="font-display font-bold text-base sm:text-lg text-white truncate">
                     ${escapeHtml(item.title)}
                   </h4>
-                  <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border ${def.badge}">
-                    Base Tier ${def.display}/10 • ${escapeHtml(def.label)}
-                  </span>
+                  ${isPlanActivity
+                    ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                         <i class="fa-solid fa-bookmark text-[10px]"></i> Planning to Watch
+                       </span>`
+                    : `<span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border ${def.badge}">
+                         Base Tier ${def.display}/10 • ${escapeHtml(def.label)}
+                       </span>`
+                  }
                   ${isTenCrown
                     ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
                          <i class="fa-solid fa-crown text-[10px]"></i> #1 Crown (10.0)
@@ -5367,28 +5861,41 @@
                   ${escapeHtml(String(item.type || "TV"))} (${escapeHtml(String(item.year || "—"))}) • ★ ${escapeHtml(String(item.mal_score || "N/A"))} MAL
                 </div>
 
-                ${item.comment
+                ${!isPlanActivity && item.comment
                   ? `<div class="mt-2 px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-xs sm:text-sm text-slate-200 italic flex items-start gap-2.5 max-w-full overflow-hidden">
                        <i class="fa-solid fa-quote-left text-emerald-400/70 text-xs mt-1 shrink-0"></i>
                        <div class="flex-1 min-w-0 review-comment-wrap">${escapeHtml(item.comment)}</div>
                      </div>`
+                  : isPlanActivity
+                  ? `<p class="text-xs text-amber-200/80 italic"><i class="fa-regular fa-calendar-plus mr-1"></i>Bookmarked to watch soon.</p>`
                   : `<p class="text-xs text-slate-500 italic">No written review note added.</p>`
                 }
               </div>
             </div>
 
-            <!-- Right Score, Heart Button & Quick Rate Button -->
+            <!-- Right Score/Status, Heart Button & Quick Action Buttons -->
             <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60 shrink-0">
-              <div class="px-3.5 py-2 rounded-2xl bg-slate-950 border ${isTenCrown ? "border-fuchsia-500/50" : "border-slate-800"} text-right min-w-[92px]">
-                <div class="font-display font-bold text-xl ${isTenCrown ? "text-fuchsia-300" : "text-emerald-400"} leading-none">
-                  ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
-                </div>
-                <div class="text-[10px] text-slate-400 mt-0.5">
-                  @${escapeHtml(entry.username)}'s Score
-                </div>
-              </div>
+              ${isPlanActivity
+                ? `<div class="px-3.5 py-2 rounded-2xl bg-amber-950/30 border border-amber-500/40 text-right min-w-[92px]">
+                     <div class="font-display font-bold text-sm text-amber-300 flex items-center justify-end gap-1.5">
+                       <i class="fa-solid fa-bookmark text-xs"></i>
+                       <span>Watchlist</span>
+                     </div>
+                     <div class="text-[10px] text-slate-400 mt-0.5">
+                       @${escapeHtml(entry.username)}'s Plan
+                     </div>
+                   </div>`
+                : `<div class="px-3.5 py-2 rounded-2xl bg-slate-950 border ${isTenCrown ? "border-fuchsia-500/50" : "border-slate-800"} text-right min-w-[92px]">
+                     <div class="font-display font-bold text-xl ${isTenCrown ? "text-fuchsia-300" : "text-emerald-400"} leading-none">
+                       ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
+                     </div>
+                     <div class="text-[10px] text-slate-400 mt-0.5">
+                       @${escapeHtml(entry.username)}'s Score
+                     </div>
+                   </div>`
+              }
 
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
                   data-action="toggle-heart"
@@ -5405,13 +5912,8 @@
                   }">${heartCount}</span>
                 </button>
 
-                <button
-                  type="button"
-                  data-action="rate-this-anime"
-                  class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold transition"
-                >
-                  + Rate on My List
-                </button>
+                ${planBtnHtml}
+                ${rateBtnHtml}
               </div>
             </div>
           </div>
@@ -5419,15 +5921,28 @@
 
         card.querySelector('[data-action="visit-profile"]').addEventListener("click", () => {
           appState.activeTab = "user-search";
+          appState.searchedUserSubTab = isPlanActivity ? "plan" : "ranked";
           updateNavTabStyles();
           lookupUserListByUsername(entry.username);
         });
 
         const feedHeartBtn = card.querySelector('[data-action="toggle-heart"]');
+        const postType = isPlanActivity ? "plan" : "ranked";
         feedHeartBtn.addEventListener("click", () => {
-          toggleHeartOnPost(entry.username, item.mal_id);
+          toggleHeartOnPost(entry.username, item.mal_id, postType);
         });
-        bindHeartHoverTrigger(feedHeartBtn, entry.username, item);
+        bindHeartHoverTrigger(feedHeartBtn, entry.username, item, postType);
+
+        const planBtnEl = card.querySelector('[data-action="plan-this-anime"]');
+        if (planBtnEl) {
+          planBtnEl.addEventListener("click", () => {
+            if (isAnimeInPlanToWatch(item.mal_id)) {
+              removeFromPlanToWatch(item.mal_id);
+            } else {
+              addToPlanToWatch(item);
+            }
+          });
+        }
 
         card.querySelector('[data-action="rate-this-anime"]').addEventListener("click", () => {
           openBaseRatingModal(item);
@@ -5533,6 +6048,7 @@
             if (b.baseTier !== a.baseTier) return b.baseTier - a.baseTier;
             return b.rankSlot - a.rankSlot;
           });
+          const userPlanItems = [...(res.planToWatch || [])].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
           const avg = userItems.length > 0
             ? (userItems.reduce((acc, i) => acc + i.finalScore, 0) / userItems.length).toFixed(2)
             : "—";
@@ -5603,6 +6119,10 @@
                 <div class="text-[10px] text-slate-400 uppercase">Rated</div>
               </div>
               <div class="px-3.5 py-2 rounded-2xl bg-slate-950/80 border border-slate-800">
+                <div class="font-display font-bold text-lg text-amber-300">${userPlanItems.length}</div>
+                <div class="text-[10px] text-slate-400 uppercase">Planned</div>
+              </div>
+              <div class="px-3.5 py-2 rounded-2xl bg-slate-950/80 border border-slate-800">
                 <div class="font-display font-bold text-lg text-emerald-400">${avg}</div>
                 <div class="text-[10px] text-slate-400 uppercase">Avg Score</div>
               </div>
@@ -5624,7 +6144,149 @@
             openSocialModal(res, "following");
           });
 
-          if (userItems.length === 0) {
+          // Sub-Tab Switcher for Searched User: Ranked Animes vs Planning to Watch
+          const subTabBar = document.createElement("div");
+          subTabBar.className = "flex flex-wrap items-center gap-2 mb-4 p-1.5 rounded-2xl bg-slate-900/80 border border-slate-800 w-fit";
+          const activeSub = appState.searchedUserSubTab || "ranked";
+          subTabBar.innerHTML = `
+            <button
+              type="button"
+              data-subtab="ranked"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSub === "ranked" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-white"
+              }"
+            >
+              <i class="fa-solid fa-trophy"></i>
+              <span>Ranked Animes (${userItems.length})</span>
+            </button>
+            <button
+              type="button"
+              data-subtab="plan"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeSub === "plan" ? "bg-amber-500 text-slate-950 shadow" : "text-slate-400 hover:text-white"
+              }"
+            >
+              <i class="fa-solid fa-bookmark"></i>
+              <span>Planning to Watch (${userPlanItems.length})</span>
+            </button>
+          `;
+          subTabBar.querySelectorAll("[data-subtab]").forEach(btn => {
+            btn.addEventListener("click", () => {
+              appState.searchedUserSubTab = btn.getAttribute("data-subtab");
+              renderMainCollectionArea();
+            });
+          });
+          resultBox.appendChild(subTabBar);
+
+          if (activeSub === "plan") {
+            if (userPlanItems.length === 0) {
+              const emptyPlan = document.createElement("div");
+              emptyPlan.className = "rounded-3xl bg-slate-900/50 border border-slate-800 p-8 text-center text-sm text-slate-400";
+              emptyPlan.textContent = `@${res.username} doesn't have any animes in their Planning to Watch list right now.`;
+              resultBox.appendChild(emptyPlan);
+            } else {
+              const planCardsList = document.createElement("div");
+              planCardsList.className = "space-y-3";
+
+              userPlanItems.forEach((item) => {
+                const isHearted = hasUserHeartedItem(item);
+                const heartCount = getItemHeartCount(item);
+                const inMyPlan = isAnimeInPlanToWatch(item.mal_id);
+                const myExistingRanking = appState.items.find(it => Number(it.mal_id) === Number(item.mal_id));
+
+                const row = document.createElement("div");
+                row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+                row.innerHTML = `
+                  <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1 w-full">
+                    <img
+                      src="${escapeHtml(item.image)}"
+                      onerror="this.onerror=null;this.src='${getFallbackPosterUrl(item.title)}';"
+                      alt=""
+                      class="w-12 h-18 object-cover rounded-xl border border-slate-700 shrink-0"
+                    />
+                    <div class="min-w-0 flex-1 space-y-1">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-display font-bold text-base text-white truncate">${escapeHtml(item.title)}</span>
+                        <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                          <i class="fa-solid fa-bookmark text-[10px]"></i> Planning to Watch
+                        </span>
+                        ${item.addedAt
+                          ? `<span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock mr-1"></i>Added ${escapeHtml(formatRelativeTime(item.addedAt))}</span>`
+                          : ""
+                        }
+                      </div>
+                      <div class="text-xs text-slate-400">
+                        ${escapeHtml(String(item.type || "TV"))} (${escapeHtml(String(item.year || "—"))}) • ★ ${escapeHtml(String(item.mal_score || "N/A"))} MAL
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap items-center justify-end gap-2 self-end sm:self-center shrink-0">
+                    <button
+                      type="button"
+                      data-action="toggle-profile-plan-heart"
+                      class="px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5 ${
+                        isHearted
+                          ? "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/50"
+                          : "bg-slate-950 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border-slate-800 hover:border-rose-500/40"
+                      }"
+                    >
+                      <i class="${isHearted ? "fa-solid text-rose-400 animate-heart-pop" : "fa-regular text-rose-400/80"} fa-heart"></i>
+                      <span class="font-mono">${heartCount}</span>
+                    </button>
+                    ${!myExistingRanking
+                      ? `<button
+                           type="button"
+                           data-action="add-to-my-plan"
+                           class="px-3 py-2 rounded-xl text-xs font-semibold border transition ${
+                             inMyPlan
+                               ? "bg-amber-500/20 hover:bg-rose-950/50 text-amber-300 hover:text-rose-200 border-amber-500/40"
+                               : "bg-slate-950 hover:bg-amber-950/40 text-amber-300 border-slate-800 hover:border-amber-500/40"
+                           }"
+                         >
+                           <i class="${inMyPlan ? "fa-solid" : "fa-regular"} fa-bookmark mr-1"></i>${inMyPlan ? "In Plan to Watch ✓" : "+ Plan to Watch"}
+                         </button>`
+                      : ""
+                    }
+                    <button
+                      type="button"
+                      data-action="rate-from-profile-plan"
+                      class="px-3.5 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${
+                        myExistingRanking
+                          ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40"
+                          : "bg-indigo-600/25 hover:bg-indigo-600 text-indigo-200 hover:text-white border-indigo-500/40"
+                      }"
+                    >
+                      <i class="fa-solid ${myExistingRanking ? "fa-check-circle text-emerald-400" : "fa-star text-amber-300"}"></i>
+                      <span>${myExistingRanking ? `My Score: ${formatScore(myExistingRanking.finalScore)}/10` : "+ Rank Anime"}</span>
+                    </button>
+                  </div>
+                `;
+                const ptwHeartBtn = row.querySelector('[data-action="toggle-profile-plan-heart"]');
+                ptwHeartBtn.addEventListener("click", () => {
+                  toggleHeartOnPost(res.username, item.mal_id, "plan");
+                });
+                bindHeartHoverTrigger(ptwHeartBtn, res.username, item, "plan");
+
+                const addPlanBtn = row.querySelector('[data-action="add-to-my-plan"]');
+                if (addPlanBtn) {
+                  addPlanBtn.addEventListener("click", () => {
+                    if (isAnimeInPlanToWatch(item.mal_id)) {
+                      removeFromPlanToWatch(item.mal_id);
+                    } else {
+                      addToPlanToWatch(item);
+                    }
+                  });
+                }
+
+                row.querySelector('[data-action="rate-from-profile-plan"]').addEventListener("click", () => {
+                  openBaseRatingModal(item);
+                });
+
+                planCardsList.appendChild(row);
+              });
+              resultBox.appendChild(planCardsList);
+            }
+          } else if (userItems.length === 0) {
             const emptyUser = document.createElement("div");
             emptyUser.className = "rounded-3xl bg-slate-900/50 border border-slate-800 p-8 text-center text-sm text-slate-400";
             emptyUser.textContent = `@${res.username} hasn't rated any animes yet.`;
@@ -5638,6 +6300,9 @@
               const isTenCrown = item.finalScore === 10;
               const isHearted = hasUserHeartedItem(item);
               const heartCount = getItemHeartCount(item);
+              const inMyPlan = isAnimeInPlanToWatch(item.mal_id);
+              const myExistingRanking = appState.items.find(it => Number(it.mal_id) === Number(item.mal_id));
+
               const row = document.createElement("div");
               row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
               row.innerHTML = `
@@ -5671,7 +6336,7 @@
                     }
                   </div>
                 </div>
-                <div class="flex items-center gap-2.5 self-end sm:self-center shrink-0">
+                <div class="flex flex-wrap items-center justify-end gap-2 self-end sm:self-center shrink-0">
                   <button
                     type="button"
                     data-action="toggle-profile-heart"
@@ -5684,6 +6349,40 @@
                     <i class="${isHearted ? "fa-solid text-rose-400 animate-heart-pop" : "fa-regular text-rose-400/80"} fa-heart"></i>
                     <span class="font-mono">${heartCount}</span>
                   </button>
+
+                  ${!isSelfProfile && !myExistingRanking
+                    ? `<button
+                         type="button"
+                         data-action="profile-ranked-plan"
+                         class="px-3 py-2 rounded-xl text-xs font-semibold border transition ${
+                           inMyPlan
+                             ? "bg-amber-500/20 hover:bg-rose-950/50 text-amber-300 hover:text-rose-200 border-amber-500/40"
+                             : "bg-slate-950 hover:bg-amber-950/40 text-amber-300 border-slate-800 hover:border-amber-500/40"
+                         }"
+                         title="${inMyPlan ? "In your Planning to Watch list (click to remove)" : "Add this anime to your Planning to Watch list"}"
+                       >
+                         <i class="${inMyPlan ? "fa-solid" : "fa-regular"} fa-bookmark mr-1"></i>${inMyPlan ? "Planned ✓" : "+ Plan"}
+                       </button>`
+                    : ""
+                  }
+
+                  ${!isSelfProfile
+                    ? `<button
+                         type="button"
+                         data-action="profile-ranked-rate"
+                         class="px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${
+                           myExistingRanking
+                             ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40"
+                             : "bg-indigo-600/25 hover:bg-indigo-600 text-indigo-200 hover:text-white border-indigo-500/40"
+                         }"
+                         title="${myExistingRanking ? "Edit your rating for this anime" : "Rank this anime on your own list"}"
+                       >
+                         <i class="fa-solid ${myExistingRanking ? "fa-check-circle text-emerald-400" : "fa-star text-amber-300"}"></i>
+                         <span>${myExistingRanking ? `My Score: ${formatScore(myExistingRanking.finalScore)}` : "+ Rank"}</span>
+                       </button>`
+                    : ""
+                  }
+
                   <div class="px-3.5 py-2 rounded-2xl bg-slate-950 border ${isTenCrown ? "border-fuchsia-500/50" : "border-slate-800"} text-right min-w-[90px]">
                     <div class="font-display font-bold text-xl ${isTenCrown ? "text-fuchsia-300" : "text-emerald-400"} leading-none">
                       ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
@@ -5699,6 +6398,25 @@
                 toggleHeartOnPost(res.username, item.mal_id);
               });
               bindHeartHoverTrigger(profileHeartBtn, res.username, item);
+
+              const btnProfilePlan = row.querySelector('[data-action="profile-ranked-plan"]');
+              if (btnProfilePlan) {
+                btnProfilePlan.addEventListener("click", () => {
+                  if (isAnimeInPlanToWatch(item.mal_id)) {
+                    removeFromPlanToWatch(item.mal_id);
+                  } else {
+                    addToPlanToWatch(item);
+                  }
+                });
+              }
+
+              const btnProfileRate = row.querySelector('[data-action="profile-ranked-rate"]');
+              if (btnProfileRate) {
+                btnProfileRate.addEventListener("click", () => {
+                  openBaseRatingModal(item);
+                });
+              }
+
               cardsList.appendChild(row);
             });
             resultBox.appendChild(cardsList);
@@ -5851,6 +6569,8 @@
       const jjk = findById(40748);
       const demon = findById(38000);
       const sao = findById(11757);
+      const tougen = findById(58811);
+      const sakamoto = findById(58939);
 
       appState.items = [
         { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 10.0, comparisonsCount: 2, likedBy: ["otaku_king", "frieren_fan", "shonen_critic"], comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!", ratedAt: Date.now() - 2 * 3600 * 1000 },
@@ -5862,6 +6582,10 @@
       ];
 
       if (!appState.accountUsername) {
+        appState.planToWatch = [
+          { ...tougen, addedAt: Date.now() - 3 * 3600 * 1000, likedBy: ["otaku_king", "shonen_critic"] },
+          { ...sakamoto, addedAt: Date.now() - 20 * 3600 * 1000, likedBy: ["frieren_fan"] }
+        ];
         appState.following = ["otaku_king", "frieren_fan"];
         appState.followers = ["otaku_king"];
       }
@@ -6474,14 +7198,15 @@
       document.getElementById("btnClearAll").addEventListener("click", () => {
         openConfirmModal(
           "Clear Current Rankings?",
-          "This will clear all rated animes and battle history from your current view.",
+          "This will clear all rated animes, Planning to Watch items, and battle history from your current view.",
           () => {
             appState.items = [];
+            appState.planToWatch = [];
             appState.battleHistory = [];
             appState.tierFilter = null;
             saveStateToStorage();
             renderAllViews();
-            showToast("Cleared all anime ratings.", "rose");
+            showToast("Cleared all anime ratings and Planning to Watch list.", "rose");
           }
         );
       });
@@ -6503,6 +7228,7 @@
       // View Tabs
       const tabLeaderboard = document.getElementById("tabLeaderboard");
       const tabTierBuckets = document.getElementById("tabTierBuckets");
+      const tabPlanToWatch = document.getElementById("tabPlanToWatch");
       const tabHistory = document.getElementById("tabHistory");
       const tabActivityFeed = document.getElementById("tabActivityFeed");
       const tabUserSearch = document.getElementById("tabUserSearch");
@@ -6514,6 +7240,9 @@
 
         tabLeaderboard.className = tabName === "leaderboard" ? activeClass : inactiveClass;
         tabTierBuckets.className = tabName === "tiers" ? activeClass : inactiveClass;
+        if (tabPlanToWatch) {
+          tabPlanToWatch.className = tabName === "plan" ? activeClass : inactiveClass;
+        }
         tabHistory.className = tabName === "history" ? activeClass : inactiveClass;
         if (tabActivityFeed) {
           tabActivityFeed.className = tabName === "activity" ? activeClass : inactiveClass;
@@ -6537,6 +7266,9 @@
 
       tabLeaderboard.addEventListener("click", () => setActiveTab("leaderboard"));
       tabTierBuckets.addEventListener("click", () => setActiveTab("tiers"));
+      if (tabPlanToWatch) {
+        tabPlanToWatch.addEventListener("click", () => setActiveTab("plan"));
+      }
       tabHistory.addEventListener("click", () => setActiveTab("history"));
       if (tabActivityFeed) {
         tabActivityFeed.addEventListener("click", () => setActiveTab("activity"));
@@ -6572,6 +7304,15 @@
       // Rating Modal Events
       document.getElementById("btnCloseRatingModal").addEventListener("click", closeBaseRatingModal);
       document.getElementById("btnConfirmBaseScore").addEventListener("click", handleConfirmBaseScore);
+      const btnModalAddToPlan = document.getElementById("btnModalAddToPlan");
+      if (btnModalAddToPlan) {
+        btnModalAddToPlan.addEventListener("click", () => {
+          if (modalCandidateAnime) {
+            addToPlanToWatch(modalCandidateAnime);
+            closeBaseRatingModal();
+          }
+        });
+      }
       ratingModalOverlayEl.addEventListener("click", (e) => {
         if (e.target === ratingModalOverlayEl) closeBaseRatingModal();
       });
