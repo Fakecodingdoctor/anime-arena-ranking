@@ -2950,16 +2950,20 @@
 
       const cleanAnime = extractCleanAnimeMetadata(anime);
 
-      const alreadyRanked = appState.items.find(it => Number(it.mal_id) === Number(cleanAnime.mal_id));
-      if (alreadyRanked) {
-        showToast(`"${cleanAnime.title}" is already rated ${formatScore(alreadyRanked.finalScore)}/10 on your ranked list!`, "amber");
-        return;
-      }
-
       const existingIdx = appState.planToWatch.findIndex(it => Number(it.mal_id) === Number(cleanAnime.mal_id));
       if (existingIdx !== -1) {
         showToast(`"${cleanAnime.title}" is already in your Planning to Watch list!`, "indigo");
         return;
+      }
+
+      // If this anime was already ranked, remove it from the ranked list and recalibrate its former tier
+      const rankedIdx = appState.items.findIndex(it => Number(it.mal_id) === Number(cleanAnime.mal_id));
+      let movedFromRanked = false;
+      if (rankedIdx !== -1) {
+        const oldTier = appState.items[rankedIdx].baseTier;
+        appState.items.splice(rankedIdx, 1);
+        recalculateScoresInTier(oldTier);
+        movedFromRanked = true;
       }
 
       const newPlanEntry = {
@@ -2971,7 +2975,12 @@
       appState.planToWatch.unshift(newPlanEntry);
       saveStateToStorage();
       renderAllViews();
-      showToast(`Added "${cleanAnime.title}" to your Planning to Watch list!`, "amber");
+
+      if (movedFromRanked) {
+        showToast(`Moved "${cleanAnime.title}" from your Ranked list to Planning to Watch!`, "amber");
+      } else {
+        showToast(`Added "${cleanAnime.title}" to your Planning to Watch list!`, "amber");
+      }
     }
 
     function removeFromPlanToWatch(malId, silent = false) {
@@ -4101,21 +4110,25 @@
         const row = document.createElement("div");
         row.className = "w-full px-4 py-3 text-left hover:bg-indigo-950/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 group cursor-pointer";
 
-        const planBtnHtml = !existing
-          ? `<button
-               type="button"
-               data-action="dropdown-plan"
-               class="px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition shrink-0 flex items-center gap-1.5 ${
-                 inPlan
-                   ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                   : "bg-slate-800/90 hover:bg-amber-500/20 text-slate-300 hover:text-amber-200 border-slate-700 hover:border-amber-500/40"
-               }"
-               title="${inPlan ? "Already in your Planning to Watch list" : "Add to your Planning to Watch list"}"
-             >
-               <i class="${inPlan ? "fa-solid" : "fa-regular"} fa-bookmark text-amber-400"></i>
-               <span>${inPlan ? "Planned ✓" : "+ Plan to Watch"}</span>
-             </button>`
-          : "";
+        const planBtnHtml = `<button
+          type="button"
+          data-action="dropdown-plan"
+          class="px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition shrink-0 flex items-center gap-1.5 ${
+            inPlan
+              ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+              : "bg-slate-800/90 hover:bg-amber-500/20 text-slate-300 hover:text-amber-200 border-slate-700 hover:border-amber-500/40"
+          }"
+          title="${
+            inPlan
+              ? "Already in your Planning to Watch list"
+              : existing
+              ? "Move this anime from your Ranked list to Planning to Watch"
+              : "Add to your Planning to Watch list"
+          }"
+        >
+          <i class="${inPlan ? "fa-solid" : "fa-regular"} fa-bookmark text-amber-400"></i>
+          <span>${inPlan ? "Planned ✓" : existing ? "Move to Plan" : "+ Plan to Watch"}</span>
+        </button>`;
 
         const existingBadgeHtml = existing
           ? `<button
@@ -4316,18 +4329,21 @@
       renderBaseScoreButtons();
       updateBaseTierCallout(modalSelectedBaseTier);
 
-      // Update the "+ Add to Planning to Watch" button state inside the rating modal
+      // Update the "+ Add to Planning to Watch" / "Move to Planning to Watch" button state inside the rating modal
       const btnModalPlan = document.getElementById("btnModalAddToPlan");
       const btnModalPlanText = document.getElementById("btnModalAddToPlanText");
       if (btnModalPlan && btnModalPlanText) {
+        btnModalPlan.classList.remove("hidden");
+        const alreadyPlanned = isAnimeInPlanToWatch(cleanAnime.mal_id);
         if (existingItem) {
-          btnModalPlan.classList.add("hidden");
+          btnModalPlanText.textContent = "Move to Planning to Watch";
+          btnModalPlan.title = "Remove this anime from your Ranked list and move it to Planning to Watch";
+        } else if (alreadyPlanned) {
+          btnModalPlanText.textContent = "Already in Planning to Watch ✓";
+          btnModalPlan.title = "This anime is already in your Planning to Watch list";
         } else {
-          btnModalPlan.classList.remove("hidden");
-          const alreadyPlanned = isAnimeInPlanToWatch(cleanAnime.mal_id);
-          btnModalPlanText.textContent = alreadyPlanned
-            ? "Already in Planning to Watch ✓"
-            : "+ Add to Planning to Watch";
+          btnModalPlanText.textContent = "+ Add to Planning to Watch";
+          btnModalPlan.title = "Save this anime to your Planning to Watch list instead of rating it right now";
         }
       }
 
