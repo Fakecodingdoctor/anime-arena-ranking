@@ -109,6 +109,16 @@
       word-break: break-word;
       max-width: 100%;
     }
+
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); }
+    }
+    .animate-heart-pop {
+      animation: heartPop 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
   </style>
 </head>
 <body class="bg-aurora min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
@@ -1318,6 +1328,21 @@
     </div>
   </div>
 
+  <!-- FLOATING "WHO LIKED THIS" HOVER POPOVER -->
+  <div
+    id="heartLikersPopover"
+    class="hidden fixed z-50 w-72 sm:w-80 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/90 shadow-2xl overflow-hidden animate-pop"
+  >
+    <div class="px-3.5 py-2.5 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-1.5 text-xs font-bold text-white">
+        <i class="fa-solid fa-heart text-rose-400"></i>
+        <span id="heartPopoverTitle">Liked by (0)</span>
+      </div>
+      <span class="text-[10px] text-slate-400">Click user to view list</span>
+    </div>
+    <div id="heartPopoverList" class="max-h-60 overflow-y-auto divide-y divide-slate-800/70 p-1.5"></div>
+  </div>
+
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
@@ -1906,8 +1931,8 @@
         username: "otaku_king",
         displayName: "King of Otakus 👑",
         passwordHint: "El Psy Kongroo",
-        followers: ["frieren_fan", "shonen_critic"],
-        following: ["frieren_fan"],
+        followers: ["frieren_fan", "shonen_critic", "sakura_chan"],
+        following: ["frieren_fan", "gojo_sensei"],
         items: [
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 52991),
@@ -1915,6 +1940,7 @@
             rankSlot: 1,
             finalScore: 10.0,
             comparisonsCount: 3,
+            likedBy: ["frieren_fan", "shonen_critic", "sakura_chan", "gojo_sensei"],
             comment: "Frieren is an absolute masterpiece in storytelling, atmosphere, and emotional weight. The way it explores time and memory after the main quest is unlike any other fantasy anime.",
             ratedAt: Date.now() - 45 * 60 * 1000 // 45 mins ago
           },
@@ -1924,6 +1950,7 @@
             rankSlot: 1,
             finalScore: 8.5,
             comparisonsCount: 2,
+            likedBy: ["shonen_critic", "gojo_sensei"],
             comment: "Tougen Anki's blood eclipse powers and Oni vs Momotaro battles go super hard! Studio Hibari delivered great dark action scenes.",
             ratedAt: Date.now() - 2 * 3600 * 1000 // 2 hours ago
           },
@@ -1933,6 +1960,7 @@
             rankSlot: 0,
             finalScore: 9.0,
             comparisonsCount: 2,
+            likedBy: ["frieren_fan", "shonen_critic", "sakura_chan"],
             comment: "Dandadan has the wildest animation energy of the decade. Episode 7 made me cry out of nowhere!",
             ratedAt: Date.now() - 26 * 3600 * 1000 // 1 day ago
           }
@@ -1942,7 +1970,7 @@
         username: "frieren_fan",
         displayName: "Frieren the Slayer ✨",
         passwordHint: "Zoltraak",
-        followers: ["otaku_king"],
+        followers: ["otaku_king", "sakura_chan"],
         following: ["otaku_king", "shonen_critic"],
         items: [
           {
@@ -1951,6 +1979,7 @@
             rankSlot: 0,
             finalScore: 10.0,
             comparisonsCount: 1,
+            likedBy: ["otaku_king", "sakura_chan", "gojo_sensei"],
             comment: "Bocchi the Rock creative visual gags and live concert performances are 10/10 peak comedy and music.",
             ratedAt: Date.now() - 1 * 3600 * 1000 // 1 hour ago
           },
@@ -1960,6 +1989,7 @@
             rankSlot: 0,
             finalScore: 8.0,
             comparisonsCount: 1,
+            likedBy: ["otaku_king", "shonen_critic"],
             comment: "Sakamoto Days convenience store fight choreography is pure fun from start to finish.",
             ratedAt: Date.now() - 5 * 3600 * 1000 // 5 hours ago
           }
@@ -1969,8 +1999,8 @@
         username: "shonen_critic",
         displayName: "Shonen Critic 🔥",
         passwordHint: "Bankai",
-        followers: ["frieren_fan"],
-        following: ["otaku_king"],
+        followers: ["frieren_fan", "gojo_sensei"],
+        following: ["otaku_king", "gojo_sensei"],
         items: [
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 11061),
@@ -1978,6 +2008,7 @@
             rankSlot: 0,
             finalScore: 10.0,
             comparisonsCount: 2,
+            likedBy: ["otaku_king", "frieren_fan", "gojo_sensei"],
             comment: "Hunter x Hunter's Chimera Ant arc and Nen power system remain undefeated in battle shonen history.",
             ratedAt: Date.now() - 3 * 3600 * 1000 // 3 hours ago
           },
@@ -1987,8 +2018,67 @@
             rankSlot: 0,
             finalScore: 7.0,
             comparisonsCount: 1,
+            likedBy: ["otaku_king"],
             comment: "Gachiakuta has gritty art direction and a super unique world concept.",
             ratedAt: Date.now() - 49 * 3600 * 1000 // 2 days ago
+          }
+        ]
+      },
+      sakura_chan: {
+        username: "sakura_chan",
+        displayName: "Sakura Blossom 🌸",
+        passwordHint: "Cardcaptor",
+        followers: ["frieren_fan"],
+        following: ["otaku_king", "frieren_fan"],
+        items: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 54492),
+            baseTier: 9,
+            rankSlot: 1,
+            finalScore: 10.0,
+            comparisonsCount: 2,
+            likedBy: ["otaku_king", "frieren_fan"],
+            comment: "The Apothecary Diaries has the best mystery writing and protagonist chemistry in recent years! Maomao is iconic.",
+            ratedAt: Date.now() - 4 * 3600 * 1000 // 4 hours ago
+          },
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 32281),
+            baseTier: 9,
+            rankSlot: 0,
+            finalScore: 9.0,
+            comparisonsCount: 1,
+            likedBy: ["frieren_fan"],
+            comment: "Your Name's visuals and RADWIMPS soundtrack still give me chills every rewatch.",
+            ratedAt: Date.now() - 18 * 3600 * 1000 // 18 hours ago
+          }
+        ]
+      },
+      gojo_sensei: {
+        username: "gojo_sensei",
+        displayName: "Six Eyes Limitless 🤞",
+        passwordHint: "Hollow Purple",
+        followers: ["otaku_king", "shonen_critic"],
+        following: ["shonen_critic", "otaku_king"],
+        items: [
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 40748),
+            baseTier: 9,
+            rankSlot: 1,
+            finalScore: 10.0,
+            comparisonsCount: 2,
+            likedBy: ["otaku_king", "shonen_critic", "sakura_chan"],
+            comment: "Throughout Heaven and Earth, Jujutsu Kaisen's Hidden Inventory & Shibuya Incident arcs alone are peak action animation.",
+            ratedAt: Date.now() - 6 * 3600 * 1000 // 6 hours ago
+          },
+          {
+            ...FALLBACK_ANIME_DB.find(a => a.mal_id === 52299),
+            baseTier: 8,
+            rankSlot: 0,
+            finalScore: 8.0,
+            comparisonsCount: 1,
+            likedBy: ["shonen_critic"],
+            comment: "Solo Leveling's boss fights and A-1 Pictures compositing are pure adrenaline.",
+            ratedAt: Date.now() - 30 * 3600 * 1000 // 1 day ago
           }
         ]
       }
@@ -2205,6 +2295,9 @@
         it.baseTier = Math.min(9, Math.max(0, Number(it.baseTier) || 0));
         if (typeof it.comment !== "string") {
           it.comment = "";
+        }
+        if (!Array.isArray(it.likedBy)) {
+          it.likedBy = [];
         }
       });
       for (let t = 0; t <= 9; t++) {
@@ -3087,6 +3180,330 @@
       renderMainCollectionArea();
     }
 
+    /**
+     * Returns the unique actor identifier for hearting/liking posts
+     */
+    function getLikeActorId() {
+      return appState.accountUsername ? normalizeUsername(appState.accountUsername) : getOrCreateDeviceUid();
+    }
+
+    function hasUserHeartedItem(item) {
+      if (!item || !Array.isArray(item.likedBy)) return false;
+      return item.likedBy.includes(getLikeActorId());
+    }
+
+    function getItemHeartCount(item) {
+      if (!item || !Array.isArray(item.likedBy)) return 0;
+      return item.likedBy.length;
+    }
+
+    /**
+     * Toggles a Heart (like) on a user's ranked anime post and syncs the updated count
+     */
+    async function toggleHeartOnPost(ownerUsername, malId) {
+      const cleanOwner = normalizeUsername(ownerUsername);
+      const numericMalId = Number(malId);
+      const actorId = getLikeActorId();
+      if (!cleanOwner || !numericMalId) return;
+
+      let updatedLikedBy = null;
+      let nowHearted = false;
+
+      const applyToggleToLikedArray = (arr) => {
+        const list = Array.isArray(arr) ? [...arr] : [];
+        const idx = list.indexOf(actorId);
+        if (idx !== -1) {
+          list.splice(idx, 1);
+          nowHearted = false;
+        } else {
+          list.push(actorId);
+          nowHearted = true;
+        }
+        return list;
+      };
+
+      // 1. Update in Activity Feed state if present
+      (appState.activityFeedItems || []).forEach(entry => {
+        if (normalizeUsername(entry.username) === cleanOwner && Number(entry.anime.mal_id) === numericMalId) {
+          if (!updatedLikedBy) {
+            updatedLikedBy = applyToggleToLikedArray(entry.anime.likedBy);
+          }
+          entry.anime.likedBy = [...updatedLikedBy];
+        }
+      });
+
+      // 2. Update in Demo Community Users if applicable
+      if (DEMO_COMMUNITY_USERS[cleanOwner]) {
+        const demoItem = DEMO_COMMUNITY_USERS[cleanOwner].items.find(it => Number(it.mal_id) === numericMalId);
+        if (demoItem) {
+          if (!updatedLikedBy) {
+            updatedLikedBy = applyToggleToLikedArray(demoItem.likedBy);
+          }
+          demoItem.likedBy = [...updatedLikedBy];
+        }
+      }
+
+      // 3. Update in Searched User profile result if currently viewing that user
+      if (appState.searchedUserResult && normalizeUsername(appState.searchedUserResult.username) === cleanOwner) {
+        const searchedItem = (appState.searchedUserResult.items || []).find(it => Number(it.mal_id) === numericMalId);
+        if (searchedItem) {
+          if (!updatedLikedBy) {
+            updatedLikedBy = applyToggleToLikedArray(searchedItem.likedBy);
+          }
+          searchedItem.likedBy = [...updatedLikedBy];
+        }
+      }
+
+      // 4. Update in own items if liking own post
+      if (appState.accountUsername && cleanOwner === appState.accountUsername) {
+        const ownItem = appState.items.find(it => Number(it.mal_id) === numericMalId);
+        if (ownItem) {
+          if (!updatedLikedBy) {
+            updatedLikedBy = applyToggleToLikedArray(ownItem.likedBy);
+          }
+          ownItem.likedBy = [...updatedLikedBy];
+          await saveStateToStorage();
+        }
+      }
+
+      // Re-render immediately so the heart button and count update without delay
+      renderMainCollectionArea();
+
+      // If the "Liked By" hover popover is currently open for this post, refresh its list live
+      if (
+        activeHeartPopoverContext &&
+        normalizeUsername(activeHeartPopoverContext.ownerUsername) === cleanOwner &&
+        Number(activeHeartPopoverContext.malId) === numericMalId
+      ) {
+        activeHeartPopoverContext.likedBy = updatedLikedBy || [];
+        renderHeartPopoverListContent();
+      }
+
+      // 5. Persist to Firestore if the post belongs to a cloud user account
+      if (db && !DEMO_COMMUNITY_USERS[cleanOwner] && cleanOwner !== appState.accountUsername) {
+        try {
+          const targetRef = getNamedAccountDocRef(cleanOwner);
+          const snap = await getDoc(targetRef);
+          if (snap.exists()) {
+            const data = snap.data() || {};
+            const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
+            if (Array.isArray(parsedItems)) {
+              const targetItem = parsedItems.find(it => Number(it.mal_id) === numericMalId);
+              if (targetItem) {
+                targetItem.likedBy = updatedLikedBy || applyToggleToLikedArray(targetItem.likedBy);
+                await setDoc(targetRef, {
+                  items: JSON.stringify(parsedItems),
+                  passwordHash: data.passwordHash
+                }, { merge: true });
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Could not persist heart to cloud profile:", err);
+        }
+      }
+    }
+
+    /*************************************************************************
+     * 3C. "WHO LIKED THIS" HOVER POPOVER ENGINE
+     * - Opens when hovering over any Heart button on a ranking
+     * - Stays open when moving the cursor into the popover list
+     * - Lets users click +Follow/Following or click a user to view their list
+     *************************************************************************/
+    let heartPopoverHideTimer = null;
+    let activeHeartPopoverContext = null; // { anchorEl, ownerUsername, malId, likedBy }
+
+    function cancelHeartPopoverHide() {
+      if (heartPopoverHideTimer) {
+        clearTimeout(heartPopoverHideTimer);
+        heartPopoverHideTimer = null;
+      }
+    }
+
+    function scheduleHeartPopoverHide(delayMs = 220) {
+      cancelHeartPopoverHide();
+      heartPopoverHideTimer = setTimeout(() => {
+        const popoverEl = document.getElementById("heartLikersPopover");
+        if (popoverEl) popoverEl.classList.add("hidden");
+        activeHeartPopoverContext = null;
+      }, delayMs);
+    }
+
+    function positionHeartPopover(anchorEl) {
+      const popoverEl = document.getElementById("heartLikersPopover");
+      if (!popoverEl || !anchorEl) return;
+
+      const rect = anchorEl.getBoundingClientRect();
+      const popWidth = popoverEl.offsetWidth || 300;
+      const popHeight = popoverEl.offsetHeight || 220;
+
+      // Horizontal clamping inside viewport
+      let left = rect.right - popWidth;
+      if (left < 12) left = rect.left;
+      if (left + popWidth > window.innerWidth - 12) {
+        left = window.innerWidth - popWidth - 12;
+      }
+      left = Math.max(12, left);
+
+      // Prefer placing right above the Heart button if space permits, otherwise below
+      let top = rect.top - popHeight - 8;
+      if (top < 12) {
+        top = rect.bottom + 8;
+      }
+
+      popoverEl.style.left = `${Math.round(left)}px`;
+      popoverEl.style.top = `${Math.round(top)}px`;
+    }
+
+    function renderHeartPopoverListContent() {
+      const popoverEl = document.getElementById("heartLikersPopover");
+      const titleEl = document.getElementById("heartPopoverTitle");
+      const listEl = document.getElementById("heartPopoverList");
+      if (!popoverEl || !titleEl || !listEl || !activeHeartPopoverContext) return;
+
+      const likedBy = Array.isArray(activeHeartPopoverContext.likedBy)
+        ? activeHeartPopoverContext.likedBy
+        : [];
+
+      titleEl.textContent = `Liked by (${likedBy.length})`;
+      listEl.innerHTML = "";
+
+      if (likedBy.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-4 text-center text-xs text-slate-400">
+            No hearts yet — click the heart button to be the first!
+          </div>
+        `;
+        return;
+      }
+
+      likedBy.forEach(rawUser => {
+        const cleanU = normalizeUsername(rawUser);
+        if (!cleanU) return;
+
+        const isAnonDeviceUid = cleanU.startsWith("user_") || cleanU.startsWith("guest_");
+        const isMyDeviceUid = isAnonDeviceUid && cleanU === normalizeUsername(getOrCreateDeviceUid());
+        const isMe = (appState.accountUsername && cleanU === appState.accountUsername) || isMyDeviceUid;
+        const iFollowThem = !isAnonDeviceUid && isFollowingUser(cleanU);
+
+        const dispName = isMyDeviceUid
+          ? "You (Demo Session)"
+          : isAnonDeviceUid
+          ? "Guest Visitor"
+          : getDisplayNameForUser(cleanU);
+
+        const row = document.createElement("div");
+        row.className = "p-2 rounded-xl hover:bg-slate-800/80 transition flex items-center justify-between gap-2";
+
+        row.innerHTML = `
+          <button
+            type="button"
+            data-action="visit-liker"
+            ${isAnonDeviceUid ? "disabled" : ""}
+            class="flex items-center gap-2.5 min-w-0 flex-1 text-left group ${isAnonDeviceUid ? "cursor-default" : "cursor-pointer"}"
+            title="${isAnonDeviceUid ? "Demo visitor" : `View ${escapeHtml(dispName)} (@${escapeHtml(cleanU)})'s anime rankings`}"
+          >
+            <div class="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 flex items-center justify-center text-xs font-bold shrink-0 group-hover:bg-indigo-500/25 group-hover:text-indigo-200 group-hover:border-indigo-500/40 transition">
+              <i class="fa-solid fa-user-astronaut"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="font-display font-bold text-xs sm:text-sm text-white group-hover:text-indigo-300 truncate transition">
+                ${escapeHtml(dispName)}
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono truncate">
+                ${isAnonDeviceUid ? "Demo Mode Visitor" : `@${escapeHtml(cleanU)}`}
+              </div>
+            </div>
+          </button>
+
+          <div class="shrink-0">
+            ${isMe
+              ? `<span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">You</span>`
+              : !isAnonDeviceUid
+              ? `<button
+                   type="button"
+                   data-action="follow-liker"
+                   class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition ${
+                     iFollowThem
+                       ? "bg-emerald-950/80 hover:bg-rose-950 text-emerald-300 hover:text-rose-300 border border-emerald-500/40"
+                       : "bg-sky-600 hover:bg-sky-500 text-white shadow-sm"
+                   }"
+                 >
+                   ${iFollowThem ? "Following" : "+ Follow"}
+                 </button>`
+              : ""
+            }
+          </div>
+        `;
+
+        const visitBtn = row.querySelector('[data-action="visit-liker"]');
+        if (visitBtn && !isAnonDeviceUid) {
+          visitBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            cancelHeartPopoverHide();
+            popoverEl.classList.add("hidden");
+            activeHeartPopoverContext = null;
+            appState.activeTab = "user-search";
+            if (typeof window.updateNavTabStyles === "function") {
+              window.updateNavTabStyles();
+            }
+            lookupUserListByUsername(cleanU);
+          });
+        }
+
+        const followBtn = row.querySelector('[data-action="follow-liker"]');
+        if (followBtn) {
+          followBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            await toggleFollowUser(cleanU);
+            renderHeartPopoverListContent();
+          });
+        }
+
+        listEl.appendChild(row);
+      });
+    }
+
+    async function openHeartLikersPopover(anchorEl, ownerUsername, item) {
+      cancelHeartPopoverHide();
+      const popoverEl = document.getElementById("heartLikersPopover");
+      if (!popoverEl || !anchorEl || !item) return;
+
+      activeHeartPopoverContext = {
+        anchorEl,
+        ownerUsername: normalizeUsername(ownerUsername),
+        malId: item.mal_id,
+        likedBy: Array.isArray(item.likedBy) ? [...item.likedBy] : []
+      };
+
+      renderHeartPopoverListContent();
+      popoverEl.classList.remove("hidden");
+      positionHeartPopover(anchorEl);
+
+      // Hydrate any uncached display names in the background so the popover shows latest display names
+      const uncachedUsers = activeHeartPopoverContext.likedBy
+        .map(u => normalizeUsername(u))
+        .filter(u => u && !u.startsWith("user_") && !u.startsWith("guest_") && !appState.displayNameMap[u]);
+
+      if (uncachedUsers.length > 0) {
+        await Promise.all(uncachedUsers.map(u => fetchUserProfileData(u)));
+        if (activeHeartPopoverContext && activeHeartPopoverContext.malId === item.mal_id) {
+          renderHeartPopoverListContent();
+          positionHeartPopover(anchorEl);
+        }
+      }
+    }
+
+    function bindHeartHoverTrigger(heartBtnEl, ownerUsername, item) {
+      if (!heartBtnEl) return;
+      heartBtnEl.addEventListener("mouseenter", () => {
+        openHeartLikersPopover(heartBtnEl, ownerUsername, item);
+      });
+      heartBtnEl.addEventListener("mouseleave", () => {
+        scheduleHeartPopoverHide(220);
+      });
+    }
+
     /*************************************************************************
      * 4. CORE DECIMAL CALIBRATION ENGINE WITHIN A BASE TIER (0–9+)
      *************************************************************************/
@@ -3774,12 +4191,16 @@
       let previousBaseTier = null;
       let existingComparisonsCount = 0;
       let preservedComment = candidateAnime.comment !== undefined ? candidateAnime.comment : "";
+      let preservedLikedBy = Array.isArray(candidateAnime.likedBy) ? candidateAnime.likedBy : [];
 
       if (previousIndex !== -1) {
         previousBaseTier = appState.items[previousIndex].baseTier;
         existingComparisonsCount = appState.items[previousIndex].comparisonsCount || 0;
         if (candidateAnime.comment === undefined && appState.items[previousIndex].comment) {
           preservedComment = appState.items[previousIndex].comment;
+        }
+        if (Array.isArray(appState.items[previousIndex].likedBy)) {
+          preservedLikedBy = appState.items[previousIndex].likedBy;
         }
         appState.items.splice(previousIndex, 1);
         if (previousBaseTier !== null) {
@@ -3793,6 +4214,7 @@
         const newEntry = {
           ...candidateAnime,
           comment: preservedComment,
+          likedBy: preservedLikedBy,
           baseTier: clampedTier,
           rankSlot: 0,
           finalScore: clampedTier === 9 ? 10.0 : Number(clampedTier.toFixed(1)),
@@ -3822,6 +4244,7 @@
         candidate: {
           ...candidateAnime,
           comment: preservedComment,
+          likedBy: preservedLikedBy,
           comparisonsCount: existingComparisonsCount
         },
         groups: groups,
@@ -4368,6 +4791,19 @@
                   ? `<span class="text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${escapeHtml(formatRelativeTime(item.ratedAt))}</span>`
                   : ""
                 }
+                <button
+                  type="button"
+                  data-action="leaderboard-heart"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold border transition ${
+                    hasUserHeartedItem(item)
+                      ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                      : "bg-slate-950/90 hover:bg-rose-950/40 text-rose-400/90 border-slate-800"
+                  }"
+                  title="Hover to see who liked this ranking"
+                >
+                  <i class="${hasUserHeartedItem(item) ? "fa-solid" : "fa-regular"} fa-heart"></i>
+                  <span>${getItemHeartCount(item)}</span>
+                </button>
               </div>
 
               ${item.comment
@@ -4862,6 +5298,8 @@
         const def = getTierDef(item.baseTier);
         const isTenCrown = item.finalScore === 10;
         const relTime = formatRelativeTime(entry.timestamp);
+        const isHearted = hasUserHeartedItem(item);
+        const heartCount = getItemHeartCount(item);
 
         const card = document.createElement("div");
         card.className = "rounded-2xl bg-slate-900/85 border border-slate-800/90 hover:border-slate-700 p-4 sm:p-5 transition space-y-3.5 shadow-lg";
@@ -4939,8 +5377,8 @@
               </div>
             </div>
 
-            <!-- Right Score & Quick Rate Button -->
-            <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60 shrink-0">
+            <!-- Right Score, Heart Button & Quick Rate Button -->
+            <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60 shrink-0">
               <div class="px-3.5 py-2 rounded-2xl bg-slate-950 border ${isTenCrown ? "border-fuchsia-500/50" : "border-slate-800"} text-right min-w-[92px]">
                 <div class="font-display font-bold text-xl ${isTenCrown ? "text-fuchsia-300" : "text-emerald-400"} leading-none">
                   ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
@@ -4950,13 +5388,31 @@
                 </div>
               </div>
 
-              <button
-                type="button"
-                data-action="rate-this-anime"
-                class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold transition"
-              >
-                + Rate on My List
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-action="toggle-heart"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5 ${
+                    isHearted
+                      ? "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/50 shadow-sm shadow-rose-500/10"
+                      : "bg-slate-950 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border-slate-800 hover:border-rose-500/40"
+                  }"
+                >
+                  <i class="${isHearted ? "fa-solid text-rose-400 animate-heart-pop" : "fa-regular text-rose-400/80"} fa-heart"></i>
+                  <span>${isHearted ? "Hearted" : "Heart"}</span>
+                  <span class="px-1.5 py-0.2 rounded-full text-[11px] font-mono ${
+                    isHearted ? "bg-rose-500/30 text-white" : "bg-slate-800 text-slate-300"
+                  }">${heartCount}</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-action="rate-this-anime"
+                  class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-semibold transition"
+                >
+                  + Rate on My List
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -4966,6 +5422,12 @@
           updateNavTabStyles();
           lookupUserListByUsername(entry.username);
         });
+
+        const feedHeartBtn = card.querySelector('[data-action="toggle-heart"]');
+        feedHeartBtn.addEventListener("click", () => {
+          toggleHeartOnPost(entry.username, item.mal_id);
+        });
+        bindHeartHoverTrigger(feedHeartBtn, entry.username, item);
 
         card.querySelector('[data-action="rate-this-anime"]').addEventListener("click", () => {
           openBaseRatingModal(item);
@@ -5174,6 +5636,8 @@
             userItems.forEach((item, idx) => {
               const def = getTierDef(item.baseTier);
               const isTenCrown = item.finalScore === 10;
+              const isHearted = hasUserHeartedItem(item);
+              const heartCount = getItemHeartCount(item);
               const row = document.createElement("div");
               row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
               row.innerHTML = `
@@ -5207,15 +5671,34 @@
                     }
                   </div>
                 </div>
-                <div class="px-3.5 py-2 rounded-2xl bg-slate-950 border ${isTenCrown ? "border-fuchsia-500/50" : "border-slate-800"} text-right min-w-[90px] self-end sm:self-center shrink-0">
-                  <div class="font-display font-bold text-xl ${isTenCrown ? "text-fuchsia-300" : "text-emerald-400"} leading-none">
-                    ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
-                  </div>
-                  <div class="text-[10px] text-slate-400 mt-0.5">
-                    ${isTenCrown ? "#1 Crown" : `Tier ${def.display}`}
+                <div class="flex items-center gap-2.5 self-end sm:self-center shrink-0">
+                  <button
+                    type="button"
+                    data-action="toggle-profile-heart"
+                    class="px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 flex items-center gap-1.5 ${
+                      isHearted
+                        ? "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/50"
+                        : "bg-slate-950 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border-slate-800 hover:border-rose-500/40"
+                    }"
+                  >
+                    <i class="${isHearted ? "fa-solid text-rose-400 animate-heart-pop" : "fa-regular text-rose-400/80"} fa-heart"></i>
+                    <span class="font-mono">${heartCount}</span>
+                  </button>
+                  <div class="px-3.5 py-2 rounded-2xl bg-slate-950 border ${isTenCrown ? "border-fuchsia-500/50" : "border-slate-800"} text-right min-w-[90px]">
+                    <div class="font-display font-bold text-xl ${isTenCrown ? "text-fuchsia-300" : "text-emerald-400"} leading-none">
+                      ${formatScore(item.finalScore)}<span class="text-xs text-slate-500 font-normal">/10</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">
+                      ${isTenCrown ? "#1 Crown" : `Tier ${def.display}`}
+                    </div>
                   </div>
                 </div>
               `;
+              const profileHeartBtn = row.querySelector('[data-action="toggle-profile-heart"]');
+              profileHeartBtn.addEventListener("click", () => {
+                toggleHeartOnPost(res.username, item.mal_id);
+              });
+              bindHeartHoverTrigger(profileHeartBtn, res.username, item);
               cardsList.appendChild(row);
             });
             resultBox.appendChild(cardsList);
@@ -5298,6 +5781,15 @@
       if (btnNudgeDown) {
         btnNudgeDown.addEventListener("click", () => nudgeItemInTier(item.mal_id, -1));
       }
+
+      const btnLeaderboardHeart = containerEl.querySelector('[data-action="leaderboard-heart"]');
+      if (btnLeaderboardHeart) {
+        const ownerName = appState.accountUsername || "demo_visitor";
+        btnLeaderboardHeart.addEventListener("click", () => {
+          toggleHeartOnPost(ownerName, item.mal_id);
+        });
+        bindHeartHoverTrigger(btnLeaderboardHeart, ownerName, item);
+      }
     }
 
     function nudgeItemInTier(malId, direction) {
@@ -5361,12 +5853,12 @@
       const sao = findById(11757);
 
       appState.items = [
-        { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 10.0, comparisonsCount: 2, comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!", ratedAt: Date.now() - 2 * 3600 * 1000 },
-        { ...steins, baseTier: 9, rankSlot: 1, finalScore: 9.5,  comparisonsCount: 2, comment: "Masterclass time-travel thriller once the second half kicks into gear.", ratedAt: Date.now() - 5 * 3600 * 1000 },
-        { ...aot,    baseTier: 9, rankSlot: 0, finalScore: 9.0,  comparisonsCount: 1, comment: "Legendary twists and soundtrack.", ratedAt: Date.now() - 24 * 3600 * 1000 },
-        { ...jjk,    baseTier: 8, rankSlot: 1, finalScore: 8.5,  comparisonsCount: 1, comment: "Top-tier fight choreography in the Shibuya arc.", ratedAt: Date.now() - 48 * 3600 * 1000 },
-        { ...demon,  baseTier: 8, rankSlot: 0, finalScore: 8.0,  comparisonsCount: 1, comment: "", ratedAt: Date.now() - 72 * 3600 * 1000 },
-        { ...sao,    baseTier: 4, rankSlot: 0, finalScore: 4.0,  comparisonsCount: 0, comment: "Great premise in episode 1, but dropped off quickly for me.", ratedAt: Date.now() - 96 * 3600 * 1000 }
+        { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 10.0, comparisonsCount: 2, likedBy: ["otaku_king", "frieren_fan", "shonen_critic"], comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!", ratedAt: Date.now() - 2 * 3600 * 1000 },
+        { ...steins, baseTier: 9, rankSlot: 1, finalScore: 9.5,  comparisonsCount: 2, likedBy: ["otaku_king", "sakura_chan"], comment: "Masterclass time-travel thriller once the second half kicks into gear.", ratedAt: Date.now() - 5 * 3600 * 1000 },
+        { ...aot,    baseTier: 9, rankSlot: 0, finalScore: 9.0,  comparisonsCount: 1, likedBy: ["shonen_critic", "gojo_sensei"], comment: "Legendary twists and soundtrack.", ratedAt: Date.now() - 24 * 3600 * 1000 },
+        { ...jjk,    baseTier: 8, rankSlot: 1, finalScore: 8.5,  comparisonsCount: 1, likedBy: ["gojo_sensei"], comment: "Top-tier fight choreography in the Shibuya arc.", ratedAt: Date.now() - 48 * 3600 * 1000 },
+        { ...demon,  baseTier: 8, rankSlot: 0, finalScore: 8.0,  comparisonsCount: 1, likedBy: ["sakura_chan"], comment: "", ratedAt: Date.now() - 72 * 3600 * 1000 },
+        { ...sao,    baseTier: 4, rankSlot: 0, finalScore: 4.0,  comparisonsCount: 0, likedBy: [], comment: "Great premise in episode 1, but dropped off quickly for me.", ratedAt: Date.now() - 96 * 3600 * 1000 }
       ];
 
       if (!appState.accountUsername) {
@@ -6126,6 +6618,17 @@
       const btnClearLocalBugs = document.getElementById("btnClearLocalBugs");
       if (btnClearLocalBugs) {
         btnClearLocalBugs.addEventListener("click", clearAllLocalPendingBugs);
+      }
+
+      // Keep "Who Liked This" Heart Popover open when hovering inside the popover list
+      const heartLikersPopoverEl = document.getElementById("heartLikersPopover");
+      if (heartLikersPopoverEl) {
+        heartLikersPopoverEl.addEventListener("mouseenter", () => {
+          cancelHeartPopoverHide();
+        });
+        heartLikersPopoverEl.addEventListener("mouseleave", () => {
+          scheduleHeartPopoverHide(200);
+        });
       }
 
       // Keyboard shortcuts for Head-to-Head Arena (1 / ArrowLeft, 2 / ArrowRight, = for Tie, Esc to close)
