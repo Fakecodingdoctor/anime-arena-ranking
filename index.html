@@ -180,6 +180,17 @@
         </button>
 
         <button
+          id="btnHeaderNotifications"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border border-rose-500/30 transition-all active:scale-95"
+          title="View notifications for hearts, comments, and replies"
+        >
+          <i class="fa-solid fa-bell text-rose-400"></i>
+          <span>Notifications</span>
+          <span id="headerNotifCountBadge" class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500 text-white">0</span>
+        </button>
+
+        <button
           id="btnHeaderFindUser"
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-purple-500/15 hover:bg-purple-500/25 text-purple-200 border border-purple-500/30 transition-all active:scale-95"
@@ -474,6 +485,15 @@
             <i class="fa-solid fa-rss text-emerald-400"></i>
             <span>Following Activity</span>
             <span id="badgeFollowingCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700/40">0</span>
+          </button>
+          <button
+            id="tabNotifications"
+            type="button"
+            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <i class="fa-solid fa-bell text-rose-400"></i>
+            <span>Notifications</span>
+            <span id="badgeNotifCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-950 text-rose-300 border border-rose-700/40">0</span>
           </button>
           <button
             id="tabUserSearch"
@@ -1927,7 +1947,9 @@
       items: [],
       planToWatch: [],
       battleHistory: [],
-      activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'plan' | 'history' | 'activity' | 'user-search'
+      notifications: [],        // Stored notifications (most recent to oldest)
+      notifFilter: "ALL",       // 'ALL' | 'post_like' | 'comments_replies' | 'comment_like'
+      activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'plan' | 'history' | 'activity' | 'notifications' | 'user-search'
       tierFilter: null,         // null or 0..9
       searchQuery: "",
       accountUsername: null,
@@ -1976,6 +1998,35 @@
             comparisonsCount: 3,
             likedBy: ["frieren_fan", "shonen_critic", "sakura_chan", "gojo_sensei"],
             comment: "Frieren is an absolute masterpiece in storytelling, atmosphere, and emotional weight. The way it explores time and memory after the main quest is unlike any other fantasy anime.",
+            publicComments: [
+              {
+                id: "cmt_demo_1",
+                authorUsername: "frieren_fan",
+                authorDisplayName: "Frieren the Slayer ✨",
+                text: "100% deserved #1 crown! Episode 10 and the Aura scene gave me chills.",
+                likedBy: ["otaku_king", "sakura_chan"],
+                createdAt: Date.now() - 28 * 60 * 1000
+              },
+              {
+                id: "cmt_demo_1_reply",
+                authorUsername: "otaku_king",
+                authorDisplayName: "King of Otakus 👑",
+                text: "Facts! The soundtrack during that scene made it even more legendary.",
+                replyToCommentId: "cmt_demo_1",
+                replyToUsername: "frieren_fan",
+                replyToDisplayName: "Frieren the Slayer ✨",
+                likedBy: ["frieren_fan", "shonen_critic"],
+                createdAt: Date.now() - 21 * 60 * 1000
+              },
+              {
+                id: "cmt_demo_2",
+                authorUsername: "shonen_critic",
+                authorDisplayName: "Shonen Critic 🔥",
+                text: "The First-Class Mage Exam arc had some of the cleanest animation all year.",
+                likedBy: ["otaku_king"],
+                createdAt: Date.now() - 14 * 60 * 1000
+              }
+            ],
             ratedAt: Date.now() - 45 * 60 * 1000 // 45 mins ago
           },
           {
@@ -1986,6 +2037,16 @@
             comparisonsCount: 2,
             likedBy: ["shonen_critic", "gojo_sensei"],
             comment: "Tougen Anki's blood eclipse powers and Oni vs Momotaro battles go super hard! Studio Hibari delivered great dark action scenes.",
+            publicComments: [
+              {
+                id: "cmt_demo_3",
+                authorUsername: "gojo_sensei",
+                authorDisplayName: "Six Eyes Limitless 🤞",
+                text: "Shiki's blood powers look so good in motion, solid 8.5!",
+                likedBy: ["otaku_king", "shonen_critic"],
+                createdAt: Date.now() - 50 * 60 * 1000
+              }
+            ],
             ratedAt: Date.now() - 2 * 3600 * 1000 // 2 hours ago
           },
           {
@@ -1996,6 +2057,7 @@
             comparisonsCount: 2,
             likedBy: ["frieren_fan", "shonen_critic", "sakura_chan"],
             comment: "Dandadan has the wildest animation energy of the decade. Episode 7 made me cry out of nowhere!",
+            publicComments: [],
             ratedAt: Date.now() - 26 * 3600 * 1000 // 1 day ago
           }
         ]
@@ -2010,6 +2072,16 @@
           {
             ...FALLBACK_ANIME_DB.find(a => a.mal_id === 54492),
             likedBy: ["otaku_king", "sakura_chan"],
+            publicComments: [
+              {
+                id: "cmt_demo_4",
+                authorUsername: "sakura_chan",
+                authorDisplayName: "Sakura Blossom 🌸",
+                text: "You HAVE to watch Apothecary Diaries next! Maomao is the best protagonist.",
+                likedBy: ["frieren_fan"],
+                createdAt: Date.now() - 40 * 60 * 1000
+              }
+            ],
             addedAt: Date.now() - 90 * 60 * 1000 // 1 hour ago
           }
         ],
@@ -2022,6 +2094,16 @@
             comparisonsCount: 1,
             likedBy: ["otaku_king", "sakura_chan", "gojo_sensei"],
             comment: "Bocchi the Rock creative visual gags and live concert performances are 10/10 peak comedy and music.",
+            publicComments: [
+              {
+                id: "cmt_demo_5",
+                authorUsername: "otaku_king",
+                authorDisplayName: "King of Otakus 👑",
+                text: "Kessoku Band's songs are still on repeat in my playlist!",
+                likedBy: ["frieren_fan", "sakura_chan"],
+                createdAt: Date.now() - 35 * 60 * 1000
+              }
+            ],
             ratedAt: Date.now() - 1 * 3600 * 1000 // 1 hour ago
           },
           {
@@ -2237,7 +2319,8 @@
             followers: appState.followers || [],
             items: appState.items,
             planToWatch: appState.planToWatch || [],
-            battleHistory: appState.battleHistory
+            battleHistory: appState.battleHistory,
+            notifications: appState.notifications || []
           }));
         } else {
           localStorage.removeItem("aar_account_session");
@@ -2362,6 +2445,12 @@
         if (!Array.isArray(it.likedBy)) {
           it.likedBy = [];
         }
+        if (!Array.isArray(it.publicComments)) {
+          it.publicComments = [];
+        }
+        it.publicComments.forEach(c => {
+          if (!Array.isArray(c.likedBy)) c.likedBy = [];
+        });
       });
       if (!Array.isArray(appState.planToWatch)) {
         appState.planToWatch = [];
@@ -2370,10 +2459,19 @@
         if (!Array.isArray(ptw.likedBy)) {
           ptw.likedBy = [];
         }
+        if (!Array.isArray(ptw.publicComments)) {
+          ptw.publicComments = [];
+        }
+        ptw.publicComments.forEach(c => {
+          if (!Array.isArray(c.likedBy)) c.likedBy = [];
+        });
         if (!ptw.addedAt) {
           ptw.addedAt = Date.now();
         }
       });
+      if (!Array.isArray(appState.notifications)) {
+        appState.notifications = [];
+      }
       for (let t = 0; t <= 9; t++) {
         recalculateScoresInTier(t);
       }
@@ -2466,6 +2564,14 @@
               appState.planToWatch = parsedPtw;
             }
           }
+          if (extraData.notifications !== undefined) {
+            const parsedNotifs = typeof extraData.notifications === "string"
+              ? JSON.parse(extraData.notifications)
+              : extraData.notifications;
+            if (Array.isArray(parsedNotifs)) {
+              appState.notifications = parsedNotifs;
+            }
+          }
         }
 
         if (Array.isArray(parsedItems)) {
@@ -2502,8 +2608,9 @@
         items: JSON.stringify(appState.items),
         planToWatch: JSON.stringify(appState.planToWatch || []),
         battleHistory: JSON.stringify(appState.battleHistory),
+        notifications: JSON.stringify((appState.notifications || []).slice(0, 120)),
         updatedAt: Date.now(),
-        ownerUid: effectiveUid,
+        ownerUid: currentUser ? currentUser.uid : effectiveUid,
         username: appState.accountUsername,
         displayName: appState.accountDisplayName || appState.accountUsername,
         passwordHash: appState.accountPasswordHash,
@@ -2540,6 +2647,7 @@
       appState.items = [];
       appState.planToWatch = [];
       appState.battleHistory = [];
+      appState.notifications = [];
       appState.tierFilter = null;
 
       appState.accountUsername = cleanUser;
@@ -2775,6 +2883,7 @@
           appState.items = [];
           appState.planToWatch = [];
           appState.battleHistory = [];
+          appState.notifications = [];
           appState.tierFilter = null;
           appState.accountUsername = cleanUser;
           appState.accountDisplayName = chosenDisplayName;
@@ -2909,6 +3018,7 @@
       appState.following = [];
       appState.followers = [];
       appState.planToWatch = [];
+      appState.notifications = [];
       appState.tierFilter = null;
       saveAccountSessionToLocal();
 
@@ -2969,7 +3079,8 @@
       const newPlanEntry = {
         ...cleanAnime,
         addedAt: Date.now(),
-        likedBy: []
+        likedBy: [],
+        publicComments: []
       };
 
       appState.planToWatch.unshift(newPlanEntry);
@@ -3133,6 +3244,10 @@
             console.warn("Could not update target user's followers array:", e);
           }
         }
+
+        await pushNotificationToUser(resolvedUsername, {
+          type: "new_follower"
+        });
 
         showToast(`Now following ${resolvedDisplay} (@${resolvedUsername})!`, "emerald");
       } else {
@@ -3376,6 +3491,1077 @@
       return item.likedBy.length;
     }
 
+    function getItemPublicCommentCount(item) {
+      if (!item || !Array.isArray(item.publicComments)) return 0;
+      return item.publicComments.length;
+    }
+
+    function hasUserHeartedComment(comment) {
+      if (!comment || !Array.isArray(comment.likedBy)) return false;
+      return comment.likedBy.includes(getLikeActorId());
+    }
+
+    function getCommentHeartCount(comment) {
+      if (!comment || !Array.isArray(comment.likedBy)) return 0;
+      return comment.likedBy.length;
+    }
+
+    /**
+     * Pushes a notification to a target user (locally if targeting current session, or to Firestore if targeting another cloud user)
+     * Notification types:
+     * - 'post_like'     : Someone hearted your anime ranking or watchlist item
+     * - 'post_comment'  : Someone commented on your anime ranking or watchlist item
+     * - 'comment_reply' : Someone replied to a comment you wrote
+     * - 'comment_like'  : Someone hearted a comment you wrote
+     */
+    async function pushNotificationToUser(rawTargetUsername, notifData) {
+      const cleanTarget = normalizeUsername(rawTargetUsername);
+      if (!cleanTarget) return;
+
+      const myActorUsername = appState.accountUsername
+        ? normalizeUsername(appState.accountUsername)
+        : "demo_visitor";
+      const myActorDisplayName = appState.accountUsername
+        ? getDisplayNameForUser(appState.accountUsername)
+        : "Demo Visitor";
+
+      const notifObj = {
+        id: notifData.id || ("ntf_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7)),
+        type: notifData.type || "post_like",
+        actorUsername: notifData.actorUsername || myActorUsername,
+        actorDisplayName: notifData.actorDisplayName || myActorDisplayName,
+        targetUsername: cleanTarget,
+        postOwnerUsername: normalizeUsername(notifData.postOwnerUsername || cleanTarget),
+        postType: notifData.postType || "ranked",
+        malId: Number(notifData.malId) || 0,
+        animeTitle: notifData.animeTitle || "Anime",
+        animeImage: notifData.animeImage || getFallbackPosterUrl(notifData.animeTitle || "Anime"),
+        animeScore: notifData.animeScore !== undefined ? notifData.animeScore : null,
+        commentId: notifData.commentId || null,
+        commentText: notifData.commentText || "",
+        createdAt: notifData.createdAt || Date.now(),
+        read: false
+      };
+
+      const isTargetingMe =
+        (appState.accountUsername && cleanTarget === appState.accountUsername) ||
+        (!appState.accountUsername && cleanTarget === "demo_visitor");
+
+      if (isTargetingMe) {
+        if (!Array.isArray(appState.notifications)) appState.notifications = [];
+        // Prevent duplicate like or follower notification spam for the exact same actor
+        if (notifObj.type === "post_like" || notifObj.type === "comment_like") {
+          appState.notifications = appState.notifications.filter(
+            n => !(n.type === notifObj.type && n.actorUsername === notifObj.actorUsername && Number(n.malId) === Number(notifObj.malId) && n.commentId === notifObj.commentId)
+          );
+        } else if (notifObj.type === "new_follower") {
+          appState.notifications = appState.notifications.filter(
+            n => !(n.type === "new_follower" && n.actorUsername === notifObj.actorUsername)
+          );
+        }
+        appState.notifications.unshift(notifObj);
+        appState.notifications = appState.notifications.slice(0, 120);
+        await saveStateToStorage();
+        renderStatsAndMatrix();
+        return;
+      }
+
+      // If targeting a cloud user on Firestore, append to their notifications array
+      if (db && !DEMO_COMMUNITY_USERS[cleanTarget]) {
+        try {
+          const targetRef = getNamedAccountDocRef(cleanTarget);
+          const snap = await getDoc(targetRef);
+          if (snap.exists()) {
+            const data = snap.data() || {};
+            let existingNotifs = [];
+            try {
+              existingNotifs = typeof data.notifications === "string"
+                ? JSON.parse(data.notifications)
+                : (Array.isArray(data.notifications) ? data.notifications : []);
+            } catch (e) {
+              existingNotifs = [];
+            }
+
+            if (notifObj.type === "post_like" || notifObj.type === "comment_like") {
+              existingNotifs = existingNotifs.filter(
+                n => !(n.type === notifObj.type && n.actorUsername === notifObj.actorUsername && Number(n.malId) === Number(notifObj.malId) && n.commentId === notifObj.commentId)
+              );
+            } else if (notifObj.type === "new_follower") {
+              existingNotifs = existingNotifs.filter(
+                n => !(n.type === "new_follower" && n.actorUsername === notifObj.actorUsername)
+              );
+            }
+
+            existingNotifs.unshift(notifObj);
+            existingNotifs = existingNotifs.slice(0, 120);
+
+            await setDoc(targetRef, {
+              notifications: JSON.stringify(existingNotifs),
+              passwordHash: data.passwordHash
+            }, { merge: true });
+          }
+        } catch (err) {
+          console.warn("Could not push notification to cloud user:", err);
+        }
+      }
+    }
+
+    /**
+     * Aggregates all notifications for the current user (combining stored notifications
+     * and live-derived notifications from followers, likes/comments on the user's rankings,
+     * and likes/replies on the user's comments) sorted strictly from most recent to oldest.
+     */
+    function getAggregatedNotificationsForCurrentUser() {
+      const myUsername = appState.accountUsername
+        ? normalizeUsername(appState.accountUsername)
+        : "demo_visitor";
+      const myUid = normalizeUsername(getLikeActorId());
+
+      const notifMap = new Map();
+
+      const addNotif = (n) => {
+        if (!n || !n.id) return;
+        if (!notifMap.has(n.id)) {
+          notifMap.set(n.id, n);
+        }
+      };
+
+      // 1. Add explicitly stored notifications
+      if (Array.isArray(appState.notifications)) {
+        appState.notifications.forEach(addNotif);
+      }
+
+      // 1B. Derive notifications from current followers list if not already explicitly stored
+      if (Array.isArray(appState.followers)) {
+        appState.followers.forEach((followerUser, fIdx) => {
+          const cleanFollower = normalizeUsername(followerUser);
+          if (!cleanFollower || cleanFollower === myUsername || cleanFollower === myUid) return;
+          const isAnon = cleanFollower.startsWith("user_") || cleanFollower.startsWith("guest_");
+          const disp = isAnon ? "Guest Visitor" : getDisplayNameForUser(cleanFollower);
+          const alreadyExplicit = Array.from(notifMap.values()).some(
+            existing => existing.type === "new_follower" && normalizeUsername(existing.actorUsername) === cleanFollower
+          );
+          if (!alreadyExplicit) {
+            addNotif({
+              id: `derived_follower_${cleanFollower}`,
+              type: "new_follower",
+              actorUsername: cleanFollower,
+              actorDisplayName: disp,
+              targetUsername: myUsername,
+              postOwnerUsername: myUsername,
+              postType: "profile",
+              malId: 0,
+              animeTitle: "",
+              animeImage: "",
+              animeScore: null,
+              commentId: null,
+              commentText: "",
+              createdAt: Date.now() - ((fIdx + 1) * 40 * 60 * 1000),
+              read: false
+            });
+          }
+        });
+      }
+
+      // 2. Derive notifications from likes & comments on the user's own Ranked Animes & Plan to Watch items
+      const scanOwnCollection = (collectionArr, postType) => {
+        (collectionArr || []).forEach((item, itemIdx) => {
+          // Likes on user's ranking
+          if (Array.isArray(item.likedBy)) {
+            item.likedBy.forEach((liker, likerIdx) => {
+              const cleanLiker = normalizeUsername(liker);
+              if (!cleanLiker || cleanLiker === myUsername || cleanLiker === myUid) return;
+              const isAnon = cleanLiker.startsWith("user_") || cleanLiker.startsWith("guest_");
+              const disp = isAnon ? "Guest Visitor" : getDisplayNameForUser(cleanLiker);
+              const syntheticId = `derived_post_like_${postType}_${item.mal_id}_${cleanLiker}`;
+              // Check if we already have an explicit notification for this post_like
+              const alreadyExplicit = Array.from(notifMap.values()).some(
+                existing => existing.type === "post_like" && normalizeUsername(existing.actorUsername) === cleanLiker && Number(existing.malId) === Number(item.mal_id)
+              );
+              if (!alreadyExplicit) {
+                addNotif({
+                  id: syntheticId,
+                  type: "post_like",
+                  actorUsername: cleanLiker,
+                  actorDisplayName: disp,
+                  targetUsername: myUsername,
+                  postOwnerUsername: myUsername,
+                  postType,
+                  malId: item.mal_id,
+                  animeTitle: item.title,
+                  animeImage: item.image,
+                  animeScore: postType === "ranked" ? item.finalScore : null,
+                  commentText: "",
+                  createdAt: (item.ratedAt || item.addedAt || Date.now()) + ((likerIdx + 1) * 180000) - (itemIdx * 60000),
+                  read: false
+                });
+              }
+            });
+          }
+
+          // Comments & replies on user's ranking
+          if (Array.isArray(item.publicComments)) {
+            item.publicComments.forEach((c) => {
+              const cAuthor = normalizeUsername(c.authorUsername);
+              if (cAuthor && cAuthor !== myUsername && cAuthor !== myUid) {
+                const isReplyToMe = c.replyToUsername && normalizeUsername(c.replyToUsername) === myUsername;
+                const notifType = isReplyToMe ? "comment_reply" : "post_comment";
+                const alreadyExplicit = Array.from(notifMap.values()).some(
+                  existing => existing.commentId === c.id && existing.type === notifType
+                );
+                if (!alreadyExplicit) {
+                  addNotif({
+                    id: `derived_cmt_${c.id}`,
+                    type: notifType,
+                    actorUsername: cAuthor,
+                    actorDisplayName: c.authorDisplayName || getDisplayNameForUser(cAuthor),
+                    targetUsername: myUsername,
+                    postOwnerUsername: myUsername,
+                    postType,
+                    malId: item.mal_id,
+                    animeTitle: item.title,
+                    animeImage: item.image,
+                    animeScore: postType === "ranked" ? item.finalScore : null,
+                    commentId: c.id,
+                    commentText: c.text || "",
+                    createdAt: c.createdAt || Date.now(),
+                    read: false
+                  });
+                }
+              }
+
+              // If this comment was written by ME, check if anyone hearted it!
+              if (cAuthor === myUsername || cAuthor === myUid) {
+                (c.likedBy || []).forEach((liker, lIdx) => {
+                  const cleanLiker = normalizeUsername(liker);
+                  if (!cleanLiker || cleanLiker === myUsername || cleanLiker === myUid) return;
+                  const alreadyExplicit = Array.from(notifMap.values()).some(
+                    existing => existing.type === "comment_like" && existing.commentId === c.id && normalizeUsername(existing.actorUsername) === cleanLiker
+                  );
+                  if (!alreadyExplicit) {
+                    addNotif({
+                      id: `derived_cmt_like_${c.id}_${cleanLiker}`,
+                      type: "comment_like",
+                      actorUsername: cleanLiker,
+                      actorDisplayName: getDisplayNameForUser(cleanLiker),
+                      targetUsername: myUsername,
+                      postOwnerUsername: myUsername,
+                      postType,
+                      malId: item.mal_id,
+                      animeTitle: item.title,
+                      animeImage: item.image,
+                      animeScore: postType === "ranked" ? item.finalScore : null,
+                      commentId: c.id,
+                      commentText: c.text || "",
+                      createdAt: (c.createdAt || Date.now()) + ((lIdx + 1) * 120000),
+                      read: false
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+      };
+
+      scanOwnCollection(appState.items, "ranked");
+      scanOwnCollection(appState.planToWatch, "plan");
+
+      // 3. Also scan community/activity posts for any comments authored by ME that received hearts or replies!
+      const scanExternalPostComments = (ownerUser, item, postType) => {
+        if (!item || !Array.isArray(item.publicComments)) return;
+        const cleanOwner = normalizeUsername(ownerUser);
+        if (cleanOwner === myUsername) return; // already scanned above
+
+        item.publicComments.forEach((c) => {
+          const cAuthor = normalizeUsername(c.authorUsername);
+
+          // Someone replied to my comment on another user's post
+          if (c.replyToUsername && (normalizeUsername(c.replyToUsername) === myUsername || normalizeUsername(c.replyToUsername) === myUid) && cAuthor !== myUsername) {
+            const alreadyExplicit = Array.from(notifMap.values()).some(
+              existing => existing.commentId === c.id && existing.type === "comment_reply"
+            );
+            if (!alreadyExplicit) {
+              addNotif({
+                id: `derived_ext_reply_${c.id}`,
+                type: "comment_reply",
+                actorUsername: cAuthor,
+                actorDisplayName: c.authorDisplayName || getDisplayNameForUser(cAuthor),
+                targetUsername: myUsername,
+                postOwnerUsername: cleanOwner,
+                postType,
+                malId: item.mal_id,
+                animeTitle: item.title,
+                animeImage: item.image,
+                animeScore: postType === "ranked" ? item.finalScore : null,
+                commentId: c.id,
+                commentText: c.text || "",
+                createdAt: c.createdAt || Date.now(),
+                read: false
+              });
+            }
+          }
+
+          // Someone hearted a comment I wrote on another user's post
+          if (cAuthor === myUsername || cAuthor === myUid) {
+            (c.likedBy || []).forEach((liker, lIdx) => {
+              const cleanLiker = normalizeUsername(liker);
+              if (!cleanLiker || cleanLiker === myUsername || cleanLiker === myUid) return;
+              const alreadyExplicit = Array.from(notifMap.values()).some(
+                existing => existing.type === "comment_like" && existing.commentId === c.id && normalizeUsername(existing.actorUsername) === cleanLiker
+              );
+              if (!alreadyExplicit) {
+                addNotif({
+                  id: `derived_ext_cmt_like_${c.id}_${cleanLiker}`,
+                  type: "comment_like",
+                  actorUsername: cleanLiker,
+                  actorDisplayName: getDisplayNameForUser(cleanLiker),
+                  targetUsername: myUsername,
+                  postOwnerUsername: cleanOwner,
+                  postType,
+                  malId: item.mal_id,
+                  animeTitle: item.title,
+                  animeImage: item.image,
+                  animeScore: postType === "ranked" ? item.finalScore : null,
+                  commentId: c.id,
+                  commentText: c.text || "",
+                  createdAt: (c.createdAt || Date.now()) + ((lIdx + 1) * 90000),
+                  read: false
+                });
+              }
+            });
+          }
+        });
+      };
+
+      Object.values(DEMO_COMMUNITY_USERS).forEach(u => {
+        (u.items || []).forEach(it => scanExternalPostComments(u.username, it, "ranked"));
+        (u.planToWatch || []).forEach(ptw => scanExternalPostComments(u.username, ptw, "plan"));
+      });
+      (appState.activityFeedItems || []).forEach(entry => {
+        scanExternalPostComments(entry.username, entry.anime, entry.activityType || "ranked");
+      });
+
+      // Sort strictly from most recent to oldest
+      return Array.from(notifMap.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+
+    /**
+     * Toggles a Heart (like) on a specific public comment or reply
+     */
+    async function toggleHeartOnComment(ownerUsername, malId, commentId, postType = "ranked") {
+      const cleanOwner = normalizeUsername(ownerUsername);
+      const numericMalId = Number(malId);
+      const actorId = getLikeActorId();
+      if (!cleanOwner || !numericMalId || !commentId) return;
+
+      let updatedCommentLikedBy = null;
+      let targetCommentObj = null;
+      let targetAnimeObj = null;
+      let nowHearted = false;
+
+      const applyToggle = (arr) => {
+        const list = Array.isArray(arr) ? [...arr] : [];
+        const idx = list.indexOf(actorId);
+        if (idx !== -1) {
+          list.splice(idx, 1);
+          nowHearted = false;
+        } else {
+          list.push(actorId);
+          nowHearted = true;
+        }
+        return list;
+      };
+
+      const updateInCommentsArray = (item) => {
+        if (!item || !Array.isArray(item.publicComments)) return;
+        const c = item.publicComments.find(cm => cm && cm.id === commentId);
+        if (c) {
+          if (!updatedCommentLikedBy) {
+            updatedCommentLikedBy = applyToggle(c.likedBy);
+          }
+          c.likedBy = [...updatedCommentLikedBy];
+          targetCommentObj = c;
+          targetAnimeObj = item;
+        }
+      };
+
+      // 1. Update in Activity Feed
+      (appState.activityFeedItems || []).forEach(entry => {
+        const entryType = entry.activityType || "ranked";
+        if (normalizeUsername(entry.username) === cleanOwner && Number(entry.anime.mal_id) === numericMalId && entryType === postType) {
+          updateInCommentsArray(entry.anime);
+        }
+      });
+
+      // 2. Update in Demo Community Users
+      if (DEMO_COMMUNITY_USERS[cleanOwner]) {
+        const col = postType === "plan" ? (DEMO_COMMUNITY_USERS[cleanOwner].planToWatch || []) : (DEMO_COMMUNITY_USERS[cleanOwner].items || []);
+        const item = col.find(it => Number(it.mal_id) === numericMalId);
+        if (item) updateInCommentsArray(item);
+      }
+
+      // 3. Update in Searched User profile result
+      if (appState.searchedUserResult && normalizeUsername(appState.searchedUserResult.username) === cleanOwner) {
+        const col = postType === "plan" ? (appState.searchedUserResult.planToWatch || []) : (appState.searchedUserResult.items || []);
+        const item = col.find(it => Number(it.mal_id) === numericMalId);
+        if (item) updateInCommentsArray(item);
+      }
+
+      // 4. Update in own items / own planToWatch
+      const isOwnSession = (appState.accountUsername && cleanOwner === appState.accountUsername) ||
+        (!appState.accountUsername && cleanOwner === "demo_visitor");
+      if (isOwnSession) {
+        const col = postType === "plan" ? (appState.planToWatch || []) : (appState.items || []);
+        const item = col.find(it => Number(it.mal_id) === numericMalId);
+        if (item) {
+          updateInCommentsArray(item);
+          await saveStateToStorage();
+        }
+      }
+
+      // Send notification to the comment's author when hearted
+      if (nowHearted && targetCommentObj && targetAnimeObj) {
+        const commentAuthor = normalizeUsername(targetCommentObj.authorUsername || "demo_visitor");
+        await pushNotificationToUser(commentAuthor, {
+          type: "comment_like",
+          postOwnerUsername: cleanOwner,
+          postType,
+          malId: numericMalId,
+          animeTitle: targetAnimeObj.title,
+          animeImage: targetAnimeObj.image,
+          animeScore: postType === "ranked" ? targetAnimeObj.finalScore : null,
+          commentId: targetCommentObj.id,
+          commentText: targetCommentObj.text || ""
+        });
+      }
+
+      renderStatsAndMatrix();
+      renderMainCollectionArea();
+
+      // Refresh hover popover if currently open for this comment
+      if (
+        activeHeartPopoverContext &&
+        activeHeartPopoverContext.commentId === commentId
+      ) {
+        activeHeartPopoverContext.likedBy = updatedCommentLikedBy || [];
+        renderHeartPopoverListContent();
+      }
+
+      // 5. Persist to Firestore if post belongs to a cloud user account
+      if (db && !DEMO_COMMUNITY_USERS[cleanOwner] && cleanOwner !== appState.accountUsername) {
+        try {
+          const targetRef = getNamedAccountDocRef(cleanOwner);
+          const snap = await getDoc(targetRef);
+          if (snap.exists()) {
+            const data = snap.data() || {};
+            const fieldName = postType === "plan" ? "planToWatch" : "items";
+            const parsedList = typeof data[fieldName] === "string" ? JSON.parse(data[fieldName]) : (data[fieldName] || []);
+            if (Array.isArray(parsedList)) {
+              const targetItem = parsedList.find(it => Number(it.mal_id) === numericMalId);
+              if (targetItem && Array.isArray(targetItem.publicComments)) {
+                const targetCmt = targetItem.publicComments.find(cm => cm && cm.id === commentId);
+                if (targetCmt) {
+                  targetCmt.likedBy = updatedCommentLikedBy || applyToggle(targetCmt.likedBy);
+                  await setDoc(targetRef, {
+                    [fieldName]: JSON.stringify(parsedList),
+                    passwordHash: data.passwordHash
+                  }, { merge: true });
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Could not persist comment heart to cloud profile:", err);
+        }
+      }
+    }
+
+    /**
+     * Adds a public comment (or reply to another comment) to any user's ranked anime or Planning to Watch post
+     * and syncs it across the Activity Feed, User Profiles, Notifications, and Firebase Firestore.
+     */
+    async function addPublicCommentToPost(ownerUsername, malId, rawText, postType = "ranked", replyContext = null) {
+      const cleanOwner = normalizeUsername(ownerUsername);
+      const numericMalId = Number(malId);
+      const trimmedText = String(rawText || "").trim();
+
+      if (!cleanOwner || !numericMalId) return;
+      if (!trimmedText) {
+        showToast("Please write a comment before posting.", "amber");
+        return;
+      }
+
+      const authorUsername = appState.accountUsername
+        ? normalizeUsername(appState.accountUsername)
+        : "demo_visitor";
+      const authorDisplayName = appState.accountUsername
+        ? getDisplayNameForUser(appState.accountUsername)
+        : "Demo Visitor";
+
+      const newCommentObj = {
+        id: "cmt_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+        authorUsername,
+        authorDisplayName,
+        text: trimmedText.slice(0, 800),
+        likedBy: [],
+        replyToCommentId: replyContext && replyContext.replyToCommentId ? replyContext.replyToCommentId : null,
+        replyToUsername: replyContext && replyContext.replyToUsername ? normalizeUsername(replyContext.replyToUsername) : null,
+        replyToDisplayName: replyContext && replyContext.replyToDisplayName ? replyContext.replyToDisplayName : null,
+        createdAt: Date.now()
+      };
+
+      let updatedCommentsList = null;
+      let targetAnimeObj = null;
+      const appendComment = (arr) => {
+        const list = Array.isArray(arr) ? [...arr] : [];
+        list.push(newCommentObj);
+        return list;
+      };
+
+      // 1. Update in Activity Feed state if present
+      (appState.activityFeedItems || []).forEach(entry => {
+        const entryType = entry.activityType || "ranked";
+        if (
+          normalizeUsername(entry.username) === cleanOwner &&
+          Number(entry.anime.mal_id) === numericMalId &&
+          entryType === postType
+        ) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = appendComment(entry.anime.publicComments);
+          }
+          entry.anime.publicComments = [...updatedCommentsList];
+          targetAnimeObj = entry.anime;
+        }
+      });
+
+      // 2. Update in Demo Community Users if applicable
+      if (DEMO_COMMUNITY_USERS[cleanOwner]) {
+        const targetCollection = postType === "plan"
+          ? (DEMO_COMMUNITY_USERS[cleanOwner].planToWatch || [])
+          : (DEMO_COMMUNITY_USERS[cleanOwner].items || []);
+        const demoItem = targetCollection.find(it => Number(it.mal_id) === numericMalId);
+        if (demoItem) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = appendComment(demoItem.publicComments);
+          }
+          demoItem.publicComments = [...updatedCommentsList];
+          targetAnimeObj = demoItem;
+        }
+      }
+
+      // 3. Update in Searched User profile result if currently viewing that user
+      if (appState.searchedUserResult && normalizeUsername(appState.searchedUserResult.username) === cleanOwner) {
+        const targetCollection = postType === "plan"
+          ? (appState.searchedUserResult.planToWatch || [])
+          : (appState.searchedUserResult.items || []);
+        const searchedItem = targetCollection.find(it => Number(it.mal_id) === numericMalId);
+        if (searchedItem) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = appendComment(searchedItem.publicComments);
+          }
+          searchedItem.publicComments = [...updatedCommentsList];
+          targetAnimeObj = searchedItem;
+        }
+      }
+
+      // 4. Update in own items / own planToWatch if commenting on own post
+      const isOwnSession = (appState.accountUsername && cleanOwner === appState.accountUsername) ||
+        (!appState.accountUsername && cleanOwner === "demo_visitor");
+      if (isOwnSession) {
+        const ownCollection = postType === "plan" ? (appState.planToWatch || []) : (appState.items || []);
+        const ownItem = ownCollection.find(it => Number(it.mal_id) === numericMalId);
+        if (ownItem) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = appendComment(ownItem.publicComments);
+          }
+          ownItem.publicComments = [...updatedCommentsList];
+          targetAnimeObj = ownItem;
+          await saveStateToStorage();
+        }
+      }
+
+      // 5. Trigger Notifications for the post owner and (if replying) the parent comment author
+      if (targetAnimeObj) {
+        if (newCommentObj.replyToUsername) {
+          await pushNotificationToUser(newCommentObj.replyToUsername, {
+            type: "comment_reply",
+            postOwnerUsername: cleanOwner,
+            postType,
+            malId: numericMalId,
+            animeTitle: targetAnimeObj.title,
+            animeImage: targetAnimeObj.image,
+            animeScore: postType === "ranked" ? targetAnimeObj.finalScore : null,
+            commentId: newCommentObj.id,
+            commentText: newCommentObj.text
+          });
+        }
+
+        if (!newCommentObj.replyToUsername || newCommentObj.replyToUsername !== cleanOwner) {
+          await pushNotificationToUser(cleanOwner, {
+            type: "post_comment",
+            postOwnerUsername: cleanOwner,
+            postType,
+            malId: numericMalId,
+            animeTitle: targetAnimeObj.title,
+            animeImage: targetAnimeObj.image,
+            animeScore: postType === "ranked" ? targetAnimeObj.finalScore : null,
+            commentId: newCommentObj.id,
+            commentText: newCommentObj.text
+          });
+        }
+      }
+
+      renderStatsAndMatrix();
+      renderMainCollectionArea();
+      showToast(
+        newCommentObj.replyToUsername
+          ? `Replied to @${newCommentObj.replyToUsername}!`
+          : "Posted your public comment!",
+        "emerald"
+      );
+
+      // 6. Persist to Firestore if the post belongs to a cloud user account
+      if (db && !DEMO_COMMUNITY_USERS[cleanOwner] && cleanOwner !== appState.accountUsername) {
+        try {
+          const targetRef = getNamedAccountDocRef(cleanOwner);
+          const snap = await getDoc(targetRef);
+          if (snap.exists()) {
+            const data = snap.data() || {};
+            if (postType === "plan") {
+              const parsedPtw = typeof data.planToWatch === "string" ? JSON.parse(data.planToWatch) : (data.planToWatch || []);
+              if (Array.isArray(parsedPtw)) {
+                const targetItem = parsedPtw.find(it => Number(it.mal_id) === numericMalId);
+                if (targetItem) {
+                  targetItem.publicComments = updatedCommentsList || appendComment(targetItem.publicComments);
+                  await setDoc(targetRef, {
+                    planToWatch: JSON.stringify(parsedPtw),
+                    passwordHash: data.passwordHash
+                  }, { merge: true });
+                }
+              }
+            } else {
+              const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
+              if (Array.isArray(parsedItems)) {
+                const targetItem = parsedItems.find(it => Number(it.mal_id) === numericMalId);
+                if (targetItem) {
+                  targetItem.publicComments = updatedCommentsList || appendComment(targetItem.publicComments);
+                  await setDoc(targetRef, {
+                    items: JSON.stringify(parsedItems),
+                    passwordHash: data.passwordHash
+                  }, { merge: true });
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Could not persist public comment to cloud profile:", err);
+        }
+      }
+    }
+
+    /**
+     * Deletes a public comment (allowed for the comment's author or the post owner)
+     */
+    async function deletePublicCommentFromPost(ownerUsername, malId, commentId, postType = "ranked") {
+      const cleanOwner = normalizeUsername(ownerUsername);
+      const numericMalId = Number(malId);
+      if (!cleanOwner || !numericMalId || !commentId) return;
+
+      let updatedCommentsList = null;
+      const filterOutComment = (arr) => {
+        const list = Array.isArray(arr) ? [...arr] : [];
+        return list.filter(c => c && c.id !== commentId);
+      };
+
+      (appState.activityFeedItems || []).forEach(entry => {
+        const entryType = entry.activityType || "ranked";
+        if (
+          normalizeUsername(entry.username) === cleanOwner &&
+          Number(entry.anime.mal_id) === numericMalId &&
+          entryType === postType
+        ) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = filterOutComment(entry.anime.publicComments);
+          }
+          entry.anime.publicComments = [...updatedCommentsList];
+        }
+      });
+
+      if (DEMO_COMMUNITY_USERS[cleanOwner]) {
+        const targetCollection = postType === "plan"
+          ? (DEMO_COMMUNITY_USERS[cleanOwner].planToWatch || [])
+          : (DEMO_COMMUNITY_USERS[cleanOwner].items || []);
+        const demoItem = targetCollection.find(it => Number(it.mal_id) === numericMalId);
+        if (demoItem) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = filterOutComment(demoItem.publicComments);
+          }
+          demoItem.publicComments = [...updatedCommentsList];
+        }
+      }
+
+      if (appState.searchedUserResult && normalizeUsername(appState.searchedUserResult.username) === cleanOwner) {
+        const targetCollection = postType === "plan"
+          ? (appState.searchedUserResult.planToWatch || [])
+          : (appState.searchedUserResult.items || []);
+        const searchedItem = targetCollection.find(it => Number(it.mal_id) === numericMalId);
+        if (searchedItem) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = filterOutComment(searchedItem.publicComments);
+          }
+          searchedItem.publicComments = [...updatedCommentsList];
+        }
+      }
+
+      const isOwnSession = (appState.accountUsername && cleanOwner === appState.accountUsername) ||
+        (!appState.accountUsername && cleanOwner === "demo_visitor");
+      if (isOwnSession) {
+        const ownCollection = postType === "plan" ? (appState.planToWatch || []) : (appState.items || []);
+        const ownItem = ownCollection.find(it => Number(it.mal_id) === numericMalId);
+        if (ownItem) {
+          if (!updatedCommentsList) {
+            updatedCommentsList = filterOutComment(ownItem.publicComments);
+          }
+          ownItem.publicComments = [...updatedCommentsList];
+          await saveStateToStorage();
+        }
+      }
+
+      renderMainCollectionArea();
+      showToast("Deleted comment.", "indigo");
+
+      if (db && !DEMO_COMMUNITY_USERS[cleanOwner] && cleanOwner !== appState.accountUsername) {
+        try {
+          const targetRef = getNamedAccountDocRef(cleanOwner);
+          const snap = await getDoc(targetRef);
+          if (snap.exists()) {
+            const data = snap.data() || {};
+            if (postType === "plan") {
+              const parsedPtw = typeof data.planToWatch === "string" ? JSON.parse(data.planToWatch) : (data.planToWatch || []);
+              if (Array.isArray(parsedPtw)) {
+                const targetItem = parsedPtw.find(it => Number(it.mal_id) === numericMalId);
+                if (targetItem) {
+                  targetItem.publicComments = updatedCommentsList || filterOutComment(targetItem.publicComments);
+                  await setDoc(targetRef, {
+                    planToWatch: JSON.stringify(parsedPtw),
+                    passwordHash: data.passwordHash
+                  }, { merge: true });
+                }
+              }
+            } else {
+              const parsedItems = typeof data.items === "string" ? JSON.parse(data.items) : (data.items || []);
+              if (Array.isArray(parsedItems)) {
+                const targetItem = parsedItems.find(it => Number(it.mal_id) === numericMalId);
+                if (targetItem) {
+                  targetItem.publicComments = updatedCommentsList || filterOutComment(targetItem.publicComments);
+                  await setDoc(targetRef, {
+                    items: JSON.stringify(parsedItems),
+                    passwordHash: data.passwordHash
+                  }, { merge: true });
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Could not delete public comment from cloud profile:", err);
+        }
+      }
+    }
+
+    /**
+     * Builds the interactive Public Comments thread (with Comment Hearts & Threaded Replies)
+     * and input bar for any ranking or watchlist card
+     */
+    function buildPublicCommentsSection(ownerUsername, item, postType = "ranked", initiallyOpenInput = false) {
+      const cleanOwner = normalizeUsername(ownerUsername);
+      const comments = Array.isArray(item.publicComments) ? item.publicComments : [];
+      const myActorUsername = appState.accountUsername ? normalizeUsername(appState.accountUsername) : "demo_visitor";
+
+      let activeReplyTarget = null; // { replyToCommentId, replyToUsername, replyToDisplayName }
+
+      const sectionEl = document.createElement("div");
+      sectionEl.className = "pt-3 mt-3 border-t border-slate-800/80 space-y-2.5 w-full";
+
+      const commentsListEl = document.createElement("div");
+      commentsListEl.className = "space-y-2";
+
+      // Reply banner shown right above the input when replying to a specific comment
+      const replyBannerEl = document.createElement("div");
+      replyBannerEl.className = "hidden px-3 py-1.5 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-[11px] text-indigo-200 flex items-center justify-between gap-2";
+      replyBannerEl.innerHTML = `
+        <span class="truncate"><i class="fa-solid fa-reply text-indigo-400 mr-1.5"></i>Replying to <strong data-reply-target-label>@user</strong></span>
+        <button type="button" data-cancel-reply class="text-slate-400 hover:text-white px-1.5 py-0.5 rounded hover:bg-slate-800 transition" title="Cancel reply">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      `;
+
+      // Public comment input form
+      const formEl = document.createElement("form");
+      formEl.className = `flex items-center gap-2 ${comments.length === 0 && !initiallyOpenInput ? "hidden" : ""}`;
+      formEl.setAttribute("data-comment-form", "true");
+
+      const commentingAsLabel = appState.accountUsername
+        ? `@${appState.accountUsername}`
+        : "Demo Visitor";
+
+      formEl.innerHTML = `
+        <div class="relative flex-1">
+          <i class="fa-regular fa-comment-dots absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input
+            type="text"
+            maxlength="800"
+            placeholder="Add a public comment as ${escapeHtml(commentingAsLabel)}..."
+            class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none text-xs text-white placeholder-slate-500 transition"
+          />
+        </div>
+        <button
+          type="submit"
+          class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-sm"
+        >
+          <i class="fa-solid fa-paper-plane text-[10px]"></i>
+          <span data-submit-btn-label>Post</span>
+        </button>
+      `;
+
+      const setReplyTarget = (targetObj) => {
+        activeReplyTarget = targetObj;
+        const input = formEl.querySelector("input");
+        const submitLabel = formEl.querySelector("[data-submit-btn-label]");
+        if (targetObj) {
+          replyBannerEl.querySelector("[data-reply-target-label]").textContent =
+            `${targetObj.replyToDisplayName} (@${targetObj.replyToUsername})`;
+          replyBannerEl.classList.remove("hidden");
+          sectionEl.classList.remove("hidden");
+          formEl.classList.remove("hidden");
+          if (input) {
+            input.placeholder = `Reply to @${targetObj.replyToUsername}...`;
+            input.focus();
+          }
+          if (submitLabel) submitLabel.textContent = "Reply";
+        } else {
+          replyBannerEl.classList.add("hidden");
+          if (input) {
+            input.placeholder = `Add a public comment as ${commentingAsLabel}...`;
+          }
+          if (submitLabel) submitLabel.textContent = "Post";
+        }
+      };
+
+      replyBannerEl.querySelector("[data-cancel-reply]").addEventListener("click", () => {
+        setReplyTarget(null);
+      });
+
+      formEl.onsubmit = (e) => {
+        e.preventDefault();
+        const input = formEl.querySelector("input");
+        if (input && input.value.trim()) {
+          const val = input.value.trim();
+          const replyCtx = activeReplyTarget ? { ...activeReplyTarget } : null;
+          input.value = "";
+          setReplyTarget(null);
+          addPublicCommentToPost(cleanOwner, item.mal_id, val, postType, replyCtx);
+        }
+      };
+
+      const renderSingleCommentNode = (c, isReply = false) => {
+        const cUser = normalizeUsername(c.authorUsername || "demo_visitor");
+        const isDemoVisitor = cUser === "demo_visitor";
+        const cDisp = isDemoVisitor
+          ? (c.authorDisplayName || "Demo Visitor")
+          : (appState.displayNameMap[cUser] || c.authorDisplayName || getDisplayNameForUser(cUser));
+        const canDelete = cUser === myActorUsername || (appState.accountUsername && cleanOwner === appState.accountUsername);
+        const isHearted = hasUserHeartedComment(c);
+        const heartCount = getCommentHeartCount(c);
+
+        const commentRow = document.createElement("div");
+        commentRow.className = `${
+          isReply
+            ? "ml-5 sm:ml-8 pl-3 border-l-2 border-indigo-500/30 bg-slate-950/65"
+            : "bg-slate-950/90"
+        } px-3 py-2.5 rounded-xl border border-slate-800/90 text-xs flex items-start justify-between gap-2.5 transition`;
+
+        const replyTagHtml = c.replyToUsername
+          ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[10px] font-medium">
+               <i class="fa-solid fa-reply text-[8px]"></i> @${escapeHtml(c.replyToUsername)}
+             </span>`
+          : "";
+
+        commentRow.innerHTML = `
+          <div class="flex items-start gap-2.5 min-w-0 flex-1">
+            <button
+              type="button"
+              data-action="visit-commenter"
+              ${isDemoVisitor ? "disabled" : ""}
+              class="w-6 h-6 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-300 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${isDemoVisitor ? "cursor-default" : "hover:bg-indigo-500/30 hover:text-white cursor-pointer"} transition"
+              title="${isDemoVisitor ? "Demo Visitor" : `View ${escapeHtml(cDisp)} (@${escapeHtml(cUser)})'s list`}"
+            >
+              <i class="fa-solid fa-user"></i>
+            </button>
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  data-action="visit-commenter-name"
+                  ${isDemoVisitor ? "disabled" : ""}
+                  class="font-display font-bold text-xs text-white ${isDemoVisitor ? "cursor-default" : "hover:text-sky-300 cursor-pointer"} transition"
+                >
+                  ${escapeHtml(cDisp)}
+                </button>
+                ${!isDemoVisitor
+                  ? `<span class="text-[10px] font-mono text-sky-300/80">@${escapeHtml(cUser)}</span>`
+                  : `<span class="text-[10px] font-mono text-slate-500">(Demo)</span>`
+                }
+                ${replyTagHtml}
+                <span class="text-[10px] text-slate-500">• ${escapeHtml(formatRelativeTime(c.createdAt))}</span>
+              </div>
+              <div class="text-slate-200 review-comment-wrap">${escapeHtml(c.text)}</div>
+              <div class="flex items-center gap-3 pt-0.5">
+                <button
+                  type="button"
+                  data-action="heart-comment"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold border transition ${
+                    isHearted
+                      ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                      : "bg-slate-900/90 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border-slate-800"
+                  }"
+                  title="Heart this comment (Hover to see who liked it)"
+                >
+                  <i class="${isHearted ? "fa-solid text-rose-400 animate-heart-pop" : "fa-regular text-rose-400/80"} fa-heart text-[10px]"></i>
+                  <span class="font-mono">${heartCount}</span>
+                </button>
+                <button
+                  type="button"
+                  data-action="reply-comment"
+                  class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-indigo-300 transition"
+                >
+                  <i class="fa-solid fa-reply text-[10px]"></i>
+                  <span>Reply</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          ${canDelete
+            ? `<button
+                 type="button"
+                 data-action="delete-comment"
+                 class="w-6 h-6 rounded-lg hover:bg-rose-950 text-slate-500 hover:text-rose-300 flex items-center justify-center shrink-0 transition"
+                 title="Delete comment"
+               >
+                 <i class="fa-solid fa-trash-can text-[10px]"></i>
+               </button>`
+            : ""
+          }
+        `;
+
+        const visitHandler = () => {
+          if (isDemoVisitor) return;
+          appState.activeTab = "user-search";
+          if (typeof window.updateNavTabStyles === "function") {
+            window.updateNavTabStyles();
+          }
+          lookupUserListByUsername(cUser);
+        };
+
+        const avatarBtn = commentRow.querySelector('[data-action="visit-commenter"]');
+        const nameBtn = commentRow.querySelector('[data-action="visit-commenter-name"]');
+        if (avatarBtn && !isDemoVisitor) avatarBtn.addEventListener("click", visitHandler);
+        if (nameBtn && !isDemoVisitor) nameBtn.addEventListener("click", visitHandler);
+
+        const heartBtn = commentRow.querySelector('[data-action="heart-comment"]');
+        if (heartBtn) {
+          heartBtn.addEventListener("click", () => {
+            toggleHeartOnComment(cleanOwner, item.mal_id, c.id, postType);
+          });
+          // Hovering over a comment's heart button also shows who liked that comment
+          heartBtn.addEventListener("mouseenter", () => {
+            openHeartLikersPopover(heartBtn, cleanOwner, { mal_id: item.mal_id, likedBy: c.likedBy || [] }, postType, c.id);
+          });
+          heartBtn.addEventListener("mouseleave", () => {
+            scheduleHeartPopoverHide(220);
+          });
+        }
+
+        const replyBtn = commentRow.querySelector('[data-action="reply-comment"]');
+        if (replyBtn) {
+          replyBtn.addEventListener("click", () => {
+            // Attach to root comment if replying to a reply so threads stay clean
+            const rootId = c.replyToCommentId || c.id;
+            setReplyTarget({
+              replyToCommentId: rootId,
+              replyToUsername: cUser,
+              replyToDisplayName: cDisp
+            });
+          });
+        }
+
+        const delBtn = commentRow.querySelector('[data-action="delete-comment"]');
+        if (delBtn) {
+          delBtn.addEventListener("click", () => {
+            deletePublicCommentFromPost(cleanOwner, item.mal_id, c.id, postType);
+          });
+        }
+
+        return commentRow;
+      };
+
+      if (comments.length > 0) {
+        const headerRow = document.createElement("div");
+        headerRow.className = "flex items-center justify-between text-[11px] font-semibold text-slate-400 px-1";
+        headerRow.innerHTML = `
+          <span><i class="fa-regular fa-comments text-sky-400 mr-1.5"></i>Public Comments (${comments.length})</span>
+          <span class="text-[10px] text-slate-500">Heart or reply to any comment</span>
+        `;
+        commentsListEl.appendChild(headerRow);
+
+        // Group top-level comments and their replies
+        const commentIds = new Set(comments.map(c => c.id));
+        const topLevelComments = comments.filter(c => !c.replyToCommentId || !commentIds.has(c.replyToCommentId));
+        const repliesByParent = {};
+        comments.forEach(c => {
+          if (c.replyToCommentId && commentIds.has(c.replyToCommentId)) {
+            if (!repliesByParent[c.replyToCommentId]) repliesByParent[c.replyToCommentId] = [];
+            repliesByParent[c.replyToCommentId].push(c);
+          }
+        });
+
+        topLevelComments.forEach(topCmt => {
+          commentsListEl.appendChild(renderSingleCommentNode(topCmt, false));
+          const childReplies = repliesByParent[topCmt.id] || [];
+          childReplies.forEach(replyCmt => {
+            commentsListEl.appendChild(renderSingleCommentNode(replyCmt, true));
+          });
+        });
+      }
+
+      sectionEl.appendChild(commentsListEl);
+      sectionEl.appendChild(replyBannerEl);
+      sectionEl.appendChild(formEl);
+
+      if (comments.length === 0 && !initiallyOpenInput) {
+        sectionEl.classList.add("hidden");
+      }
+
+      return sectionEl;
+    }
+
+    /**
+     * Toggles or focuses the public comment input box inside a card
+     */
+    function toggleOrFocusCommentBox(cardEl) {
+      if (!cardEl) return;
+      const sectionEl = cardEl.querySelector("[data-public-comments-wrapper]");
+      const formEl = cardEl.querySelector("[data-comment-form]");
+      if (sectionEl) {
+        sectionEl.classList.remove("hidden");
+      }
+      if (formEl) {
+        formEl.classList.remove("hidden");
+        const input = formEl.querySelector("input");
+        if (input) input.focus();
+      }
+    }
+
     /**
      * Toggles a Heart (like) on a user's ranked anime post OR Planning to Watch post
      * and syncs the updated count
@@ -3461,6 +4647,40 @@
       }
 
       // Re-render immediately so the heart button and count update without delay
+      if (nowHearted) {
+        let likedItemObj = null;
+        if (cleanOwner === (appState.accountUsername || "demo_visitor")) {
+          const ownCol = postType === "plan" ? (appState.planToWatch || []) : (appState.items || []);
+          likedItemObj = ownCol.find(it => Number(it.mal_id) === numericMalId);
+        }
+        if (!likedItemObj && DEMO_COMMUNITY_USERS[cleanOwner]) {
+          const col = postType === "plan" ? (DEMO_COMMUNITY_USERS[cleanOwner].planToWatch || []) : (DEMO_COMMUNITY_USERS[cleanOwner].items || []);
+          likedItemObj = col.find(it => Number(it.mal_id) === numericMalId);
+        }
+        if (!likedItemObj && appState.searchedUserResult && normalizeUsername(appState.searchedUserResult.username) === cleanOwner) {
+          const col = postType === "plan" ? (appState.searchedUserResult.planToWatch || []) : (appState.searchedUserResult.items || []);
+          likedItemObj = col.find(it => Number(it.mal_id) === numericMalId);
+        }
+        if (!likedItemObj) {
+          const entry = (appState.activityFeedItems || []).find(
+            e => normalizeUsername(e.username) === cleanOwner && Number(e.anime.mal_id) === numericMalId
+          );
+          if (entry) likedItemObj = entry.anime;
+        }
+        if (likedItemObj) {
+          await pushNotificationToUser(cleanOwner, {
+            type: "post_like",
+            postOwnerUsername: cleanOwner,
+            postType,
+            malId: numericMalId,
+            animeTitle: likedItemObj.title,
+            animeImage: likedItemObj.image,
+            animeScore: postType === "ranked" ? likedItemObj.finalScore : null
+          });
+        }
+      }
+
+      renderStatsAndMatrix();
       renderMainCollectionArea();
 
       // If the "Liked By" hover popover is currently open for this post, refresh its list live
@@ -3672,7 +4892,8 @@
         listEl.appendChild(row);
       });
     }
-    async function openHeartLikersPopover(anchorEl, ownerUsername, item, postType = "ranked") {
+
+    async function openHeartLikersPopover(anchorEl, ownerUsername, item, postType = "ranked", commentId = null) {
       cancelHeartPopoverHide();
       const popoverEl = document.getElementById("heartLikersPopover");
       if (!popoverEl || !anchorEl || !item) return;
@@ -3682,6 +4903,7 @@
         ownerUsername: normalizeUsername(ownerUsername),
         malId: item.mal_id,
         postType,
+        commentId,
         likedBy: Array.isArray(item.likedBy) ? [...item.likedBy] : []
       };
 
@@ -4474,6 +5696,7 @@
       let existingComparisonsCount = 0;
       let preservedComment = candidateAnime.comment !== undefined ? candidateAnime.comment : "";
       let preservedLikedBy = Array.isArray(candidateAnime.likedBy) ? candidateAnime.likedBy : [];
+      let preservedPublicComments = Array.isArray(candidateAnime.publicComments) ? candidateAnime.publicComments : [];
 
       if (previousIndex !== -1) {
         previousBaseTier = appState.items[previousIndex].baseTier;
@@ -4483,6 +5706,9 @@
         }
         if (Array.isArray(appState.items[previousIndex].likedBy)) {
           preservedLikedBy = appState.items[previousIndex].likedBy;
+        }
+        if (Array.isArray(appState.items[previousIndex].publicComments)) {
+          preservedPublicComments = appState.items[previousIndex].publicComments;
         }
         appState.items.splice(previousIndex, 1);
         if (previousBaseTier !== null) {
@@ -4498,6 +5724,7 @@
           ...candidateAnime,
           comment: preservedComment,
           likedBy: preservedLikedBy,
+          publicComments: preservedPublicComments,
           baseTier: clampedTier,
           rankSlot: 0,
           finalScore: clampedTier === 9 ? 10.0 : Number(clampedTier.toFixed(1)),
@@ -4530,6 +5757,7 @@
           ...candidateAnime,
           comment: preservedComment,
           likedBy: preservedLikedBy,
+          publicComments: preservedPublicComments,
           comparisonsCount: existingComparisonsCount
         },
         groups: groups,
@@ -4840,6 +6068,8 @@
       const totalAnimes = appState.items.length;
       const totalBattles = appState.battleHistory.length;
       const totalPlanned = Array.isArray(appState.planToWatch) ? appState.planToWatch.length : 0;
+      const allNotifs = getAggregatedNotificationsForCurrentUser();
+      const totalNotifs = allNotifs.length;
 
       document.getElementById("statTotalAnimes").textContent = String(totalAnimes);
       document.getElementById("statTotalComparisons").textContent = String(totalBattles);
@@ -4847,6 +6077,14 @@
       const badgePlanCount = document.getElementById("badgePlanCount");
       if (badgePlanCount) {
         badgePlanCount.textContent = String(totalPlanned);
+      }
+      const badgeNotifCount = document.getElementById("badgeNotifCount");
+      if (badgeNotifCount) {
+        badgeNotifCount.textContent = String(totalNotifs);
+      }
+      const headerNotifBadge = document.getElementById("headerNotifCountBadge");
+      if (headerNotifBadge) {
+        headerNotifBadge.textContent = String(totalNotifs);
       }
 
       if (totalAnimes > 0) {
@@ -4960,6 +6198,12 @@
         return;
       }
 
+      if (appState.activeTab === "notifications") {
+        if (filterWrapper) filterWrapper.classList.add("hidden");
+        renderNotificationsTab(container);
+        return;
+      }
+
       if (filterWrapper) filterWrapper.classList.remove("hidden");
 
       if (appState.activeTab === "history") {
@@ -5045,9 +6289,10 @@
             : "bg-slate-800/90 text-slate-300 font-bold border border-slate-700";
 
         const card = document.createElement("div");
-        card.className = "group rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-slate-700 p-3.5 sm:p-4 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+        card.className = "group rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800/90 hover:border-slate-700 p-3.5 sm:p-4 transition-all flex flex-col gap-2";
 
         card.innerHTML = `
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
           <div class="flex items-start sm:items-center gap-3.5 min-w-0 w-full sm:w-auto flex-1">
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${rankBadgeStyle} flex items-center justify-center font-display text-sm shrink-0">
               #${index + 1}
@@ -5100,6 +6345,15 @@
                 >
                   <i class="${hasUserHeartedItem(item) ? "fa-solid" : "fa-regular"} fa-heart"></i>
                   <span>${getItemHeartCount(item)}</span>
+                </button>
+                <button
+                  type="button"
+                  data-action="leaderboard-comment-toggle"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-950/90 hover:bg-sky-950/50 text-sky-300 border border-slate-800 hover:border-sky-500/40 transition"
+                  title="View or post a public comment on this ranking"
+                >
+                  <i class="fa-regular fa-comment-dots"></i>
+                  <span>${getItemPublicCommentCount(item)}</span>
                 </button>
               </div>
 
@@ -5163,7 +6417,18 @@
               </div>
             </div>
           </div>
+          </div>
         `;
+
+        const ownerName = appState.accountUsername || "demo_visitor";
+        const commentsSection = buildPublicCommentsSection(ownerName, item, "ranked", false);
+        commentsSection.setAttribute("data-public-comments-wrapper", "true");
+        card.appendChild(commentsSection);
+
+        const btnToggleComments = card.querySelector('[data-action="leaderboard-comment-toggle"]');
+        if (btnToggleComments) {
+          btnToggleComments.addEventListener("click", () => toggleOrFocusCommentBox(card));
+        }
 
         bindItemActionButtons(card, item);
         listWrapper.appendChild(card);
@@ -5756,6 +7021,7 @@
         const relTime = formatRelativeTime(entry.timestamp);
         const isHearted = hasUserHeartedItem(item);
         const heartCount = getItemHeartCount(item);
+        const publicCommentCount = getItemPublicCommentCount(item);
         const alreadyInMyPlan = isAnimeInPlanToWatch(item.mal_id);
         const myExistingRanking = appState.items.find(it => Number(it.mal_id) === Number(item.mal_id));
 
@@ -5928,6 +7194,17 @@
                   }">${heartCount}</span>
                 </button>
 
+                <button
+                  type="button"
+                  data-action="toggle-comment-box"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-950 hover:bg-sky-950/50 text-sky-300 border border-slate-800 hover:border-sky-500/40 transition flex items-center gap-1.5"
+                  title="Write a public comment on this activity post"
+                >
+                  <i class="fa-regular fa-comment-dots text-sky-400"></i>
+                  <span>Comment</span>
+                  <span class="px-1.5 py-0.2 rounded-full text-[11px] font-mono bg-slate-800 text-sky-200">${publicCommentCount}</span>
+                </button>
+
                 ${planBtnHtml}
                 ${rateBtnHtml}
               </div>
@@ -5949,6 +7226,16 @@
         });
         bindHeartHoverTrigger(feedHeartBtn, entry.username, item, postType);
 
+        // Append Public Comments Thread & Input Bar (always open on Activity Feed so anyone can read & comment easily)
+        const commentsSection = buildPublicCommentsSection(entry.username, item, postType, true);
+        commentsSection.setAttribute("data-public-comments-wrapper", "true");
+        card.appendChild(commentsSection);
+
+        const commentBtn = card.querySelector('[data-action="toggle-comment-box"]');
+        if (commentBtn) {
+          commentBtn.addEventListener("click", () => toggleOrFocusCommentBox(card));
+        }
+
         const planBtnEl = card.querySelector('[data-action="plan-this-anime"]');
         if (planBtnEl) {
           planBtnEl.addEventListener("click", () => {
@@ -5968,6 +7255,336 @@
       });
 
       wrapper.appendChild(feedList);
+      container.appendChild(wrapper);
+    }
+
+    /**
+     * VIEW 3C: NOTIFICATIONS TAB (SORTED MOST RECENT TO OLDEST WITH RELATIVE TIMESTAMPS)
+     * Shows:
+     * 1. Users who started following you
+     * 2. Users who hearted (liked) your rankings or watchlist items
+     * 3. Users who commented on your rankings or watchlist items
+     * 4. Users who replied to a comment you wrote
+     * 5. Users who hearted (liked) a comment you wrote
+     */
+    function renderNotificationsTab(container) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "space-y-5";
+
+      const allNotifs = getAggregatedNotificationsForCurrentUser();
+      const activeFilter = appState.notifFilter || "ALL";
+
+      const counts = {
+        ALL: allNotifs.length,
+        new_follower: allNotifs.filter(n => n.type === "new_follower").length,
+        post_like: allNotifs.filter(n => n.type === "post_like").length,
+        comments_replies: allNotifs.filter(n => n.type === "post_comment" || n.type === "comment_reply").length,
+        comment_like: allNotifs.filter(n => n.type === "comment_like").length
+      };
+
+      const filteredNotifs = allNotifs.filter(n => {
+        if (activeFilter === "ALL") return true;
+        if (activeFilter === "new_follower") return n.type === "new_follower";
+        if (activeFilter === "post_like") return n.type === "post_like";
+        if (activeFilter === "comments_replies") return n.type === "post_comment" || n.type === "comment_reply";
+        if (activeFilter === "comment_like") return n.type === "comment_like";
+        return true;
+      });
+
+      // Top Header Banner
+      const headerCard = document.createElement("div");
+      headerCard.className = "rounded-3xl bg-slate-900/80 border border-slate-800/90 p-5 sm:p-6 shadow-xl space-y-4";
+      headerCard.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-300 flex items-center justify-center text-xl shrink-0">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-display font-bold text-lg sm:text-xl text-white">
+                  Notifications (${allNotifs.length})
+                </h3>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                  Newest First
+                </span>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+                See when other users follow you, heart your rankings, comment on your rankings, reply to your comments, or heart a comment you wrote.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Filter Pills -->
+        <div class="pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-notif-filter="ALL"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeFilter === "ALL" ? "bg-indigo-600 text-white shadow" : "bg-slate-950 text-slate-300 hover:text-white border border-slate-800"
+            }"
+          >
+            <span>All Activity</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-black/30">${counts.ALL}</span>
+          </button>
+          <button
+            type="button"
+            data-notif-filter="new_follower"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeFilter === "new_follower" ? "bg-emerald-600 text-white shadow" : "bg-slate-950 text-slate-300 hover:text-white border border-slate-800"
+            }"
+          >
+            <i class="fa-solid fa-user-plus text-emerald-400"></i>
+            <span>New Followers</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-black/30">${counts.new_follower}</span>
+          </button>
+          <button
+            type="button"
+            data-notif-filter="post_like"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeFilter === "post_like" ? "bg-rose-600 text-white shadow" : "bg-slate-950 text-slate-300 hover:text-white border border-slate-800"
+            }"
+          >
+            <i class="fa-solid fa-heart text-rose-400"></i>
+            <span>Liked Your Rankings</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-black/30">${counts.post_like}</span>
+          </button>
+          <button
+            type="button"
+            data-notif-filter="comments_replies"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeFilter === "comments_replies" ? "bg-sky-600 text-white shadow" : "bg-slate-950 text-slate-300 hover:text-white border border-slate-800"
+            }"
+          >
+            <i class="fa-solid fa-comments text-sky-400"></i>
+            <span>Comments &amp; Replies</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-black/30">${counts.comments_replies}</span>
+          </button>
+          <button
+            type="button"
+            data-notif-filter="comment_like"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeFilter === "comment_like" ? "bg-pink-600 text-white shadow" : "bg-slate-950 text-slate-300 hover:text-white border border-slate-800"
+            }"
+          >
+            <i class="fa-solid fa-heart-circle-check text-pink-400"></i>
+            <span>Liked Your Comments</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-black/30">${counts.comment_like}</span>
+          </button>
+        </div>
+      `;
+
+      headerCard.querySelectorAll("[data-notif-filter]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          appState.notifFilter = btn.getAttribute("data-notif-filter");
+          renderMainCollectionArea();
+        });
+      });
+
+      wrapper.appendChild(headerCard);
+
+      if (filteredNotifs.length === 0) {
+        const emptyBox = document.createElement("div");
+        emptyBox.className = "rounded-3xl bg-slate-900/50 border border-slate-800/80 p-12 text-center space-y-3";
+        emptyBox.innerHTML = `
+          <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 flex items-center justify-center mx-auto text-xl">
+            <i class="fa-regular fa-bell"></i>
+          </div>
+          <h4 class="font-display font-bold text-base sm:text-lg text-white">
+            No Notifications in This Category Yet
+          </h4>
+          <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+            When users follow you, heart your rankings, leave public comments on your rankings, reply to your comments, or heart your comments, they will appear here from most recent to oldest.
+          </p>
+        `;
+        wrapper.appendChild(emptyBox);
+        container.appendChild(wrapper);
+        return;
+      }
+
+      const listEl = document.createElement("div");
+      listEl.className = "space-y-3";
+
+      filteredNotifs.forEach((n) => {
+        const actorUser = normalizeUsername(n.actorUsername || "demo_visitor");
+        const isAnon = actorUser === "demo_visitor" || actorUser.startsWith("user_") || actorUser.startsWith("guest_");
+        const actorDisp = isAnon
+          ? (n.actorDisplayName || "Demo Visitor")
+          : (appState.displayNameMap[actorUser] || n.actorDisplayName || getDisplayNameForUser(actorUser));
+        const relTime = formatRelativeTime(n.createdAt);
+        const isFollowerNotif = n.type === "new_follower";
+        const alreadyFollowingActor = !isAnon && isFollowingUser(actorUser);
+
+        let badgeIcon = "fa-heart text-rose-400";
+        let badgeBg = "bg-rose-500/15 border-rose-500/30 text-rose-300";
+        let actionSummaryHtml = "";
+
+        if (n.type === "new_follower") {
+          badgeIcon = "fa-solid fa-user-plus text-emerald-400";
+          badgeBg = "bg-emerald-500/15 border-emerald-500/30 text-emerald-300";
+          actionSummaryHtml = `started <strong class="text-emerald-300">following you</strong>!`;
+        } else if (n.type === "post_like") {
+          badgeIcon = "fa-solid fa-heart text-rose-400";
+          badgeBg = "bg-rose-500/15 border-rose-500/30 text-rose-300";
+          actionSummaryHtml = n.postType === "plan"
+            ? `hearted your <strong>Planning to Watch</strong> entry for <strong class="text-white">${escapeHtml(n.animeTitle)}</strong>`
+            : `hearted your ranking of <strong class="text-white">${escapeHtml(n.animeTitle)}</strong>${typeof n.animeScore === "number" ? ` <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[11px]">${formatScore(n.animeScore)}/10</span>` : ""}`;
+        } else if (n.type === "post_comment") {
+          badgeIcon = "fa-solid fa-comment-dots text-sky-400";
+          badgeBg = "bg-sky-500/15 border-sky-500/30 text-sky-300";
+          actionSummaryHtml = `commented on your ${n.postType === "plan" ? "watchlist anime" : "ranking of"} <strong class="text-white">${escapeHtml(n.animeTitle)}</strong>`;
+        } else if (n.type === "comment_reply") {
+          badgeIcon = "fa-solid fa-reply text-indigo-400";
+          badgeBg = "bg-indigo-500/15 border-indigo-500/30 text-indigo-300";
+          actionSummaryHtml = `replied to your comment on <strong class="text-white">${escapeHtml(n.animeTitle)}</strong>`;
+        } else if (n.type === "comment_like") {
+          badgeIcon = "fa-solid fa-heart text-pink-400";
+          badgeBg = "bg-pink-500/15 border-pink-500/30 text-pink-300";
+          actionSummaryHtml = `hearted your comment on <strong class="text-white">${escapeHtml(n.animeTitle)}</strong>`;
+        }
+
+        const card = document.createElement("div");
+        card.className = "rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800/90 hover:border-slate-700 p-4 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md";
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3.5 min-w-0 flex-1 w-full">
+            <div class="w-10 h-10 rounded-2xl border ${badgeBg} flex items-center justify-center shrink-0 mt-0.5">
+              <i class="${badgeIcon} text-sm"></i>
+            </div>
+
+            <div class="min-w-0 flex-1 space-y-1.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="text-xs sm:text-sm text-slate-300">
+                  <button
+                    type="button"
+                    data-action="visit-actor"
+                    ${isAnon ? "disabled" : ""}
+                    class="font-display font-bold text-white ${isAnon ? "cursor-default" : "hover:text-indigo-300 cursor-pointer"} transition"
+                  >
+                    ${escapeHtml(actorDisp)}
+                  </button>
+                  ${!isAnon
+                    ? `<span class="text-xs font-mono text-indigo-300/80 ml-1">@${escapeHtml(actorUser)}</span>`
+                    : ""
+                  }
+                  <span class="ml-1">${actionSummaryHtml}</span>
+                </div>
+
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-950 text-emerald-300 border border-slate-800 shrink-0" title="${new Date(n.createdAt || Date.now()).toLocaleString()}">
+                  <i class="fa-regular fa-clock text-emerald-400 text-[10px]"></i>
+                  <span>${escapeHtml(relTime)}</span>
+                </span>
+              </div>
+
+              ${n.commentText
+                ? `<div class="px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-800/90 text-xs text-slate-200 italic review-comment-wrap">
+                     "${escapeHtml(n.commentText)}"
+                   </div>`
+                : ""
+              }
+
+              <div class="flex flex-wrap items-center gap-2 pt-0.5">
+                ${!isAnon
+                  ? `<button
+                       type="button"
+                       data-action="visit-actor-btn"
+                       class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition"
+                     >
+                       <i class="fa-solid fa-user-astronaut mr-1 text-indigo-400"></i>View @${escapeHtml(actorUser)}'s List
+                     </button>`
+                  : ""
+                }
+                ${isFollowerNotif && !isAnon
+                  ? `<button
+                       type="button"
+                       data-action="follow-back-btn"
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                         alreadyFollowingActor
+                           ? "bg-emerald-950/80 hover:bg-rose-950 text-emerald-300 hover:text-rose-300 border border-emerald-500/40"
+                           : "bg-sky-600 hover:bg-sky-500 text-white shadow-sm"
+                       }"
+                     >
+                       <i class="fa-solid ${alreadyFollowingActor ? "fa-user-check" : "fa-user-plus"} mr-1"></i>${alreadyFollowingActor ? "Following" : "+ Follow Back"}
+                     </button>`
+                  : ""
+                }
+                ${!isFollowerNotif
+                  ? `<button
+                       type="button"
+                       data-action="jump-to-post"
+                       class="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold transition"
+                     >
+                       <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>View Post &amp; Comments
+                     </button>`
+                  : ""
+                }
+              </div>
+            </div>
+          </div>
+
+          ${isFollowerNotif
+            ? `<div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 items-center justify-center shrink-0 hidden sm:flex" title="New Follower">
+                 <i class="fa-solid fa-user-check text-lg"></i>
+               </div>`
+            : `<img
+                 src="${escapeHtml(n.animeImage || getFallbackPosterUrl(n.animeTitle))}"
+                 onerror="this.onerror=null;this.src='${getFallbackPosterUrl(n.animeTitle)}';"
+                 alt="${escapeHtml(n.animeTitle)}"
+                 class="w-12 h-16 object-cover rounded-xl border border-slate-700 shrink-0 bg-slate-800 hidden sm:block"
+               />`
+          }
+        `;
+
+        const visitActor = () => {
+          if (isAnon) return;
+          appState.activeTab = "user-search";
+          if (typeof window.updateNavTabStyles === "function") {
+            window.updateNavTabStyles();
+          }
+          lookupUserListByUsername(actorUser);
+        };
+
+        const actorLink = card.querySelector('[data-action="visit-actor"]');
+        const actorBtn = card.querySelector('[data-action="visit-actor-btn"]');
+        if (actorLink && !isAnon) actorLink.addEventListener("click", visitActor);
+        if (actorBtn && !isAnon) actorBtn.addEventListener("click", visitActor);
+
+        const followBackBtn = card.querySelector('[data-action="follow-back-btn"]');
+        if (followBackBtn && !isAnon) {
+          followBackBtn.addEventListener("click", async () => {
+            await toggleFollowUser(actorUser);
+            renderMainCollectionArea();
+          });
+        }
+
+        const jumpBtn = card.querySelector('[data-action="jump-to-post"]');
+        if (jumpBtn) {
+          jumpBtn.addEventListener("click", () => {
+            const myCurrentName = appState.accountUsername ? normalizeUsername(appState.accountUsername) : "demo_visitor";
+            const postOwner = normalizeUsername(n.postOwnerUsername || myCurrentName);
+            if (postOwner === myCurrentName) {
+              appState.activeTab = n.postType === "plan" ? "plan" : "leaderboard";
+              appState.tierFilter = null;
+              if (typeof window.updateNavTabStyles === "function") {
+                window.updateNavTabStyles();
+              }
+              renderMainCollectionArea();
+            } else {
+              appState.activeTab = "user-search";
+              appState.searchedUserSubTab = n.postType === "plan" ? "plan" : "ranked";
+              if (typeof window.updateNavTabStyles === "function") {
+                window.updateNavTabStyles();
+              }
+              lookupUserListByUsername(postOwner);
+            }
+          });
+        }
+
+        listEl.appendChild(card);
+      });
+
+      wrapper.appendChild(listEl);
       container.appendChild(wrapper);
     }
 
@@ -6207,12 +7824,14 @@
               userPlanItems.forEach((item) => {
                 const isHearted = hasUserHeartedItem(item);
                 const heartCount = getItemHeartCount(item);
+                const publicCommentCount = getItemPublicCommentCount(item);
                 const inMyPlan = isAnimeInPlanToWatch(item.mal_id);
                 const myExistingRanking = appState.items.find(it => Number(it.mal_id) === Number(item.mal_id));
 
                 const row = document.createElement("div");
-                row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+                row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col gap-2";
                 row.innerHTML = `
+                  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                   <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1 w-full">
                     <img
                       src="${escapeHtml(item.image)}"
@@ -6249,6 +7868,15 @@
                       <i class="${isHearted ? "fa-solid text-rose-400 animate-heart-pop" : "fa-regular text-rose-400/80"} fa-heart"></i>
                       <span class="font-mono">${heartCount}</span>
                     </button>
+                    <button
+                      type="button"
+                      data-action="toggle-profile-plan-comment"
+                      class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-950 hover:bg-sky-950/50 text-sky-300 border border-slate-800 hover:border-sky-500/40 transition flex items-center gap-1.5"
+                      title="Comment on this watchlist item"
+                    >
+                      <i class="fa-regular fa-comment-dots text-sky-400"></i>
+                      <span class="font-mono">${publicCommentCount}</span>
+                    </button>
                     ${!myExistingRanking
                       ? `<button
                            type="button"
@@ -6276,12 +7904,21 @@
                       <span>${myExistingRanking ? `My Score: ${formatScore(myExistingRanking.finalScore)}/10` : "+ Rank Anime"}</span>
                     </button>
                   </div>
+                  </div>
                 `;
                 const ptwHeartBtn = row.querySelector('[data-action="toggle-profile-plan-heart"]');
                 ptwHeartBtn.addEventListener("click", () => {
                   toggleHeartOnPost(res.username, item.mal_id, "plan");
                 });
                 bindHeartHoverTrigger(ptwHeartBtn, res.username, item, "plan");
+
+                const ptwCommentsSection = buildPublicCommentsSection(res.username, item, "plan", false);
+                ptwCommentsSection.setAttribute("data-public-comments-wrapper", "true");
+                row.appendChild(ptwCommentsSection);
+
+                row.querySelector('[data-action="toggle-profile-plan-comment"]').addEventListener("click", () => {
+                  toggleOrFocusCommentBox(row);
+                });
 
                 const addPlanBtn = row.querySelector('[data-action="add-to-my-plan"]');
                 if (addPlanBtn) {
@@ -6316,12 +7953,14 @@
               const isTenCrown = item.finalScore === 10;
               const isHearted = hasUserHeartedItem(item);
               const heartCount = getItemHeartCount(item);
+              const publicCommentCount = getItemPublicCommentCount(item);
               const inMyPlan = isAnimeInPlanToWatch(item.mal_id);
               const myExistingRanking = appState.items.find(it => Number(it.mal_id) === Number(item.mal_id));
 
               const row = document.createElement("div");
-              row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4";
+              row.className = "rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col gap-2";
               row.innerHTML = `
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                 <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1 w-full">
                   <div class="w-9 h-9 rounded-xl ${idx === 0 ? "bg-amber-400 text-slate-950 font-extrabold" : "bg-slate-800 text-slate-300 font-bold"} flex items-center justify-center font-display text-sm shrink-0">
                     #${idx + 1}
@@ -6366,6 +8005,16 @@
                     <span class="font-mono">${heartCount}</span>
                   </button>
 
+                  <button
+                    type="button"
+                    data-action="toggle-profile-comment"
+                    class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-950 hover:bg-sky-950/50 text-sky-300 border border-slate-800 hover:border-sky-500/40 transition flex items-center gap-1.5"
+                    title="Comment on @${escapeHtml(res.username)}'s ranking"
+                  >
+                    <i class="fa-regular fa-comment-dots text-sky-400"></i>
+                    <span class="font-mono">${publicCommentCount}</span>
+                  </button>
+
                   ${!isSelfProfile && !myExistingRanking
                     ? `<button
                          type="button"
@@ -6408,12 +8057,21 @@
                     </div>
                   </div>
                 </div>
+                </div>
               `;
               const profileHeartBtn = row.querySelector('[data-action="toggle-profile-heart"]');
               profileHeartBtn.addEventListener("click", () => {
                 toggleHeartOnPost(res.username, item.mal_id);
               });
               bindHeartHoverTrigger(profileHeartBtn, res.username, item);
+
+              const profileCommentsSection = buildPublicCommentsSection(res.username, item, "ranked", false);
+              profileCommentsSection.setAttribute("data-public-comments-wrapper", "true");
+              row.appendChild(profileCommentsSection);
+
+              row.querySelector('[data-action="toggle-profile-comment"]').addEventListener("click", () => {
+                toggleOrFocusCommentBox(row);
+              });
 
               const btnProfilePlan = row.querySelector('[data-action="profile-ranked-plan"]');
               if (btnProfilePlan) {
@@ -6589,12 +8247,53 @@
       const sakamoto = findById(58939);
 
       appState.items = [
-        { ...fma,    baseTier: 9, rankSlot: 2, finalScore: 10.0, comparisonsCount: 2, likedBy: ["otaku_king", "frieren_fan", "shonen_critic"], comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!", ratedAt: Date.now() - 2 * 3600 * 1000 },
-        { ...steins, baseTier: 9, rankSlot: 1, finalScore: 9.5,  comparisonsCount: 2, likedBy: ["otaku_king", "sakura_chan"], comment: "Masterclass time-travel thriller once the second half kicks into gear.", ratedAt: Date.now() - 5 * 3600 * 1000 },
-        { ...aot,    baseTier: 9, rankSlot: 0, finalScore: 9.0,  comparisonsCount: 1, likedBy: ["shonen_critic", "gojo_sensei"], comment: "Legendary twists and soundtrack.", ratedAt: Date.now() - 24 * 3600 * 1000 },
-        { ...jjk,    baseTier: 8, rankSlot: 1, finalScore: 8.5,  comparisonsCount: 1, likedBy: ["gojo_sensei"], comment: "Top-tier fight choreography in the Shibuya arc.", ratedAt: Date.now() - 48 * 3600 * 1000 },
-        { ...demon,  baseTier: 8, rankSlot: 0, finalScore: 8.0,  comparisonsCount: 1, likedBy: ["sakura_chan"], comment: "", ratedAt: Date.now() - 72 * 3600 * 1000 },
-        { ...sao,    baseTier: 4, rankSlot: 0, finalScore: 4.0,  comparisonsCount: 0, likedBy: [], comment: "Great premise in episode 1, but dropped off quickly for me.", ratedAt: Date.now() - 96 * 3600 * 1000 }
+        {
+          ...fma,
+          baseTier: 9,
+          rankSlot: 2,
+          finalScore: 10.0,
+          comparisonsCount: 2,
+          likedBy: ["otaku_king", "frieren_fan", "shonen_critic"],
+          comment: "Incredible pacing, worldbuilding, and an unforgettable ending. Deserves the #1 10/10 crown!",
+          publicComments: [
+            {
+              id: "cmt_starter_1",
+              authorUsername: "otaku_king",
+              authorDisplayName: "King of Otakus 👑",
+              text: "FMAB at #1 is undefeated taste! Brotherhood's finale is perfection.",
+              likedBy: ["frieren_fan", "shonen_critic"],
+              createdAt: Date.now() - 35 * 60 * 1000
+            },
+            {
+              id: "cmt_starter_2",
+              authorUsername: "demo_visitor",
+              authorDisplayName: "You",
+              text: "Thank you! Nothing else has topped that final promised day arc for me.",
+              replyToCommentId: "cmt_starter_1",
+              replyToUsername: "otaku_king",
+              replyToDisplayName: "King of Otakus 👑",
+              likedBy: ["otaku_king", "frieren_fan"],
+              createdAt: Date.now() - 22 * 60 * 1000
+            },
+            {
+              id: "cmt_starter_3",
+              authorUsername: "frieren_fan",
+              authorDisplayName: "Frieren the Slayer ✨",
+              text: "Completely agree with your reply! Arakawa's storytelling is a 10/10.",
+              replyToCommentId: "cmt_starter_1",
+              replyToUsername: "demo_visitor",
+              replyToDisplayName: "You",
+              likedBy: ["otaku_king"],
+              createdAt: Date.now() - 12 * 60 * 1000
+            }
+          ],
+          ratedAt: Date.now() - 2 * 3600 * 1000
+        },
+        { ...steins, baseTier: 9, rankSlot: 1, finalScore: 9.5,  comparisonsCount: 2, likedBy: ["otaku_king", "sakura_chan"], publicComments: [], comment: "Masterclass time-travel thriller once the second half kicks into gear.", ratedAt: Date.now() - 5 * 3600 * 1000 },
+        { ...aot,    baseTier: 9, rankSlot: 0, finalScore: 9.0,  comparisonsCount: 1, likedBy: ["shonen_critic", "gojo_sensei"], publicComments: [], comment: "Legendary twists and soundtrack.", ratedAt: Date.now() - 24 * 3600 * 1000 },
+        { ...jjk,    baseTier: 8, rankSlot: 1, finalScore: 8.5,  comparisonsCount: 1, likedBy: ["gojo_sensei"], publicComments: [], comment: "Top-tier fight choreography in the Shibuya arc.", ratedAt: Date.now() - 48 * 3600 * 1000 },
+        { ...demon,  baseTier: 8, rankSlot: 0, finalScore: 8.0,  comparisonsCount: 1, likedBy: ["sakura_chan"], publicComments: [], comment: "", ratedAt: Date.now() - 72 * 3600 * 1000 },
+        { ...sao,    baseTier: 4, rankSlot: 0, finalScore: 4.0,  comparisonsCount: 0, likedBy: [], publicComments: [], comment: "Great premise in episode 1, but dropped off quickly for me.", ratedAt: Date.now() - 96 * 3600 * 1000 }
       ];
 
       if (!appState.accountUsername) {
@@ -7247,6 +8946,7 @@
       const tabPlanToWatch = document.getElementById("tabPlanToWatch");
       const tabHistory = document.getElementById("tabHistory");
       const tabActivityFeed = document.getElementById("tabActivityFeed");
+      const tabNotifications = document.getElementById("tabNotifications");
       const tabUserSearch = document.getElementById("tabUserSearch");
 
       function updateNavTabStyles() {
@@ -7262,6 +8962,9 @@
         tabHistory.className = tabName === "history" ? activeClass : inactiveClass;
         if (tabActivityFeed) {
           tabActivityFeed.className = tabName === "activity" ? activeClass : inactiveClass;
+        }
+        if (tabNotifications) {
+          tabNotifications.className = tabName === "notifications" ? activeClass : inactiveClass;
         }
         if (tabUserSearch) {
           tabUserSearch.className = tabName === "user-search" ? activeClass : inactiveClass;
@@ -7289,6 +8992,9 @@
       if (tabActivityFeed) {
         tabActivityFeed.addEventListener("click", () => setActiveTab("activity"));
       }
+      if (tabNotifications) {
+        tabNotifications.addEventListener("click", () => setActiveTab("notifications"));
+      }
       if (tabUserSearch) {
         tabUserSearch.addEventListener("click", () => setActiveTab("user-search"));
       }
@@ -7297,6 +9003,13 @@
       if (btnHeaderActivityFeed) {
         btnHeaderActivityFeed.addEventListener("click", () => {
           setActiveTab("activity");
+        });
+      }
+
+      const btnHeaderNotifications = document.getElementById("btnHeaderNotifications");
+      if (btnHeaderNotifications) {
+        btnHeaderNotifications.addEventListener("click", () => {
+          setActiveTab("notifications");
         });
       }
 
