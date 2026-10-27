@@ -439,7 +439,7 @@
     </section>
 
     <!-- MAIN RANKINGS COLLECTION & TABS -->
-    <section class="space-y-4">
+    <section id="mainCollectionSection" class="space-y-4 scroll-mt-20">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/75 border border-slate-800/90 p-3 rounded-2xl">
         <!-- View Mode Tabs -->
         <div class="flex flex-wrap items-center gap-1.5">
@@ -8983,6 +8983,15 @@
         }
       }
 
+      function scrollToMainCollection() {
+        setTimeout(() => {
+          const sectionEl = document.getElementById("mainCollectionSection");
+          if (sectionEl) {
+            sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 40);
+      }
+
       tabLeaderboard.addEventListener("click", () => setActiveTab("leaderboard"));
       tabTierBuckets.addEventListener("click", () => setActiveTab("tiers"));
       if (tabPlanToWatch) {
@@ -9003,6 +9012,7 @@
       if (btnHeaderActivityFeed) {
         btnHeaderActivityFeed.addEventListener("click", () => {
           setActiveTab("activity");
+          scrollToMainCollection();
         });
       }
 
@@ -9010,6 +9020,7 @@
       if (btnHeaderNotifications) {
         btnHeaderNotifications.addEventListener("click", () => {
           setActiveTab("notifications");
+          scrollToMainCollection();
         });
       }
 
@@ -9017,10 +9028,11 @@
       if (btnHeaderFindUser) {
         btnHeaderFindUser.addEventListener("click", () => {
           setActiveTab("user-search");
+          scrollToMainCollection();
           setTimeout(() => {
             const input = document.getElementById("userLookupInput");
-            if (input) input.focus();
-          }, 50);
+            if (input) input.focus({ preventScroll: true });
+          }, 120);
         });
       }
 
