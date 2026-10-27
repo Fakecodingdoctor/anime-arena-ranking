@@ -1948,6 +1948,8 @@
       planToWatch: [],
       battleHistory: [],
       notifications: [],        // Stored notifications (most recent to oldest)
+      seenNotificationIds: [],  // IDs of notifications the user has already viewed
+      lastViewedUnreadIds: [],  // Highlights newly arrived items during the current view
       notifFilter: "ALL",       // 'ALL' | 'post_like' | 'comments_replies' | 'comment_like'
       activeTab: "leaderboard", // 'leaderboard' | 'tiers' | 'plan' | 'history' | 'activity' | 'notifications' | 'user-search'
       tierFilter: null,         // null or 0..9
@@ -2320,7 +2322,8 @@
             items: appState.items,
             planToWatch: appState.planToWatch || [],
             battleHistory: appState.battleHistory,
-            notifications: appState.notifications || []
+            notifications: appState.notifications || [],
+            seenNotificationIds: appState.seenNotificationIds || []
           }));
         } else {
           localStorage.removeItem("aar_account_session");
@@ -2472,6 +2475,9 @@
       if (!Array.isArray(appState.notifications)) {
         appState.notifications = [];
       }
+      if (!Array.isArray(appState.seenNotificationIds)) {
+        appState.seenNotificationIds = [];
+      }
       for (let t = 0; t <= 9; t++) {
         recalculateScoresInTier(t);
       }
@@ -2572,6 +2578,14 @@
               appState.notifications = parsedNotifs;
             }
           }
+          if (extraData.seenNotificationIds !== undefined) {
+            const parsedSeen = typeof extraData.seenNotificationIds === "string"
+              ? JSON.parse(extraData.seenNotificationIds)
+              : extraData.seenNotificationIds;
+            if (Array.isArray(parsedSeen)) {
+              appState.seenNotificationIds = parsedSeen;
+            }
+          }
         }
 
         if (Array.isArray(parsedItems)) {
@@ -2609,6 +2623,7 @@
         planToWatch: JSON.stringify(appState.planToWatch || []),
         battleHistory: JSON.stringify(appState.battleHistory),
         notifications: JSON.stringify((appState.notifications || []).slice(0, 120)),
+        seenNotificationIds: JSON.stringify((appState.seenNotificationIds || []).slice(-500)),
         updatedAt: Date.now(),
         ownerUid: currentUser ? currentUser.uid : effectiveUid,
         username: appState.accountUsername,
@@ -2648,6 +2663,8 @@
       appState.planToWatch = [];
       appState.battleHistory = [];
       appState.notifications = [];
+      appState.seenNotificationIds = [];
+      appState.lastViewedUnreadIds = [];
       appState.tierFilter = null;
 
       appState.accountUsername = cleanUser;
@@ -2884,6 +2901,8 @@
           appState.planToWatch = [];
           appState.battleHistory = [];
           appState.notifications = [];
+          appState.seenNotificationIds = [];
+          appState.lastViewedUnreadIds = [];
           appState.tierFilter = null;
           appState.accountUsername = cleanUser;
           appState.accountDisplayName = chosenDisplayName;
@@ -3019,6 +3038,8 @@
       appState.followers = [];
       appState.planToWatch = [];
       appState.notifications = [];
+      appState.seenNotificationIds = [];
+      appState.lastViewedUnreadIds = [];
       appState.tierFilter = null;
       saveAccountSessionToLocal();
 
@@ -3844,6 +3865,67 @@
 
       // Sort strictly from most recent to oldest
       return Array.from(notifMap.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+
+    /**
+     * Checks if a notification is unread (has not been seen yet by the user)
+     */
+    function isNotificationUnread(n) {
+      if (!n || !n.id) return false;
+      if (n.read === true) return false;
+      if (Array.isArray(appState.seenNotificationIds) && appState.seenNotificationIds.includes(n.id)) {
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * Returns the count of unread notifications for the badge
+     */
+    function getUnreadNotificationsCount() {
+      const allNotifs = getAggregatedNotificationsForCurrentUser();
+      return allNotifs.filter(n => isNotificationUnread(n)).length;
+    }
+
+    /**
+     * Marks all current notifications as seen/read so the badge number disappears
+     * and persists the seen state to the user's account
+     */
+    function markAllNotificationsAsSeen() {
+      const allNotifs = getAggregatedNotificationsForCurrentUser();
+      if (!Array.isArray(appState.seenNotificationIds)) {
+        appState.seenNotificationIds = [];
+      }
+
+      const newlySeenIds = allNotifs.filter(n => isNotificationUnread(n)).map(n => n.id);
+      if (newlySeenIds.length > 0) {
+        appState.lastViewedUnreadIds = newlySeenIds;
+      }
+
+      let changed = false;
+      if (Array.isArray(appState.notifications)) {
+        appState.notifications.forEach(n => {
+          if (!n.read) {
+            n.read = true;
+            changed = true;
+          }
+        });
+      }
+
+      const seenSet = new Set(appState.seenNotificationIds);
+      allNotifs.forEach(n => {
+        if (n && n.id && !seenSet.has(n.id)) {
+          seenSet.add(n.id);
+          changed = true;
+        }
+      });
+
+      appState.seenNotificationIds = Array.from(seenSet).slice(-500);
+      renderStatsAndMatrix();
+
+      if (changed) {
+        saveStateToStorage();
+      }
     }
 
     /**
@@ -6068,8 +6150,7 @@
       const totalAnimes = appState.items.length;
       const totalBattles = appState.battleHistory.length;
       const totalPlanned = Array.isArray(appState.planToWatch) ? appState.planToWatch.length : 0;
-      const allNotifs = getAggregatedNotificationsForCurrentUser();
-      const totalNotifs = allNotifs.length;
+      const unreadNotifs = getUnreadNotificationsCount();
 
       document.getElementById("statTotalAnimes").textContent = String(totalAnimes);
       document.getElementById("statTotalComparisons").textContent = String(totalBattles);
@@ -6080,11 +6161,13 @@
       }
       const badgeNotifCount = document.getElementById("badgeNotifCount");
       if (badgeNotifCount) {
-        badgeNotifCount.textContent = String(totalNotifs);
+        badgeNotifCount.textContent = String(unreadNotifs);
+        badgeNotifCount.classList.toggle("hidden", unreadNotifs === 0);
       }
       const headerNotifBadge = document.getElementById("headerNotifCountBadge");
       if (headerNotifBadge) {
-        headerNotifBadge.textContent = String(totalNotifs);
+        headerNotifBadge.textContent = String(unreadNotifs);
+        headerNotifBadge.classList.toggle("hidden", unreadNotifs === 0);
       }
 
       if (totalAnimes > 0) {
@@ -7415,6 +7498,7 @@
         const relTime = formatRelativeTime(n.createdAt);
         const isFollowerNotif = n.type === "new_follower";
         const alreadyFollowingActor = !isAnon && isFollowingUser(actorUser);
+        const isJustViewedNew = Array.isArray(appState.lastViewedUnreadIds) && appState.lastViewedUnreadIds.includes(n.id);
 
         let badgeIcon = "fa-heart text-rose-400";
         let badgeBg = "bg-rose-500/15 border-rose-500/30 text-rose-300";
@@ -7469,6 +7553,10 @@
                     : ""
                   }
                   <span class="ml-1">${actionSummaryHtml}</span>
+                  ${isJustViewedNew
+                    ? `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40">New</span>`
+                    : ""
+                  }
                 </div>
 
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-950 text-emerald-300 border border-slate-800 shrink-0" title="${new Date(n.createdAt || Date.now()).toLocaleString()}">
@@ -8973,8 +9061,15 @@
       window.updateNavTabStyles = updateNavTabStyles;
 
       function setActiveTab(tabName) {
+        if (appState.activeTab === "notifications" && tabName !== "notifications") {
+          appState.lastViewedUnreadIds = [];
+        }
         appState.activeTab = tabName;
         updateNavTabStyles();
+
+        if (tabName === "notifications") {
+          markAllNotificationsAsSeen();
+        }
 
         if (tabName === "activity") {
           loadFollowingActivityFeed();
