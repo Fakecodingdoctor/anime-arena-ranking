@@ -592,7 +592,7 @@
         <div class="space-y-1.5">
           <label for="modalAnimeComment" class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-300">
             <span><i class="fa-regular fa-comment-dots text-indigo-400 mr-1.5"></i>Your Thoughts / Review Note (Optional):</span>
-            <span class="text-[11px] font-normal normal-case text-slate-500">Wraps automatically • Shown on profile &amp; feed</span>
+            <span class="text-[11px] font-normal normal-case text-slate-500">Shown on profile &amp; feed</span>
           </label>
           <textarea
             id="modalAnimeComment"
@@ -1069,8 +1069,17 @@
                   minlength="4"
                   autocomplete="current-password"
                   placeholder="At least 4 characters"
-                  class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-indigo-500 focus:outline-none text-sm text-white placeholder-slate-500"
+                  class="w-full pl-9 pr-10 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-indigo-500 focus:outline-none text-sm text-white placeholder-slate-500"
                 />
+                <button
+                  id="btnTogglePasswordVisibility"
+                  type="button"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 flex items-center justify-center transition"
+                  title="Show password"
+                  aria-label="Toggle password visibility"
+                >
+                  <i id="iconTogglePassword" class="fa-regular fa-eye text-xs"></i>
+                </button>
               </div>
             </div>
 
@@ -8818,6 +8827,28 @@
       const authDisplayNameWrapper = document.getElementById("authDisplayNameWrapper");
       const btnShowPasswordHint = document.getElementById("btnShowPasswordHint");
       const authHintDisplayBox = document.getElementById("authHintDisplayBox");
+      const authPasswordInputEl = document.getElementById("authPasswordInput");
+      const btnTogglePasswordVisibility = document.getElementById("btnTogglePasswordVisibility");
+      const iconTogglePassword = document.getElementById("iconTogglePassword");
+
+      function resetPasswordVisibility() {
+        if (!authPasswordInputEl || !iconTogglePassword || !btnTogglePasswordVisibility) return;
+        authPasswordInputEl.type = "password";
+        iconTogglePassword.className = "fa-regular fa-eye text-xs";
+        btnTogglePasswordVisibility.title = "Show password";
+      }
+
+      if (btnTogglePasswordVisibility && authPasswordInputEl && iconTogglePassword) {
+        btnTogglePasswordVisibility.addEventListener("click", () => {
+          const isHidden = authPasswordInputEl.type === "password";
+          authPasswordInputEl.type = isHidden ? "text" : "password";
+          iconTogglePassword.className = isHidden
+            ? "fa-regular fa-eye-slash text-xs text-indigo-300"
+            : "fa-regular fa-eye text-xs";
+          btnTogglePasswordVisibility.title = isHidden ? "Hide password" : "Show password";
+          authPasswordInputEl.focus();
+        });
+      }
 
       function setAuthModalMode(mode) {
         authModalMode = mode;
@@ -8871,6 +8902,7 @@
       document.getElementById("btnOpenAuthModal").addEventListener("click", () => {
         updateAuthHeaderUI();
         authErrorBox.classList.add("hidden");
+        resetPasswordVisibility();
         const dispWarning = document.getElementById("displayNameWarningBox");
         if (dispWarning) dispWarning.classList.add("hidden");
         authModalOverlay.classList.remove("hidden");
@@ -8881,11 +8913,13 @@
         btnBannerOpenAuth.addEventListener("click", () => {
           updateAuthHeaderUI();
           authErrorBox.classList.add("hidden");
+          resetPasswordVisibility();
           authModalOverlay.classList.remove("hidden");
         });
       }
 
       document.getElementById("btnCloseAuthModal").addEventListener("click", () => {
+        resetPasswordVisibility();
         authModalOverlay.classList.add("hidden");
       });
 
