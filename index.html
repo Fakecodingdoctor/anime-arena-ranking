@@ -1416,7 +1416,7 @@
         display: "0.0–4.0",
         label: "Would Not Recommend",
         shortLabel: "Not Recommend",
-        desc: "Scores 0.0 to 4.0 • Starts at 4.0, fills 4, 3, 2, 1, 0 first",
+        desc: "Animes you would not recommend",
         minScore: 0.0,
         maxScore: 4.0,
         wholeNumbers: [4.0, 3.0, 2.0, 1.0, 0.0],
@@ -1430,7 +1430,7 @@
         display: "4.1–7.0",
         label: "Would Slightly Recommend",
         shortLabel: "Slightly Recommend",
-        desc: "Scores 4.1 to 7.0 • Starts at 7.0, fills 7, 6, 5 first",
+        desc: "Enjoyable animes worth a watch",
         minScore: 4.1,
         maxScore: 7.0,
         wholeNumbers: [7.0, 6.0, 5.0],
@@ -1444,7 +1444,7 @@
         display: "7.1–10.0",
         label: "Would Strongly Recommend",
         shortLabel: "Strongly Recommend",
-        desc: "Scores 7.1 to 10.0 • Starts at 10.0, fills 10, 9, 8 first",
+        desc: "Must-watch favorites and masterpieces",
         minScore: 7.1,
         maxScore: 10.0,
         wholeNumbers: [10.0, 9.0, 8.0],
@@ -5792,28 +5792,24 @@
 
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = `relative p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 ${accentBorder}`;
+        btn.className = `relative p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2.5 ${accentBorder}`;
 
         btn.innerHTML = `
           <div class="flex items-center justify-between w-full gap-2">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-900/90 text-white border border-slate-700/80">
-              <i class="fa-solid ${def.icon} ${iconColor}"></i>
-              <span>${def.display} / 10</span>
+            <span class="w-8 h-8 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-center justify-center">
+              <i class="fa-solid ${def.icon} ${iconColor} text-sm"></i>
             </span>
             ${count > 0
               ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-pink-500/20 text-pink-300 border border-pink-500/30" title="${count} anime(s) already in ${escapeHtml(def.label)}">
-                   <i class="fa-solid fa-bolt text-[9px]"></i> ${count} in basket
+                   <i class="fa-solid fa-bolt text-[9px]"></i> ${count} ranked
                  </span>`
               : `<span class="text-[10px] text-slate-500">Empty</span>`
             }
           </div>
-          <div class="space-y-1">
+          <div>
             <div class="font-display font-bold text-sm sm:text-base text-white">
               ${escapeHtml(def.label)}
             </div>
-            <p class="text-[11px] text-slate-400 leading-snug">
-              ${escapeHtml(def.desc)}
-            </p>
           </div>
         `;
 
@@ -5836,7 +5832,7 @@
       if (tier === null || tier === undefined) {
         labelEl.textContent = "Select 1 of the 3 options below";
         titleEl.textContent = "Pick a recommendation category above";
-        descEl.innerHTML = `Choose <strong>Would Not Recommend (0.0–4.0)</strong>, <strong>Would Slightly Recommend (4.1–7.0)</strong>, or <strong>Would Strongly Recommend (7.1–10.0)</strong>. Whole numbers fill first before moving to decimals!`;
+        descEl.innerHTML = `Choose <strong>Would Not Recommend</strong>, <strong>Would Slightly Recommend</strong>, or <strong>Would Strongly Recommend</strong> to rank this anime.`;
         btnConfirmBaseScoreEl.disabled = true;
         btnTextEl.textContent = "Select Category";
         return;
@@ -5847,21 +5843,17 @@
         it => it.baseTier === tier && (!modalCandidateAnime || it.mal_id !== modalCandidateAnime.mal_id)
       );
 
-      labelEl.textContent = `${def.label} (${def.display}/10)`;
+      labelEl.textContent = def.label;
       btnConfirmBaseScoreEl.disabled = false;
 
       if (peers.length === 0) {
-        const startScore = def.maxScore.toFixed(1);
         titleEl.innerHTML = `First anime in <span class="text-indigo-300">${escapeHtml(def.label)}</span>`;
-        descEl.innerHTML = `No other anime is in <strong>${escapeHtml(def.label)}</strong> yet. <strong>${escapeHtml(modalCandidateAnime.title)}</strong> will start at <strong class="text-emerald-300 font-mono">${startScore}/10</strong>.`;
-        btnTextEl.textContent = `Save in ${def.shortLabel} (${startScore}/10)`;
+        descEl.innerHTML = `No other anime is in <strong>${escapeHtml(def.label)}</strong> yet. Click below to save your rating!`;
+        btnTextEl.textContent = `Save in ${def.shortLabel}`;
       } else {
         const peerNames = peers.slice(0, 2).map(p => p.title).join(", ") + (peers.length > 2 ? ` +${peers.length - 2} more` : "");
-        const wholeLeft = peers.length < def.wholeNumbers.length;
-        titleEl.innerHTML = `<span class="text-pink-300">Head-to-Head Triggered!</span> (${peers.length} anime${peers.length > 1 ? "s" : ""} in ${escapeHtml(def.label)})`;
-        descEl.innerHTML = wholeLeft
-          ? `You also placed <strong>${escapeHtml(peerNames)}</strong> in <strong>${escapeHtml(def.label)}</strong>. Next, quick binary-search battles will assign whole numbers (<code class="text-amber-300">${def.wholeNumbers.map(n => n.toFixed(1)).join(", ")}</code>) first!`
-          : `All whole numbers in <strong>${escapeHtml(def.label)}</strong> are filled! Next, binary-search battles against <strong>${escapeHtml(peerNames)}</strong> will calibrate exact decimal scores across <strong class="text-emerald-300 font-mono">${def.display}/10</strong>.`;
+        titleEl.innerHTML = `<span class="text-pink-300">Head-to-Head Matchup Ready!</span> (${peers.length} anime${peers.length > 1 ? "s" : ""} in ${escapeHtml(def.label)})`;
+        descEl.innerHTML = `Next, you'll compare <strong>${escapeHtml(modalCandidateAnime.title)}</strong> against <strong>${escapeHtml(peerNames)}</strong> to lock in its exact rating.`;
         btnTextEl.textContent = `Compare in ${def.shortLabel}`;
       }
     }
@@ -6175,63 +6167,108 @@
       resultBody.classList.remove("hidden");
 
       const tierDef = getTierDef(baseTier);
-      document.getElementById("resultHeadline").textContent =
-        `${tierDef.label} (${tierDef.display}) Calibrated!`;
 
-      const itemsInTier = appState.items
-        .filter(it => it.baseTier === baseTier)
-        .sort((a, b) => b.finalScore - a.finalScore || b.rankSlot - a.rankSlot);
+      // Sort all ranked animes overall so the user sees their anime's final position & its immediate neighbors
+      const allSorted = [...appState.items].sort((a, b) => {
+        if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
+        if (b.baseTier !== a.baseTier) return b.baseTier - a.baseTier;
+        return b.rankSlot - a.rankSlot;
+      });
 
-      const highlightedItem = itemsInTier.find(it => it.mal_id === highlightMalId);
+      const currentIndex = allSorted.findIndex(it => Number(it.mal_id) === Number(highlightMalId));
+      const highlightedItem = currentIndex !== -1 ? allSorted[currentIndex] : null;
+      const aboveItem = currentIndex > 0 ? allSorted[currentIndex - 1] : null;
+      const belowItem = currentIndex !== -1 && currentIndex < allSorted.length - 1 ? allSorted[currentIndex + 1] : null;
+
+      document.getElementById("resultHeadline").textContent = highlightedItem
+        ? `Ranked #${currentIndex + 1} Overall!`
+        : `${tierDef.label} Calibrated!`;
+
       document.getElementById("resultSubheadline").innerHTML = highlightedItem
-        ? `<strong>${escapeHtml(highlightedItem.title)}</strong> is now calibrated at <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">${formatScore(highlightedItem.finalScore)}/10</span>!`
-        : `Updated rankings inside ${escapeHtml(tierDef.label)} (${tierDef.display}):`;
+        ? `<strong>${escapeHtml(highlightedItem.title)}</strong> is now rated <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">${formatScore(highlightedItem.finalScore)}/10</span> in <strong>${escapeHtml(tierDef.label)}</strong>.`
+        : `Here is your updated placement:`;
 
       const listContainer = document.getElementById("resultTierLadderList");
       listContainer.innerHTML = "";
 
-      itemsInTier.forEach((item, idx) => {
-        const isJustRated = item.mal_id === highlightMalId;
+      const createComparisonRow = (item, overallRankNum, roleLabel, isCurrent) => {
+        const itemDef = getTierDef(item.baseTier);
         const row = document.createElement("div");
         row.className = `p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition ${
-          isJustRated
-            ? "bg-indigo-950/60 border-indigo-400 shadow-lg shadow-indigo-500/10"
-            : "bg-slate-950/80 border-slate-800"
+          isCurrent
+            ? "bg-indigo-950/70 border-indigo-400 ring-2 ring-indigo-400/40 shadow-lg shadow-indigo-500/15"
+            : "bg-slate-950/80 border-slate-800/90 opacity-85"
         }`;
+
+        const roleBadgeClass = isCurrent
+          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+          : "bg-slate-800 text-slate-400 border-slate-700";
 
         row.innerHTML = `
           <div class="flex items-center gap-3 min-w-0">
-            <span class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center shrink-0">
-              #${idx + 1}
+            <span class="w-8 h-8 rounded-xl ${isCurrent ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300"} font-mono text-xs font-bold flex items-center justify-center shrink-0">
+              #${overallRankNum}
             </span>
             <img
               src="${escapeHtml(item.image)}"
               onerror="this.onerror=null;this.src='${getFallbackPosterUrl(item.title)}';"
               alt=""
-              class="w-10 h-14 object-cover rounded-lg border border-slate-700 shrink-0"
+              class="w-11 h-16 object-cover rounded-lg border border-slate-700 shrink-0 bg-slate-800"
             />
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-sm text-white truncate">${escapeHtml(item.title)}</span>
-                ${isJustRated
-                  ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Calibrated</span>`
-                  : ""
-                }
+            <div class="min-w-0 space-y-0.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${roleBadgeClass}">
+                  ${escapeHtml(roleLabel)}
+                </span>
+                <span class="text-[11px] text-slate-400 truncate">
+                  ${escapeHtml(itemDef.label)}
+                </span>
               </div>
-              <div class="text-xs text-slate-400">
-                ${escapeHtml(tierDef.label)} (${tierDef.display}) • Rank #${idx + 1} in basket
+              <div class="font-display font-bold text-sm sm:text-base text-white truncate">
+                ${escapeHtml(item.title)}
               </div>
             </div>
           </div>
 
-          <div class="text-right shrink-0">
-            <div class="font-display font-bold text-lg ${isJustRated ? "text-emerald-300" : "text-amber-300"}">
+          <div class="text-right shrink-0 pl-2">
+            <div class="font-display font-bold text-xl ${isCurrent ? "text-emerald-300" : "text-amber-300"}">
               ${formatScore(item.finalScore)}<span class="text-xs text-slate-400 font-normal">/10</span>
             </div>
           </div>
         `;
-        listContainer.appendChild(row);
-      });
+        return row;
+      };
+
+      // 1. Anime Ranked Right Above
+      if (aboveItem) {
+        listContainer.appendChild(
+          createComparisonRow(aboveItem, currentIndex, "Ranked Right Above ↑", false)
+        );
+      } else if (highlightedItem) {
+        const topBanner = document.createElement("div");
+        topBanner.className = "px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-center";
+        topBanner.innerHTML = `<i class="fa-solid fa-crown mr-1.5"></i>Ranked #1 at the very top of your list!`;
+        listContainer.appendChild(topBanner);
+      }
+
+      // 2. Current Newly Ranked Anime
+      if (highlightedItem) {
+        listContainer.appendChild(
+          createComparisonRow(highlightedItem, currentIndex + 1, "Your New Ranking ★", true)
+        );
+      }
+
+      // 3. Anime Ranked Right Below
+      if (belowItem) {
+        listContainer.appendChild(
+          createComparisonRow(belowItem, currentIndex + 2, "Ranked Right Below ↓", false)
+        );
+      } else if (highlightedItem && allSorted.length > 1) {
+        const bottomBanner = document.createElement("div");
+        bottomBanner.className = "px-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs text-center";
+        bottomBanner.textContent = "No anime ranked below this one yet.";
+        listContainer.appendChild(bottomBanner);
+      }
     }
 
     function cancelArenaModal() {
